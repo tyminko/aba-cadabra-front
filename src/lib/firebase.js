@@ -1,4 +1,5 @@
 import firebase from 'firebase'
+// import axios from 'axios'
 
 export const config = {
   apiKey: 'AIzaSyBK82_DBknR1YdvhHUE_8Cfoez_sG-FgQU',
@@ -16,32 +17,26 @@ export const auth = firebase.auth()
 export const storage = firebase.storage()
 export const FieldValue = firebase.firestore.FieldValue
 
-let unsubscribe = null
 export const syncAuth = store => {
   app.auth().onAuthStateChanged(user => {
     console.log('onAuthStateChanged:', user)
-    if (unsubscribe) {
-      unsubscribe()
-    }
     if (user) {
-      unsubscribe = db.collection('users').doc(user.uid).onSnapshot(
-        snapshot => {
-          console.log('onUserChanged:', snapshot)
-          if (!snapshot.exists) {
-            store.dispatch('clearUser')
-          }
+      firebase.auth().currentUser.getIdTokenResult(true)
+        .then(token => {
+          return token.claims.role
+        })
+        .then(role => {
           store.dispatch('updateUser', {
-            id: snapshot.id,
-            ...snapshot.data({
-              serverTimestamps: 'estimate'
-            })
+            id: user.uid,
+            displayName: user.displayName,
+            photoURL: user.photoURL,
+            role
           })
-        },
-        err => {
-          console.error('onUserChanged:', err)
+        })
+        .catch((error) => {
+          console.log(error)
           store.dispatch('clearUser')
-        }
-      )
+        })
     } else {
       store.dispatch('clearUser')
     }

@@ -13,7 +13,7 @@ const router = new Router({
   routes: [
     {
       path: '/',
-      name: 'works',
+      name: 'home',
       component: Works
     },
     {
@@ -28,6 +28,18 @@ const router = new Router({
         import(/* webpackChunkName: "about" */ './views/About.vue')
     },
     {
+      path: '/admin',
+      component: () => import(/* webpackChunkName: "admin" */ './views/admin/AdminArea.vue'),
+      meta: { restricted: true },
+      children: [
+        {
+          path: 'users',
+          name: 'users',
+          component: () => import(/* webpackChunkName: "admin" */ './views/admin/Users.vue')
+        }
+      ]
+    },
+    {
       path: '/login',
       component: () => import(/* webpackChunkName: "login" */ './views/Login.vue'),
       children: [
@@ -37,7 +49,7 @@ const router = new Router({
           component: () => import(/* webpackChunkName: "login" */ './components/login/LoginForm.vue')
         },
         {
-          path: '',
+          path: 'forgot-password',
           name: 'forgot-password',
           component: () => import(/* webpackChunkName: "login-password" */ './components/login/ForgotPassword.vue')
         }
@@ -47,10 +59,17 @@ const router = new Router({
 })
 
 router.beforeEach((to, from, next) => {
+  /* DEBUG */
+  console.log(`%c %c to: `, 'background:#ffbb00;color:#000', 'color:#00aaff', to)
   if (to.name === 'login') {
     if (store.state.user) {
-      next(false)
-      return
+      return next(false)
+    }
+  } else if (to.matched.some(record => record.meta.restricted)) {
+    if (!store.state.user) {
+      return next({ name: 'login' })
+    } else if (store.state.user.role !== 'admin') {
+      return next(false)
     }
   }
   next()

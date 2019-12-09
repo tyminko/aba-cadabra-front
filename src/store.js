@@ -1,12 +1,14 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import { auth } from './lib/firebase'
+import router from './router'
 
 Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
     user: null,
+    allowAdmin: false,
     works: null,
     requestToLogin: false,
     useTouch: false
@@ -26,6 +28,9 @@ export default new Vuex.Store({
     },
     SET_USE_TOUCH (state) {
       state.useTouch = true
+    },
+    SET_ALLOW_ADMIN (state, value) {
+      state.allowAdmin = value
     }
   },
   actions: {
@@ -35,6 +40,11 @@ export default new Vuex.Store({
 
     logOut: ({ commit }) => Promise.resolve(commit('CLEAR_USER'))
       .then(() => auth.signOut()
+        .then(() => {
+          if (router.currentRoute.matched.some(record => record.meta.restricted)) {
+            router.push({ name: 'home' })
+          }
+        })
         .catch(err => console.error('signOut:', err))
       ),
 

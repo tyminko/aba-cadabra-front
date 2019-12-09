@@ -1,11 +1,14 @@
 <template>
   <header class="main-header">
     <nav class="collaps">
-      <router-link :to="{name: 'works'}" class="nav-item">
-        Works
+      <router-link :to="{name: 'home'}" class="nav-item">
+        Home
       </router-link>
       <router-link :to="{name: 'about'}" class="nav-item">
         About
+      </router-link>
+      <router-link v-if="admin" :to="{name: 'users'}" class="nav-item">
+        Users
       </router-link>
     </nav>
     <button v-if="user" class="login" @click="logOut">
@@ -16,19 +19,17 @@
 
 <script>
 import { mapState, mapActions } from 'vuex'
+
 export default {
   name: 'MainHeader',
-  components: {
-  },
 
-  props: {
-  },
-
-  data: () => ({
-  }),
+  data: () => ({}),
 
   computed: {
-    ...mapState(['user'])
+    ...mapState(['user']),
+    admin () {
+      return this.user && this.user.role === 'admin'
+    }
   },
 
   methods: {

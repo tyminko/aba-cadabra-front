@@ -4,7 +4,7 @@
       <div v-click-outside="requestClose" class="modal-content-box content-box">
         <header>
           <button class="cancel micro transparent" @click="requestClose">
-            <i class="ti-close" />
+            <i class="ico-close" />
           </button>
         </header>
         <div class="modal-content">
@@ -35,6 +35,14 @@ export default {
     open (value) {
       this.setAllowClickOutside()
     }
+  },
+
+  created () {
+    window.addEventListener('keydown', e => {
+      if (e.key === 'Escape' || e.keyCode === 27) {
+        this.requestClose()
+      }
+    })
   },
 
   mounted () {
