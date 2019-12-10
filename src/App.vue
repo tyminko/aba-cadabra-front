@@ -37,5 +37,6 @@ export default {
 }
 </script>
 <style lang="scss">
+  @import "https://fonts.googleapis.com/icon?family=Material+Icons";
   @import "./styles/main.scss"
 </style>

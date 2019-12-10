@@ -1,6 +1,6 @@
 <template>
   <div class="users">
-    <button @click="openEditor = true">Add User</button>
+    <ui-button @click="openEditor">Add User</ui-button>
     <div v-for="user in users" :key="user.uid" class="user-card">
       <div class="photo">
         <img v-if="user.photoURL" :src="user.photoURL">
@@ -10,34 +10,37 @@
       <div class="phone">Phone: {{user.phoneNumber}}</div>
       <div class="role">Role: {{user.role}}</div>
     </div>
-    <popover-modal class="user-editor" :open="openEditor" @close="openEditor = false">
+    <ui-modal ref="editor" :title="editorTitle" class="user-editor">
       <user-editor :user="selectedUser" />
-    </popover-modal>
+    </ui-modal>
   </div>
 </template>
 
 <script>
 import { mapState } from 'vuex'
 import firebase from 'firebase'
-import PopoverModal from '../../components/UI/PopoverModal'
+import { UiButton, UiModal } from 'keen-ui'
+// import PopoverModal from '../../components/UI/PopoverModal'
 import UserEditor from './UserEditor'
 
 export default {
   name: 'Users',
   components: {
-    PopoverModal, UserEditor
+    UiButton, UiModal, UserEditor
   },
 
   data: () => ({
     users: [],
     selectedUser: null,
     allUsersFunc: null,
-    nextPageToken: '',
-    openEditor: false
+    nextPageToken: ''
   }),
 
   computed: {
-    ...mapState(['user'])
+    ...mapState(['user']),
+    editorTitle () {
+      return this.selectedUser && this.selectedUser.uid ? 'Edit User' : 'New User'
+    }
   },
 
   watch: {
@@ -57,6 +60,10 @@ export default {
         const res = await this.allUsersFunc()
         this.users = res.data
       }
+    },
+
+    openEditor () {
+      this.$refs.editor.open()
     }
   }
 }

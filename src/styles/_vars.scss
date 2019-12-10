@@ -1,11 +1,11 @@
-$base-size: 4.8rem;
+$base-size: 48rem / 16; // 48px (3rem) based on default font size 16px
 $base-padding: $base-size / 3;
 
 $color-bg: rgb(240,240,240);
 $color-bg-semitransparent: transparentize($color-bg, 0.3);
 $color-white-semitransparent: transparentize(white, 0.3);
 
-$z-index-header: 1000;
+$z-index-header: 40;
 
 $font-family-sans-serif:
   // Safari for macOS and iOS (San Francisco)
