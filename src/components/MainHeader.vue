@@ -1,20 +1,22 @@
 <template>
-  <header class="main-header">
-    <nav class="collaps">
-      <router-link :to="{name: 'home'}" class="nav-item">
-        Home
-      </router-link>
-      <router-link :to="{name: 'about'}" class="nav-item">
-        About
-      </router-link>
-      <router-link v-if="admin" :to="{name: 'users'}" class="nav-item">
-        Users
-      </router-link>
-    </nav>
-    <button v-if="user" class="login" @click="logOut">
-      Log Out
-    </button>
-  </header>
+  <v-app-bar app flat class="main-header">
+    <!-- <header class="main-header"> -->
+      <nav class="collaps">
+        <router-link :to="{name: 'home'}" class="nav-item">
+          Home
+        </router-link>
+        <router-link :to="{name: 'about'}" class="nav-item">
+          About
+        </router-link>
+        <router-link v-if="admin" :to="{name: 'users'}" class="nav-item">
+          Users
+        </router-link>
+      </nav>
+      <button v-if="user" class="login" @click="logOut">
+        Log Out
+      </button>
+    <!-- </header> -->
+  </v-app-bar>
 </template>
 
 <script>
@@ -61,7 +63,7 @@ export default {
       display: flex;
       align-items: center;
       height: 100%;
-      background: transparentize($color-bg, 0.1);
+      // background: transparentize($color-bg, 0.1);
       pointer-events: all;
 
       a {

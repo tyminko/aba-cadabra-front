@@ -1,14 +1,14 @@
 import firebase from 'firebase'
-// import axios from 'axios'
 
 export const config = {
-  apiKey: 'AIzaSyBK82_DBknR1YdvhHUE_8Cfoez_sG-FgQU',
-  authDomain: 'aba-cadabra-test.firebaseapp.com',
-  databaseURL: 'https://aba-cadabra-test.firebaseio.com',
-  projectId: 'aba-cadabra-test',
-  storageBucket: 'aba-cadabra-test.appspot.com',
-  messagingSenderId: '101473110806',
-  appId: '1:101473110806:web:21161d88a16312d7481e37'
+  apiKey: 'AIzaSyCxfEiKF30A51yBQ7ofv-CK9VxG-RW59Yo',
+  authDomain: 'aba-cadabra.firebaseapp.com',
+  databaseURL: 'https://aba-cadabra.firebaseio.com',
+  projectId: 'aba-cadabra',
+  storageBucket: 'aba-cadabra.appspot.com',
+  messagingSenderId: '110254923980',
+  appId: '1:110254923980:web:7e061f51d355a57c656269',
+  measurementId: 'G-CCFSJH8HQJ'
 }
 
 export const app = firebase.initializeApp(config)

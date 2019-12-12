@@ -1,13 +1,15 @@
 <template>
-  <div id="app">
-    <main-header />
-    <keep-alive>
-      <router-view :key="$route.fullPath" />
-    </keep-alive>
-    <popover-modal v-if="requestToLogin">
-      <login-form />
-    </popover-modal>
-  </div>
+  <v-app id="app">
+    <v-content>
+      <main-header />
+      <keep-alive>
+        <router-view :key="$route.fullPath" />
+      </keep-alive>
+      <popover-modal v-if="requestToLogin">
+        <login-form />
+      </popover-modal>
+    </v-content>
+  </v-app>
 </template>
 <script>
 import { mapState, mapActions } from 'vuex'
