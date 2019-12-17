@@ -43,7 +43,7 @@
               spellcheck="false"
               :autocomplete="uid ? 'current-password' : 'new-password'"
               :append-icon="showPassword ? 'visibility' : 'visibility_off'"
-              :type="showPassword ? 'password' : 'text'"
+              :type="showPassword ? 'text' : 'password'"
               :rules="[rules.password]"
               @blur="generatePasswordIfEmpty"
               @click:append="() => {showPassword = !showPassword}"
@@ -278,20 +278,5 @@ export default {
   }
   .v-select__selection, .v-list-item__title {
     text-transform: capitalize
-  }
-  .v-card__actions{
-    // justify-content: flex-end;
-    padding: 20px 24px;
-  }
-  .v-btn:not(.v-btn--round) {
-    text-transform: capitalize;
-    letter-spacing: 0.02em;
-    border-radius: 2px;
-    &.v-size--default{
-      font-size: 100%;
-    }
-  }
-  .v-btn--contained {
-    box-shadow: none;
   }
 </style>

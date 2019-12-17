@@ -46,12 +46,12 @@ const router = new Router({
         {
           path: '',
           name: 'login',
-          component: () => import(/* webpackChunkName: "login" */ './components/login/LoginForm.vue')
+          component: () => import(/* webpackChunkName: "login" */ './views/components/login/LoginForm.vue')
         },
         {
           path: 'forgot-password',
           name: 'forgot-password',
-          component: () => import(/* webpackChunkName: "login-password" */ './components/login/ForgotPassword.vue')
+          component: () => import(/* webpackChunkName: "login-password" */ './views/components/login/ForgotPassword.vue')
         }
       ]
     }

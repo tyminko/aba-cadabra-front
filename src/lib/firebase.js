@@ -21,14 +21,14 @@ export const syncAuth = store => {
   app.auth().onAuthStateChanged(user => {
     console.log('onAuthStateChanged:', user)
     if (user) {
-      firebase.auth().currentUser.getIdTokenResult(true)
+      auth.currentUser.getIdTokenResult(true)
         .then(token => {
           return token.claims.role
         })
         .then(role => {
           store.dispatch('updateUser', {
             id: user.uid,
-            displayName: user.displayName,
+            displayName: user.displayName || user.email,
             photoURL: user.photoURL,
             role
           })

@@ -1,29 +1,11 @@
 @import "vars";
-// *,
-// *::before,
-// *::after {
-//     // box-sizing: border-box;
-// }
+@import "autofill";
+@import "anti-vuetify";
 
 html {
   font-size: 100%;
 }
 
-body {
-  background: $color-bg;
-}
-
-.v-btn:not(.v-btn--text):not(.v-btn--outlined):active::before {
-  opacity: 0.2;
-}
-
-.v-text-field > .v-input__control > .v-input__slot:before, 
-.v-text-field > .v-input__control > .v-input__slot:after,
-.v-list-item--link:before,
-button::before {
-  transition: 0s !important;
-}
-
-.v-dialog {
-  box-shadow: none !important;
+.dimmed {
+  color: $color-dimmed;
 }

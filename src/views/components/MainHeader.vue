@@ -1,21 +1,16 @@
 <template>
   <v-app-bar app flat class="main-header">
-    <!-- <header class="main-header"> -->
-      <nav class="collaps">
-        <router-link :to="{name: 'home'}" class="nav-item">
-          Home
-        </router-link>
-        <router-link :to="{name: 'about'}" class="nav-item">
-          About
-        </router-link>
-        <router-link v-if="admin" :to="{name: 'users'}" class="nav-item">
-          Users
-        </router-link>
-      </nav>
-      <button v-if="user" class="login" @click="logOut">
-        Log Out
-      </button>
-    <!-- </header> -->
+    <nav>
+      <router-link :to="{name: 'home'}" class="nav-item">
+        Home
+      </router-link>
+      <router-link :to="{name: 'about'}" class="nav-item">
+        About
+      </router-link>
+      <router-link v-if="admin" :to="{name: 'users'}" class="nav-item">
+        Users
+      </router-link>
+    </nav>
   </v-app-bar>
 </template>
 
@@ -24,7 +19,7 @@ import { mapState, mapActions } from 'vuex'
 
 export default {
   name: 'MainHeader',
-
+  components: { },
   data: () => ({}),
 
   computed: {
@@ -41,7 +36,7 @@ export default {
 </script>
 
 <style lang='scss'>
-  @import "../styles/_vars.scss";
+  @import "../../styles/vars";
 
   .main-header{
     position: fixed;
@@ -63,6 +58,7 @@ export default {
       display: flex;
       align-items: center;
       height: 100%;
+      width: 100%;
       // background: transparentize($color-bg, 0.1);
       pointer-events: all;
 
@@ -79,5 +75,11 @@ export default {
       margin-left: auto;
       pointer-events: all;
     }
+
+  }
+
+  .user-actions {
+    padding: $base-padding;
+    background: $color-bg;
   }
 </style>

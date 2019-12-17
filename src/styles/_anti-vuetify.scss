@@ -1,0 +1,47 @@
+
+.theme--light.v-application.bg {
+  background: $color-bg;
+}
+
+
+.v-btn:not(.v-btn--text):not(.v-btn--outlined):active::before {
+  opacity: 0.2;
+}
+
+.v-text-field > .v-input__control > .v-input__slot:before,
+.v-text-field > .v-input__control > .v-input__slot:after,
+.v-list-item--link:before,
+button::before {
+  transition: 0s !important;
+}
+
+
+.theme--light {
+  &.v-sheet.v-card {
+    .v-card__actions{
+      padding: 20px 24px;
+    }
+  }
+  &.v-sheet.v-card, .v-dialog, .v-menu__content {
+    box-shadow: none;
+    border-radius: 0;
+    // border: 5px solid $color-prime;
+  }
+}
+.v-btn:not(.v-btn--round) {
+  text-transform: capitalize;
+  letter-spacing: 0.02em;
+  border-radius: 2px;
+  &.v-size--default{
+    font-size: 100%;
+  }
+}
+.v-btn--contained {
+  box-shadow: none;
+}
+
+::selection {
+  background-color: #eaf3ff !important;
+  color: $color-prime !important;
+  text-shadow: none;
+}

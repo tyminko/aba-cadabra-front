@@ -36,5 +36,8 @@ export default {
 <style lang='scss'>
   .login{
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 </style>

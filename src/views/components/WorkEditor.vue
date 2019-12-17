@@ -25,9 +25,9 @@
    */
 
 import { mapState } from 'vuex'
-import Work from '../lib/work'
-import { deleteAttachments } from '../lib/storage'
-import localData from '../lib/local-storage'
+import Work from '../../lib/work'
+import { deleteAttachments } from '../../lib/storage'
+import localData from '../../lib/local-storage'
 import LabeledInput from './UI/LabeledInput'
 import Attachments from './UI/Attachments'
 import PopoverDialog from './UI/PopoverDialog'

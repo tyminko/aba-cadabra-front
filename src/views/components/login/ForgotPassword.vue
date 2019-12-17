@@ -15,7 +15,7 @@
 </template>
 
 <script>
-import { auth } from '../../lib/firebase'
+import { auth } from '../../../lib/firebase'
 
 export default {
   name: 'ForgotPassword',

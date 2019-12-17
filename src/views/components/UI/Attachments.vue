@@ -29,7 +29,7 @@
 
 <script>
 import Vue from 'vue'
-import imageLib from '../../lib/image'
+import imageLib from '../../../lib/image'
 
 export default {
   name: 'Attachments',

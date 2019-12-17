@@ -1,25 +1,24 @@
 <template>
-  <v-app id="app">
+  <v-app id="app" class="bg">
+    <main-header />
+    <user-menu class="user-menu" />
     <v-content>
-      <main-header />
-      <keep-alive>
-        <router-view :key="$route.fullPath" />
-      </keep-alive>
-      <popover-modal v-if="requestToLogin">
-        <login-form />
-      </popover-modal>
+      <v-container fluid>
+        <keep-alive>
+          <router-view :key="$route.fullPath" />
+        </keep-alive>
+      </v-container>
     </v-content>
   </v-app>
 </template>
 <script>
 import { mapState, mapActions } from 'vuex'
-import MainHeader from './components/MainHeader'
-import PopoverModal from './components/UI/PopoverModal'
-import LoginForm from './components/login/LoginForm'
+import MainHeader from './views/components/MainHeader'
+import UserMenu from './views/components/UserMenu'
 
 export default {
   name: 'App',
-  components: { MainHeader, PopoverModal, LoginForm },
+  components: { MainHeader, UserMenu },
   computed: {
     ...mapState(['requestToLogin'])
   },
@@ -40,5 +39,12 @@ export default {
 </script>
 <style lang="scss">
   @import "https://fonts.googleapis.com/icon?family=Material+Icons";
-  @import "./styles/main.scss"
+  @import "./styles/main.scss";
+  .user-menu {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: $z-high;
+    margin-right: 10px;
+  }
 </style>

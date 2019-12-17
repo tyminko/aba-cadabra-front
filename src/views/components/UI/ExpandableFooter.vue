@@ -33,7 +33,7 @@ export default {
 </script>
 
 <style lang='scss'>
-  @import "../../styles/_vars.scss";
+  @import "../../../styles/vars";
 
   .expandable-footer {
     display: flex;

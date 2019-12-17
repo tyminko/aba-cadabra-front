@@ -29,8 +29,8 @@
 <script>
 import { mapState } from 'vuex'
 import { db } from '../lib/firebase'
-import WorkEditor from '../components/WorkEditor'
-import PopoverModal from '../components/UI/PopoverModal'
+import WorkEditor from './components/WorkEditor'
+import PopoverModal from './components/UI/PopoverModal'
 import ExpandableTextLine from 'vue-expandable-text-line'
 
 export default {
