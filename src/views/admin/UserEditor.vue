@@ -178,12 +178,8 @@ export default {
     },
 
     submit () {
-      /* DEBUG */
-      console.log(`%c %c this.formValid: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.formValid)
       if (!this.formValid) return
       if (!this.uid) {
-        /* DEBUG */
-        console.log(`%c %c this.uid: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.uid)
         this.addUser()
       }
     },
@@ -206,6 +202,7 @@ export default {
           const res = await this.addUserFunc(data)
           this.processing = false
           if (res.data.error) {
+            // eslint-disable-next-line no-console
             console.error(res.data.error)
           } else {
             this.$emit('complete', res.data)
@@ -213,6 +210,7 @@ export default {
             this.requestClose()
           }
         } catch (error) {
+          // eslint-disable-next-line no-console
           console.error(error)
         }
       }

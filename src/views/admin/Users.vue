@@ -73,6 +73,7 @@ export default {
         this.allUsersFunc = firebase.functions().httpsCallable('users-all')
         const res = await this.allUsersFunc()
         if (res.data.error) {
+          // eslint-disable-next-line no-console
           console.error(res.data.error)
         } else {
           this.users = res.data
@@ -81,19 +82,13 @@ export default {
     },
 
     updateUserInList (userData) {
-      /* DEBUG */
-      console.log(`%c updateUserInList %c userData: `, 'background:#ffbb00;color:#000', 'color:#00aaff', userData)
       if (!userData.uid) return
       const index = this.users.findIndex(u => u.uid === userData.uid)
-      /* DEBUG */
-      console.log(`%c %c index: `, 'background:#ffbb00;color:#000', 'color:#00aaff', index)
       if (index > -1) {
         this.$set(this.users, index, { ...userData })
       } else {
         this.users.unshift(userData)
       }
-      /* DEBUG */
-      console.log(`%c %c this.users: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.users)
     },
 
     openEditor () {

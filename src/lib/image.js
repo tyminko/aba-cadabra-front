@@ -128,7 +128,7 @@ export default {
           // @ts-ignore
           .then(res => pica.resize(res, canvas, settings))
           .catch(e => {
-            console.warn('%c resize ON Err %c e.message: ', 'background:#ffbb00;color:#000', 'color:#00aaff', e.message)
+            // console.warn('%c resize ON Err %c e.message: ', 'background:#ffbb00;color:#000', 'color:#00aaff', e.message)
           })
       })
   },

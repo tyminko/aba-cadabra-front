@@ -19,7 +19,7 @@ export const FieldValue = firebase.firestore.FieldValue
 
 export const syncAuth = store => {
   app.auth().onAuthStateChanged(user => {
-    console.log('onAuthStateChanged:', user)
+    // console.log('onAuthStateChanged:', user)
     if (user) {
       auth.currentUser.getIdTokenResult(true)
         .then(token => {
@@ -34,6 +34,7 @@ export const syncAuth = store => {
           })
         })
         .catch((error) => {
+          // eslint-disable-next-line no-console
           console.log(error)
           store.dispatch('clearUser')
         })

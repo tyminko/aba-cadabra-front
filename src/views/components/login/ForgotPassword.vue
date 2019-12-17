@@ -52,6 +52,7 @@ export default {
           this.userEmail = ''
         })
         .catch(err => {
+          // eslint-disable-next-line no-console
           console.log(err)
           this.error = err
         })

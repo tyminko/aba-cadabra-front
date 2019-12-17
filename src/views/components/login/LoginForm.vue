@@ -76,6 +76,7 @@ export default {
   methods: {
     login () {
       auth.signInWithEmailAndPassword(this.userEmail, this.userPassword).catch(err => {
+        // eslint-disable-next-line no-console
         console.log(err)
         if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
           this.message = 'Wrong email or password.'

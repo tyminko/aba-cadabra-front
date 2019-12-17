@@ -76,6 +76,7 @@ export default {
             })
           },
           err => {
+            // eslint-disable-next-line no-console
             console.error('getWorks:', err)
           }
         )
@@ -94,8 +95,6 @@ export default {
       if (this.$refs.editor) {
         this.$refs.editor.close()
           .then(res => {
-            /* DEBUG */
-            console.log('%c closeEditor %c res: ', 'background:#ffbb00;color:#000', 'color:#00aaff', res)
             if (res === 'close') {
               this.shouldOpenEditor = false
               this.editableWork = null

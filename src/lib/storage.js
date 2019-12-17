@@ -89,25 +89,25 @@ function put (path, uploadData, progressFn) {
     uploadTask.on(Firebase.storage.TaskEvent.STATE_CHANGED,
       snapshot => {
         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-        console.log('Upload is ' + progress + '% done')
+        // console.log('Upload is ' + progress + '% done')
         if (progressFn) {
           progressFn(uploadData.attachment.id, progress)
         }
         switch (snapshot.state) {
           case Firebase.storage.TaskState.PAUSED:
-            console.log('Upload is paused')
+            // console.log('Upload is paused')
             break
           case Firebase.storage.TaskState.RUNNING:
-            console.log('Upload is running')
+            // console.log('Upload is running')
             break
         }
       },
       error => reject(error),
       () => resolve(uploadTask.snapshot))
   }).then(snapshot => {
-    console.log('New pic uploaded. Size:', snapshot.totalBytes, 'bytes.')
+    // console.log('New pic uploaded. Size:', snapshot.totalBytes, 'bytes.')
     return snapshot.ref.getDownloadURL().then(url => {
-      console.log('File available at', url)
+      // console.log('File available at', url)
       return { uploadData, url }
     })
   })
@@ -126,8 +126,6 @@ export function upload (userId, attachments, progressFn) {
       .then(filesForUpload => {
         return Promise.all(filesForUpload.map(fileData => {
           const path = filePath(userId, fileData.name, fileData.sizeType, fileData.blob.type)
-          /* DEBUG */
-          console.log('%c %c UPLOAD path: ', 'background:#ffbb00;color:#000', 'color:#00aaff', path)
           return put(path, fileData, progressFn)
         }))
       })

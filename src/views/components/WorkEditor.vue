@@ -110,12 +110,11 @@ export default {
 
     close () {
       return this.saveWork().then(() => {
-        console.log('%c After Save %c: ', 'background:#ffbb00;color:#000', 'color:#00aaff')
         this.$emit('add-work', { ...this.workData })
         return 'close'
       })
         .catch(e => {
-          console.warn('%c CLOSE %c e.message: ', 'background:#ffbb00;color:#000', 'color:#00aaff', e.message)
+          // console.warn('%c CLOSE %c e.message: ', 'background:#ffbb00;color:#000', 'color:#00aaff', e.message)
         })
     },
 
