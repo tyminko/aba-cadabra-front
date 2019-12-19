@@ -7,9 +7,6 @@
       <router-link :to="{name: 'about'}" class="nav-item">
         About
       </router-link>
-      <router-link v-if="admin" :to="{name: 'users'}" class="nav-item">
-        Users
-      </router-link>
     </nav>
   </v-app-bar>
 </template>

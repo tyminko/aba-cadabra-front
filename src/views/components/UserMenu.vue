@@ -15,7 +15,9 @@
             Profile
           </router-link>
         </div>
-        <v-divider />
+        <router-link v-if="admin" :to="{name: 'users'}" class="nav-item">
+          Users
+        </router-link>
         <button class="login" @click="logOut">
           <span>Log Out</span>
         </button>
