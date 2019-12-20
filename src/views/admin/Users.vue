@@ -17,21 +17,24 @@
         @close="showEditor=false"
         @complete="updateUserInList"/>
     </v-dialog>
-    <div v-for="user in users" :key="user.uid" class="user-card">
-      <div class="photo"  >
-        <img v-if="user.photoURL" :src="user.photoURL">
+    <div>
+      <div v-for="user in users" :key="user.uid" class="user-card">
+        <div class="photo"  >
+          <img v-if="user.photoURL" :src="user.photoURL">
+        </div>
+        <div class="name">{{user.displayName || user.email}}</div>
+        <div class="email">Email: {{user.email}}</div>
+        <div class="phone">Phone: {{user.phoneNumber}}</div>
+        <div class="role">Role: {{user.role}}</div>
       </div>
-      <div class="name">{{user.displayName || user.email}}</div>
-      <div class="email">Email: {{user.email}}</div>
-      <div class="phone">Phone: {{user.phoneNumber}}</div>
-      <div class="role">Role: {{user.role}}</div>
+      <v-progress-circular v-if="processing" indeterminate />
     </div>
   </div>
 </template>
 
 <script>
 import { mapState } from 'vuex'
-import firebase from 'firebase'
+import * as users from '../../lib/users'
 // import { UiButton, UiModal } from 'keen-ui'
 // import PopoverModal from '../../components/UI/PopoverModal'
 import UserEditor from './UserEditor'
@@ -48,7 +51,8 @@ export default {
     allUsersFunc: null,
     nextPageToken: '',
     viewportIsSmall: false,
-    showEditor: false
+    showEditor: false,
+    processing: false
   }),
 
   computed: {
@@ -70,14 +74,11 @@ export default {
   methods: {
     async getUsers () {
       if (this.user && this.user.role === 'admin') {
-        this.allUsersFunc = firebase.functions().httpsCallable('users-all')
-        const res = await this.allUsersFunc()
-        if (res.data.error) {
-          // eslint-disable-next-line no-console
-          console.error(res.data.error)
-        } else {
-          this.users = res.data
-        }
+        this.processing = true
+        this.users = await users.getAll()
+        this.processing = false
+      } else {
+        this.users = []
       }
     },
 

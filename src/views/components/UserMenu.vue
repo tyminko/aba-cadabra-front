@@ -10,13 +10,16 @@
       <login-form v-if="!user" />
       <div v-else class="user-actions">
         <div>
-          <router-link :to="{ name: profile }">
+          <router-link :to="{ name: 'profile' }">
             <div> {{user.displayName}} </div>
             Profile
           </router-link>
         </div>
         <router-link v-if="admin" :to="{name: 'users'}" class="nav-item">
           Users
+        </router-link>
+        <router-link v-if="admin" :to="{name: 'wp-users'}" class="nav-item">
+          Export Users from WP
         </router-link>
         <button class="login" @click="logOut">
           <span>Log Out</span>

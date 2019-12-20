@@ -83,13 +83,7 @@
 
 <script>
 import { mapState } from 'vuex'
-import firebase from 'firebase'
-
-// import { UiButton, UiSelect, UiTextbox } from 'keen-ui'
-// import configure from 'keen-ui/src/configure'
-// import 'keen-ui/dist/keen-ui.css'
-
-// configure(UiButton, { disableRipple: true })
+import { addUser, generatePassword } from '../../lib/users'
 
 export default {
   name: 'UserEditor',
@@ -180,38 +174,27 @@ export default {
     submit () {
       if (!this.formValid) return
       if (!this.uid) {
-        this.addUser()
+        this.createUser()
       }
     },
 
-    async addUser () {
+    async createUser () {
       if (this.editor && this.editor.role === 'admin') {
-        try {
-          this.addUserFunc = firebase.functions().httpsCallable('users-add')
-          const data = {
-            displayName: this.displayName,
-            email: this.email,
-            password: this.password,
-            phoneNumber: this.phoneNumber,
-            photoURL: this.photoURL,
-            emailVerified: this.emailVerified,
-            disabled: this.disabled,
-            role: this.role
-          }
-          this.processing = true
-          const res = await this.addUserFunc(data)
-          this.processing = false
-          if (res.data.error) {
-            // eslint-disable-next-line no-console
-            console.error(res.data.error)
-          } else {
-            this.$emit('complete', res.data)
-            this.$refs.form.reset()
-            this.requestClose()
-          }
-        } catch (error) {
-          // eslint-disable-next-line no-console
-          console.error(error)
+        const data = {
+          displayName: this.displayName,
+          email: this.email,
+          password: this.password,
+          phoneNumber: this.phoneNumber,
+          photoURL: this.photoURL,
+          emailVerified: this.emailVerified,
+          disabled: this.disabled,
+          role: this.role
+        }
+        const newUser = await addUser(data)
+        if (newUser) {
+          this.$emit('complete', newUser)
+          this.$refs.form.reset()
+          this.requestClose()
         }
       }
     },
@@ -229,33 +212,8 @@ export default {
 
     generatePasswordIfEmpty () {
       if (!this.password) {
-        this.password = this.generatePassword()
+        this.password = generatePassword()
       }
-    },
-
-    generatePassword () {
-      const randCharFromStr = str => str.charAt(Math.floor(Math.random() * str.length))
-      const length = 12
-      const lows = 'abcdefghijklmnopqrstuvwxyz'
-      const caps = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-      const numbers = '0123456789'
-      const specials = '.?!:;()[]{}~-_`@#$%^&*+='
-      const charset = lows + specials + caps + numbers
-      let checkLow, checkCap, checkNum, checkSpecial
-      let retVal = ''
-      for (let i = 0; i < length; ++i) {
-        const char = randCharFromStr(charset)
-        if (lows.includes(char)) checkLow = true
-        if (caps.includes(char)) checkCap = true
-        if (numbers.includes(char)) checkNum = true
-        if (specials.includes(char)) checkSpecial = true
-        retVal += char
-      }
-      if (!checkLow) retVal += randCharFromStr(lows)
-      if (!checkCap) retVal += randCharFromStr(caps)
-      if (!checkNum) retVal += randCharFromStr(numbers)
-      if (!checkSpecial) retVal += randCharFromStr(specials)
-      return retVal
     },
 
     requestClose () {

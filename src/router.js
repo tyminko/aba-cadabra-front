@@ -36,6 +36,11 @@ const router = new Router({
           path: 'users',
           name: 'users',
           component: () => import(/* webpackChunkName: "admin" */ './views/admin/Users.vue')
+        },
+        {
+          path: 'wp-users',
+          name: 'wp-users',
+          component: () => import(/* webpackChunkName: "admin" */ './views/admin/CreateUsersFromWP.vue')
         }
       ]
     },
