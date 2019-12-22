@@ -41,6 +41,16 @@ const router = new Router({
           path: 'wp-users',
           name: 'wp-users',
           component: () => import(/* webpackChunkName: "admin" */ './views/admin/CreateUsersFromWP.vue')
+        },
+        {
+          path: 'wp-posts',
+          name: 'wp-posts',
+          component: () => import(/* webpackChunkName: "admin" */ './views/admin/TransferWpPosts.vue')
+        },
+        {
+          path: 'wp-attachments',
+          name: 'wp-attachments',
+          component: () => import(/* webpackChunkName: "admin" */ './views/admin/TransferWpAttachments.vue')
         }
       ]
     },

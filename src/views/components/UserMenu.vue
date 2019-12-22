@@ -2,7 +2,7 @@
   <sliding-panel class="user-menu">
     <template v-slot:trigger="{on, open}">
       <div class="user-menu-button" @click="on">
-        <i v-if="user" class="material-icons dimmed" :class="{open, user}">sentiment_satisfied</i>
+        <i v-if="user" class="material-icons dimmed" :class="{open, user}">{{open ? 'sentiment_very_satisfied' : 'sentiment_satisfied'}}</i>
         <i v-else class="material-icons dimmed" :class="{open}">chevron_right</i>
       </div>
     </template>
@@ -19,7 +19,13 @@
           Users
         </router-link>
         <router-link v-if="admin" :to="{name: 'wp-users'}" class="nav-item">
-          Export Users from WP
+          WP Users
+        </router-link>
+        <router-link v-if="admin" :to="{name: 'wp-posts'}" class="nav-item">
+          WP Posts
+        </router-link>
+        <router-link v-if="admin" :to="{name: 'wp-attachments'}" class="nav-item">
+          WP Attachmnts
         </router-link>
         <button class="login" @click="logOut">
           <span>Log Out</span>
@@ -90,6 +96,11 @@ export default {
           display: flex;
           flex-flow: column;
           justify-content: center;
+        }
+
+        a {
+          display: block;
+          text-decoration: none;
         }
       }
     }

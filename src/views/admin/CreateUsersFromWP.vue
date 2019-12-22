@@ -307,7 +307,6 @@ export default {
       .progress-indicator {
         position: absolute;
         height: 100%;
-
       }
     }
   }
