@@ -51,13 +51,13 @@ export default {
       return WP.attachment
     },
 
-    activeAttachmnets () {
-      return this.wpAttachmnets.map(item => {
-        if (this.attachmentIsUsed(item)) {
-          return item.post.ID
-        }
-      })
-    },
+    // activeAttachmnets () {
+    //   return this.wpAttachmnets.map(item => {
+    //     if (this.attachmentIsUsed(item)) {
+    //       return item.post.ID
+    //     }
+    //   })
+    // },
 
     done () {
       return this.transfered.length / this.wpAttachments.length * 100
