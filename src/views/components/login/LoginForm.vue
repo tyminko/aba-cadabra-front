@@ -1,53 +1,65 @@
 <!--suppress HtmlFormInputWithoutLabel -->
 <template>
-  <v-card class="login-container">
-    <v-card-title>
-      Log In
-    </v-card-title>
-    <v-card-text>
-      <v-form
-        ref="form"
-        v-model="formValid"
-        class="login-box"
-        @submit.prevent="login">
-          <v-text-field
-            ref="email"
-            v-model="userEmail"
-            label="Email"
-            type="email"
-            :rules="[rules.required, rules.email]"
-            @input="clearMessage" />
-          <v-text-field
-            v-model="userPassword"
-            label="Password"
-            type="password"
-            :rules="[rules.required]"
-            spellcheck="false"
-            autocomplete="current-password"
-            @input="clearMessage" />
-          <p class="message" :class="{open: message}">
-            {{message}}
-          </p>
-      </v-form>
-      <div @click="openForgotPasswordForm" class="">Forgot my password</div>
-    </v-card-text>
-    <v-card-actions class="justify-end">
-      <button
-        :disabled="!enableLogin"
-        @click="login">
+  <div class="login-wrap">
+    <v-card class="login-container">
+      <v-card-title>
         Log In
-      </button>
-    </v-card-actions>
-  </v-card>
+      </v-card-title>
+      <v-card-text>
+        <v-form
+          ref="form"
+          v-model="formValid"
+          class="login-box"
+          @submit.prevent="login">
+            <v-text-field
+              ref="email"
+              v-model="userEmail"
+              label="Email"
+              type="email"
+              :rules="[rules.required, rules.email]"
+              @input="clearMessage" />
+            <v-text-field
+              v-model="userPassword"
+              label="Password"
+              type="password"
+              :rules="[rules.required]"
+              spellcheck="false"
+              autocomplete="current-password"
+              @input="clearMessage" />
+            <p class="message" :class="{open: message}">
+              {{message}}
+            </p>
+        </v-form>
+        <div @click="forgotPassword = true" class="link mini">
+          Forgot my password
+        </div>
+      </v-card-text>
+      <v-card-actions class="justify-end">
+        <button
+          :disabled="!enableLogin"
+          @click="login">
+          Log In
+        </button>
+      </v-card-actions>
+    </v-card>
+    <transition name="push">
+      <forgot-form
+        v-if="forgotPassword"
+        :class="{open:forgotPassword}"
+        class="forgot-form"
+        @close="forgotPassword = false" />
+    </transition>
+  </div>
 </template>
 
 <script>
 import { mapState } from 'vuex'
 import { auth } from '../../../lib/firebase'
+import ForgotForm from './ForgotPasswordForm'
 
 export default {
   name: 'Login',
-  components: {},
+  components: { ForgotForm },
   data () {
     return {
       userEmail: '',
@@ -59,7 +71,8 @@ export default {
         required: value => !!value || 'Required',
         email: value => /.+@.+\..+/.test(value) || 'E-mail must be valid'
       },
-      formValid: true
+      formValid: true,
+      forgotPassword: false
     }
   },
   computed: {
@@ -101,6 +114,7 @@ export default {
 
 <style lang='scss'>
   @import '../../../styles/vars';
+  .login-wrap { position: relative; }
   .v-card.login-container {
     max-width: 300px;
     width: 100%;
@@ -114,12 +128,31 @@ export default {
       color: red;
       overflow: hidden;
       margin: 0;
-      transition: height 0.2s;
-      font-size: 1;
+      transition: height 0.2s 0.5s;
+      font-size: 90%;
 
       &.open {
-        height: $base-size;
+        // height: $base-size;
       }
     }
+  }
+  .forgot-form {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    // transition: left $transition-time;
+
+    // &.open {
+    //   left: 0;
+    // }
+  }
+
+  .push-enter-active, .push-leave-active {
+    transition: left $transition-time;
+  }
+  .push-enter, .push-leave-to /* .fade-leave-active below version 2.1.8 */ {
+    left: 100%;
   }
 </style>

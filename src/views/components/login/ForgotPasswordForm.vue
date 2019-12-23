@@ -1,8 +1,8 @@
 <!--suppress HtmlFormInputWithoutLabel -->
 <template>
-  <v-card class="login-container">
+  <v-card class="login-container forgot">
     <v-card-title>
-      Reset Password
+      <v-icon @click="$emit('close')">close</v-icon> Reset Password
     </v-card-title>
     <v-card-text>
       <v-form
@@ -15,7 +15,9 @@
             v-model="userEmail"
             label="Email"
             type="email"
-            :rules="[rules.required, rules.email]"
+            hint="Request an email with the password resetting details."
+            :validate-on-blur="true"
+            :rules="[rules.required, rules.email, rules.serverError]"
             @input="clearMessage" />
           <p class="message" :class="{open: message}">
             {{message}}
@@ -25,8 +27,9 @@
     <v-card-actions class="justify-end">
       <button
         :disabled="!enableRequest"
-        @click="sendRequest">
-        Log In
+        @click="sendRequest"
+        class="submit">
+        Send Email
       </button>
     </v-card-actions>
   </v-card>
@@ -42,20 +45,34 @@ export default {
   data () {
     return {
       userEmail: '',
-      userPassword: '',
-      message: '',
+      savedEmail: '',
+      emailIsSent: false,
       messageBarOpen: false,
-      showPassword: false,
+      error: null,
+      formValid: true,
       rules: {
-        required: value => !!value || 'Required',
-        email: value => /.+@.+\..+/.test(value) || 'E-mail must be valid'
+        required: value => (!!value || this.emailIsSent) || 'Required',
+        email: value => /.+@.+\..+/.test(value) || 'E-mail must be valid',
+        serverError: value => !this.error || (this.errorMessages[this.error.code] || this.errorMessages.default)
       },
-      formValid: true
+      errorMessages: {
+        'auth/user-not-found': 'There is no user with this email address.',
+        'auth/invalid-email': "It doesn't look like an email address.",
+        'default': 'Sorry, there was a problem with sending a message to this email address.'
+      }
     }
   },
   computed: {
     ...mapState(['user']),
-
+    message () {
+      if (this.emailIsSent) {
+        return `An Email with the password resetting details has been sent to ${this.savedEmail}.`
+      }
+      // } else if (this.error) {
+      //   return this.errorMessages[this.error.code] || this.errorMessages.default
+      // }
+      return ''
+    },
     enableRequest () {
       return this.formValid
     }
@@ -74,8 +91,8 @@ export default {
           this.userEmail = ''
         })
         .catch(err => {
-          console.log(err)
           this.error = err
+          this.$refs.form.validate()
         })
     },
 
@@ -84,7 +101,10 @@ export default {
     },
 
     clearMessage () {
-      if (this.message) this.message = ''
+      this.error = false
+      this.emailIsSent = false
+      this.savedEmail = ''
+      // if (this.message) this.message = ''
     }
   }
 }
@@ -102,14 +122,27 @@ export default {
     }
     .message {
       height: 0;
-      color: red;
       overflow: hidden;
       margin: 0;
       transition: height 0.2s;
-      font-size: 1;
+      // font-size: 90%;
+      line-height: 1.3;
+      color: #0000ff !important;
 
       &.open {
-        height: $base-size;
+        height: auto;
+      }
+
+      &.error {
+        color: red;
+        background: transparent !important;
+      }
+    }
+
+    button.submit {
+      color: #0000ff;
+      &:disabled {
+        color: #ccc;
       }
     }
   }

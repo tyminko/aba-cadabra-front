@@ -93,6 +93,7 @@ export default {
       padding-top: calc(#{$base-size} - 5px);
       border: 5px solid $color-prime;
       background: $color-bg;
+      overflow: hidden;
 
       .user-actions {
         padding-top: 0;
