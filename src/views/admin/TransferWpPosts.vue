@@ -21,7 +21,7 @@
                   :key="lng"
                   :class="{active:lang===lng}"
                   @click="lang=lng">
-                  {{lng.toUpperCase()}}
+                  {{lng}}
                 </span>
               </span>
             </div>
@@ -32,10 +32,17 @@
             <template v-else>
               {{item.title || ''}}
             </template>
-            <div class="images">
-            <!-- <img
-              v-if="item.post.post_mime_type.startsWith('image/')"
-              :src="thumbnailUrl(item)"> -->
+            <div class="attachments">
+              <div
+                v-for="attach in [...item.attachmnets, ...item.gallery]"
+                :key="attach.wpID"
+                :class="{file:!attach.mime.startsWith('image/')}"
+                class="attach-box" >
+                <img
+                  v-if="attach.mime.startsWith('image/')"
+                  :src="attach.thumbnail">
+                <span v-else>{{attach.mime.split('/').pop()}}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -101,8 +108,21 @@ export default {
             content: item.post.post_content,
             created: this.wpTimeStringToTime(item.post.post_date_gmt),
             modified: this.wpTimeStringToTime(item.post.post_modified_gmt),
-            images: this.extractImagesFromContent(item.post.post_content)
+            attachmnets: this.getAttachmentsFromContent(item.post.post_content),
+            gallery: this.galleryAttachments(item)
           }
+          const unique = []
+          post.attachmnets = post.attachmnets.filter(a => {
+            if (unique.includes(a.wpID)) return false
+            unique.push(a.wpID)
+            return true
+          })
+          post.gallery = post.gallery.filter(a => {
+            if (unique.includes(a.wpID)) return false
+            unique.push(a.wpID)
+            return true
+          })
+
           if (item.post.post_excerpt) {
             post.excerpt = item.post.post_excerpt
           }
@@ -152,21 +172,101 @@ export default {
       return { displayName, uid }
     },
 
-    extractImagesFromContent (content) {
-      const captionsMatches = content.match(/\[caption\s*id=".*?(\d+)".*?<img.*?>\s*(.*?)\[\/caption\]/g)
-      if (captionsMatches) {
-        return captionsMatches.map(match => {
-          const attachment = this.getAttachment(match[1])
-          return {
-            toReplace: match[0],
-            id: match[1],
-            url: this.getAttachmentUrl(attachment),
-            thumbnail: attachment ? this.thumbnailUrl(attachment) : null,
-            caption: match[2]
-          }
+    galleryAttachments (wpPost) {
+      return (wpPost.meta.gallery || []).map(wpID => {
+        wpID = parseInt(wpID)
+        const attachment = this.getAttachment(wpID)
+        return {
+          wpID,
+          url: this.getAttachmentUrl(attachment),
+          thumbnail: attachment ? this.thumbnailUrl(attachment) : null,
+          mime: attachment ? attachment.post.post_mime_type : null
+        }
+      })
+    },
+
+    getAttachmentsFromContent (content) {
+      let res = this.extractImagesWithWpCaptions({ attachments: [], text: content })
+      res = this.extractImagesWithWpID(res)
+      res = this.extractABAImages(res)
+      res = this.extractABAFileLinks(res)
+      return res.attachments
+    },
+
+    extractImagesWithWpCaptions ({ attachments, text }) {
+      const regex = /\[caption\s*id=".*?(\d+)".*?<img.*?>\s*(.*?)\[\/caption\]/g
+      let match
+      while ((match = regex.exec(text)) !== null) {
+        const wpID = parseInt(match[1])
+        const attachment = this.getAttachment(wpID)
+        attachments.push({
+          toReplace: match[0],
+          wpID,
+          url: this.getAttachmentUrl(attachment),
+          thumbnail: attachment ? this.thumbnailUrl(attachment) : null,
+          caption: match[2],
+          mime: attachment ? attachment.post.post_mime_type : null
         })
+        text = text.replace(match[0], '')
       }
-      return []
+      return { attachments, text }
+    },
+
+    extractImagesWithWpID ({ attachments, text }) {
+      const regex = /<img.*?wp-image-(\d+).*?>/g
+      let match
+      while ((match = regex.exec(text)) !== null) {
+        const wpID = parseInt(match[1])
+        const attachment = this.getAttachment(wpID)
+        attachments.push({
+          toReplace: match[0],
+          wpID,
+          url: this.getAttachmentUrl(attachment),
+          thumbnail: attachment ? this.thumbnailUrl(attachment) : null,
+          caption: null,
+          mime: attachment ? attachment.post.post_mime_type : null
+        })
+        text = text.replace(match[0], '')
+      }
+      return { attachments, text }
+    },
+
+    extractABAImages ({ attachments, text }) {
+      const regex = /<img.*?src="http:\/\/airberlinalexanderplatz\.de\/wp-content\/uploads\/\d{4}\/\d+\/(.*?)".*?>/g
+      let match
+      while ((match = regex.exec(text)) !== null) {
+        const fileName = match[1]
+        const attachment = this.getAttachmentByFileName(fileName)
+        attachments.push({
+          toReplace: match[0],
+          wpID: attachment ? attachment.post.ID : null,
+          url: this.getAttachmentUrl(attachment),
+          thumbnail: attachment ? this.thumbnailUrl(attachment) : null,
+          caption: null,
+          mime: attachment ? attachment.post.post_mime_type : null
+        })
+        text = text.replace(match[0], '')
+      }
+      return { attachments, text }
+    },
+
+    extractABAFileLinks ({ attachments, text }) {
+      const regex = /<a.*?href="(http:\/\/airberlinalexanderplatz\.de\/wp-content\/uploads\/\d{4}\/\d+\/(.*?))".*?>.*?<\/a>/g
+      let match
+      while ((match = regex.exec(text)) !== null) {
+        const fileName = match[2]
+        const attachment = this.getAttachmentByFileName(fileName)
+        attachments.push({
+          toReplace: match[1],
+          wpID: attachment ? attachment.post.ID : null,
+          url: this.getAttachmentUrl(attachment),
+          thumbnail: attachment ? this.thumbnailUrl(attachment) : null,
+          caption: null,
+          mime: attachment ? attachment.post.post_mime_type : null
+        })
+        text = text.replace(match[0], '')
+      }
+      return { attachments, text }
     },
 
     getAttachment (id) {
@@ -175,6 +275,30 @@ export default {
 
     getAttachmentUrl (item) {
       return item && item.post && item.post.url ? item.post.url : null
+    },
+
+    getAttachmentByFileName (fileName) {
+      return WP.attachment.find(a => {
+        if (a.meta._wp_attached_file.split('/').pop() === fileName) return true
+        let found = false
+        const m = a.meta._wp_attachment_metadata
+        if (m) {
+          if (m.file && m.file.split('/').pop() === fileName) return true
+          if (m.sizes) {
+            Object.values(m.sizes).forEach(s => {
+              if (s.file === fileName) found = true
+            })
+            if (found) return true
+          }
+        }
+        if (a.meta._wp_attachment_backup_sizes) {
+          Object.values(a.meta._wp_attachment_backup_sizes).forEach(s => {
+            if (s.file === fileName) found = true
+          })
+          if (found) return true
+        }
+        return false
+      })
     },
 
     thumbnailUrl (item) {
@@ -298,18 +422,44 @@ export default {
           .trans {
             margin: 0 5px 0 auto;
             padding: 0 5px;
+            text-transform: uppercase;
             cursor: pointer;
             .active {
               font-weight: 900;
             }
           }
         }
+        .attachments {
+          display: flex;
 
-        img {
-          display: block;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
+          flex-flow: row wrap;
+
+          .attach-box {
+            flex: 1 1 20px;
+            margin-bottom: 2px;
+            max-height: 30px;
+            max-width: 60px;
+            text-transform: uppercase;
+
+            &.file {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: #0000ff;
+              color: #fff;
+            }
+
+            &:not(:last-child) {
+              margin-right: 2px;
+            }
+
+            img {
+              display: block;
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+            }
+          }
         }
       }
     }
