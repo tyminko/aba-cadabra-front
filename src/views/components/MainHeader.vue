@@ -76,7 +76,7 @@ export default {
   }
 
   .user-actions {
-    padding: $base-padding;
+    padding: $base-padding / 2;
     background: $color-bg;
   }
 </style>

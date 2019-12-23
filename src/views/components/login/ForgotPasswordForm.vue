@@ -2,14 +2,14 @@
 <template>
   <v-card class="login-container">
     <v-card-title>
-      Log In
+      Reset Password
     </v-card-title>
     <v-card-text>
       <v-form
         ref="form"
         v-model="formValid"
         class="login-box"
-        @submit.prevent="login">
+        @submit.prevent="sendRequest">
           <v-text-field
             ref="email"
             v-model="userEmail"
@@ -17,24 +17,15 @@
             type="email"
             :rules="[rules.required, rules.email]"
             @input="clearMessage" />
-          <v-text-field
-            v-model="userPassword"
-            label="Password"
-            type="password"
-            :rules="[rules.required]"
-            spellcheck="false"
-            autocomplete="current-password"
-            @input="clearMessage" />
           <p class="message" :class="{open: message}">
             {{message}}
           </p>
       </v-form>
-      <div @click="openForgotPasswordForm" class="">Forgot my password</div>
     </v-card-text>
     <v-card-actions class="justify-end">
       <button
-        :disabled="!enableLogin"
-        @click="login">
+        :disabled="!enableRequest"
+        @click="sendRequest">
         Log In
       </button>
     </v-card-actions>
@@ -46,7 +37,7 @@ import { mapState } from 'vuex'
 import { auth } from '../../../lib/firebase'
 
 export default {
-  name: 'Login',
+  name: 'ForgotPasswordForm',
   components: {},
   data () {
     return {
@@ -65,7 +56,7 @@ export default {
   computed: {
     ...mapState(['user']),
 
-    enableLogin () {
+    enableRequest () {
       return this.formValid
     }
   },
@@ -75,17 +66,17 @@ export default {
   },
 
   methods: {
-    login () {
-      auth.signInWithEmailAndPassword(this.userEmail, this.userPassword).catch(err => {
-        // eslint-disable-next-line no-console
-        console.log(err)
-        if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
-          this.message = 'Wrong email or password.'
-        } else {
-          this.message = err.message
-        }
-        this.messageBarOpen = true
-      })
+    sendRequest () {
+      auth.sendPasswordResetEmail(this.userEmail)
+        .then(() => {
+          this.emailIsSent = true
+          this.savedEmail = this.userEmail
+          this.userEmail = ''
+        })
+        .catch(err => {
+          console.log(err)
+          this.error = err
+        })
     },
 
     redirectTo (routeName) {

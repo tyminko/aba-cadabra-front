@@ -19,13 +19,25 @@ button::before {
 .theme--light {
   &.v-sheet.v-card {
     .v-card__actions{
-      padding: 20px 24px;
+      padding: 0 $base-padding $base-padding;
     }
+    .v-card__text {
+      // padding: 0 $base-padding / 2 $base-padding / 2;
+    } 
   }
+
   &.v-sheet.v-card, .v-dialog, .v-menu__content {
     box-shadow: none;
     border-radius: 0;
-    // border: 5px solid $color-prime;
+  }
+
+  &.v-text-field > .v-input__control > .v-input__slot:before {
+    border-color: $color-prime-semi;
+  }
+
+  .v-text-field input {
+    // padding-left: $base-padding;
+    // padding-right: $base-padding;
   }
 }
 .v-btn:not(.v-btn--round) {

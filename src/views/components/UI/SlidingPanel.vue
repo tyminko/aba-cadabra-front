@@ -61,6 +61,14 @@ export default {
     toggle () {
       this.open = !this.open
     },
+    jumpTop () {
+      const panel = this.$refs.panel
+      if (!panel) return
+      const transition = panel.style.transition
+      panel.style.transition = 'none 0s ease 0s'
+      this.setTop()
+      panel.style.transition = transition
+    },
     setTop () {
       const panel = this.$refs.panel
       if (!panel) return
