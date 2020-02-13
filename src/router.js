@@ -1,7 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Works from './views/Works.vue'
-import Work from './views/Work.vue'
+import Home from './views/Home'
 import store from './store'
 import localData from './lib/local-storage'
 
@@ -14,12 +13,7 @@ const router = new Router({
     {
       path: '/',
       name: 'home',
-      component: Works
-    },
-    {
-      path: '/work/:id',
-      name: 'work',
-      component: Work
+      component: Home
     },
     {
       path: '/about',

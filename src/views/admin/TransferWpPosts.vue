@@ -1,12 +1,12 @@
 <template>
   <div class="transfer-wp-posts">
     <div>
-      <v-btn :ripple="false" :loading="processing" @click="process">
+      <button :ripple="false" :loading="processing" @click="process">
         Transfer Posts
-      </v-btn>
-      <v-btn :ripple="false" :loading="processing" @click="transferPost('post', 577)">
+      </button>
+      <button :ripple="false" :loading="processing" @click="transferPost('post', 577)">
         Test First File
-      </v-btn>
+      </button>
     </div>
     <div class="main-section">
       <section v-for="(posts, type) in convertedPosts" :key="type">
@@ -47,26 +47,17 @@
                 <span v-else>{{attach.mime.split('/').pop()}}</span>
               </div>
             </div>
-            <v-progress-linear
-              :value="item.progress ? item.progress.total : 0"
-              color="blue-grey"
-              height="5"
-              reactive >
-            </v-progress-linear>
+            <div>
+              {{Math.ceil(item.progress.total)}}
+            </div>
           </div>
         </div>
       </section>
     </div>
 
-    <v-progress-linear
-      v-model="totalProgress"
-      color="blue-grey"
-      height="25"
-      reactive >
-      <template v-slot="{ value }">
-        <strong>{{ Math.ceil(value) }}%</strong>
-      </template>
-    </v-progress-linear>
+    <div>
+      <strong>{{ Math.ceil(totalProgress) }}%</strong>
+    </div>
   </div>
 </template>
 
@@ -123,12 +114,13 @@ export default {
       return Object.entries(this.postTypes).reduce((res, [type, posts]) => {
         res[type] = posts.reduce((res, item) => {
           const post = {
+            published: true,
             wpID: parseInt(item.post.ID),
             author: this.postAuthor(item.post.post_author),
             content: item.post.post_content,
             created: this.wpTimeStringToTime(item.post.post_date_gmt),
             modified: this.wpTimeStringToTime(item.post.post_modified_gmt),
-            attachmnets: this.getAttachmentsFromContent(item.post.post_content),
+            attachments: this.getAttachmentsFromContent(item.post.post_content),
             gallery: this.galleryAttachments(item),
             progress: {
               max: 100,
@@ -137,7 +129,7 @@ export default {
             }
           }
           const unique = []
-          post.attachmnets = post.attachmnets.filter(a => {
+          post.attachments = post.attachments.filter(a => {
             if (unique.includes(a.wpID)) return false
             unique.push(a.wpID)
             return true
@@ -185,11 +177,11 @@ export default {
               if (savedPost.attachmnets) {
                 const savedId = Object.keys(savedPost.attachmnets).find(id => savedPost.attachmnets[id].wpID === attachment.wpID)
                 /* DEBUG */
-                console.log(`%c savedPost.attachmnets %c savedId: `, 'background:#ffbb00;color:#000', 'color:#00aaff', savedId)
+                console.log(`%c savedPost.attachments %c savedId: `, 'background:#ffbb00;color:#000', 'color:#00aaff', savedId)
                 if (savedId) {
                   const savedA = savedPost.attachmnets[savedId]
                   /* DEBUG */
-                  console.log(`%c attachmnets %c  savedA: `, 'background:#ffbb00;color:#000', 'color:#00aaff', savedA)
+                  console.log(`%c attachments %c  savedA: `, 'background:#ffbb00;color:#000', 'color:#00aaff', savedA)
                   if (savedA.full || savedA.preview || savedA.original) {
                     a.savedId = savedId
                   }
@@ -319,15 +311,12 @@ export default {
         return
       }
       try {
-        // const attachments = []
-        // let uploadedAttach = {}
-        // const brokenAttachments = []
         this.processing = true
         const attachments = await Promise.all(post.attachmnets.map(async a => {
           const file = await imgLib.blobFromUrl(a.url)
           const nameWithFolders = a.url.match(/(\d{4}\/\d{2}\/.*)\..+$/)
           const storageName = nameWithFolders ? nameWithFolders[1].replace(/\//g, '-') : null
-          return { ...a, file, id: a.wpID, storageName, placedIn: 'attachmnets' }
+          return { ...a, file, id: a.wpID, storageName, placedIn: 'attachments' }
         }))
         const gallery = await Promise.all(post.gallery.map(async a => {
           const file = await imgLib.blobFromUrl(a.url)

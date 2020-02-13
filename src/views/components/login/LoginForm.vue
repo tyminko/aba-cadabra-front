@@ -1,24 +1,23 @@
 <!--suppress HtmlFormInputWithoutLabel -->
 <template>
   <div class="login-wrap">
-    <v-card class="login-container">
-      <v-card-title>
+    <div class="login-container">
+      <span>
         Log In
-      </v-card-title>
-      <v-card-text>
-        <v-form
+      </span>
+      <div class="card-content">
+        <form
           ref="form"
-          v-model="formValid"
           class="login-box"
           @submit.prevent="login">
-            <v-text-field
+            <input
               ref="email"
               v-model="userEmail"
               label="Email"
               type="email"
               :rules="[rules.required, rules.email]"
               @input="clearMessage" />
-            <v-text-field
+            <input
               v-model="userPassword"
               label="Password"
               type="password"
@@ -29,19 +28,19 @@
             <p class="message" :class="{open: message}">
               {{message}}
             </p>
-        </v-form>
+        </form>
         <div @click="forgotPassword = true" class="link mini">
           Forgot my password
         </div>
-      </v-card-text>
-      <v-card-actions class="justify-end">
+      </div>
+      <footer class="justify-end">
         <button
           :disabled="!enableLogin"
           @click="login">
           Log In
         </button>
-      </v-card-actions>
-    </v-card>
+      </footer>
+    </div>
     <transition name="push">
       <forgot-form
         v-if="forgotPassword"

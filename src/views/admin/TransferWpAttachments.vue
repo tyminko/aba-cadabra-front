@@ -1,9 +1,9 @@
 <template>
   <div class="transfer-wp-attachments">
     <div>
-      <v-btn :ripple="false" :loading="processing" @click="process">
-        Transfer Attachmnts
-      </v-btn>
+      <button :loading="processing" @click="process">
+        Transfer Attachments
+      </button>
       <!-- <v-btn :ripple="false" color="red" :disabled="true" :loading="processing" @click="deleteUsers">
         Delete All
       </v-btn> -->
@@ -18,15 +18,11 @@
           :src="thumbnailUrl(item)">
       </div>
     </div>
-    <v-progress-linear
-      v-model="done"
-      color="blue-grey"
-      height="25"
-      reactive >
-      <template v-slot="{ value }">
-        <strong>{{ Math.ceil(value) }}%</strong>
+    <div>
+      <template>
+<!--        <strong>{{ Math.ceil(value) }}%</strong>-->
       </template>
-    </v-progress-linear>
+    </div>
   </div>
 </template>
 

@@ -1,11 +1,19 @@
+@import "tailwindcss/base";
+html * {
+  box-sizing: border-box;
+}
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 @import "vars";
 @import "autofill";
-@import "anti-vuetify";
 
-html {
-  font-size: 100%;
-}
+//@import "anti-vuetify";
+//
 
-.dimmed {
-  color: $color-dimmed;
-}
+//html {
+//  font-size: 100%;
+//}
+//
+//.dimmed {
+//  color: $color-dimmed;
+//}

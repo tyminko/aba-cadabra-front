@@ -1,5 +1,5 @@
 <template>
-  <v-app-bar app flat class="main-header">
+  <div class="main-header">
     <nav>
       <router-link :to="{name: 'home'}" class="nav-item">
         Home
@@ -8,7 +8,7 @@
         About
       </router-link>
     </nav>
-  </v-app-bar>
+  </div>
 </template>
 
 <script>

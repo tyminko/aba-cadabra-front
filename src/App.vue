@@ -1,15 +1,13 @@
 <template>
-  <v-app id="app" class="bg">
+  <div id="app" class="bg">
     <main-header />
     <user-menu class="user-menu" />
-    <v-content>
-      <v-container fluid>
-        <keep-alive>
-          <router-view :key="$route.fullPath" />
-        </keep-alive>
-      </v-container>
-    </v-content>
-  </v-app>
+    <div>
+      <keep-alive>
+        <router-view :key="$route.fullPath" />
+      </keep-alive>
+    </div>
+  </div>
 </template>
 <script>
 import { mapState, mapActions } from 'vuex'
@@ -40,6 +38,7 @@ export default {
 <style lang="scss">
   @import "https://fonts.googleapis.com/icon?family=Material+Icons";
   @import "./styles/main.scss";
+
   .user-menu {
     position: fixed;
     top: 0;
