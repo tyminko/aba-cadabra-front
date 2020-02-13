@@ -20,16 +20,16 @@ import ImageLib from './image'
  * }} PostImageData
  *
  *
- * @typedef {PostImageData & {
+ * @typedef {PostImageData? & {
  *  id?: string
  *  delited?: boolean
  * }} ImageAttachment
  *
  *
- * @typedef {ImageAttachment & {
- *  file: File
- *  image: HTMLImageElement
- * }} NewImageAttachment
+ * @typedef {*? & {
+ *  file: Blob|File
+ *  image?: HTMLImageElement
+ * }} Attachment
  *
  *
  * @typedef {{
@@ -37,11 +37,11 @@ import ImageLib from './image'
  *  blob: Blob
  *  name: string
  *  dimensions: Dimensions
- *  attachment: NewImageAttachment
- *  }} UploadFileStruct
+ *  attachment: Attachment
+ *  }} UploadStruct
  *
  * @typedef {{
- *  uploadData: UploadFileStruct
+ *  uploadData: UploadStruct
  *  url: string
  * }} UploadedFileData
  */
@@ -51,7 +51,14 @@ const imageSizeTypes = { full: 2048, preview: 512 }
 const mimeExtension = {
   'image/gif': 'gif',
   'image/jpeg': 'jpg',
-  'image/png': 'png'
+  'image/png': 'png',
+  'application/pdf': 'pdf',
+  'application/msword': 'doc',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+  'audio/mpeg': 'mp3',
+  'audio/mp4': 'm4a',
+  'video/mp4': 'mp4',
+  'video/quicktime': 'mov'
 }
 
 const stringIsExtension = string => {
@@ -70,28 +77,28 @@ export function uniqueId () {
  * @param {string} name
  * @param {string} sizeType
  * @param {Dimensions} dimensions
- * @param {NewImageAttachment} attachment
- * @return {UploadFileStruct}
+ * @param {Object} attachment
+ * @return {UploadStruct}
  */
-export function uploadFileStruct (blob, name, sizeType, dimensions, attachment) {
+export function uploadStruct (blob, name, sizeType, dimensions, attachment) {
   return { blob, name, sizeType, dimensions, attachment }
 }
 
 /**
  * @param {string} path
- * @param {UploadFileStruct} uploadData
+ * @param {UploadStruct} uploadStruct
  * @param {function(string, number): void} progressFn
  * @return {Promise<UploadedFileData>}
  */
-function put (path, uploadData, progressFn) {
-  const uploadTask = storage.ref(path).put(uploadData.blob, { contentType: uploadData.blob.type })
+function put (path, uploadStruct, progressFn) {
+  const uploadTask = storage.ref(path).put(uploadStruct.blob, { contentType: uploadStruct.blob.type })
   return new Promise((resolve, reject) => {
     uploadTask.on(Firebase.storage.TaskEvent.STATE_CHANGED,
       snapshot => {
         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
         // console.log('Upload is ' + progress + '% done')
         if (progressFn) {
-          progressFn(uploadData.attachment.id, progress)
+          progressFn(uploadStruct.attachment.id, progress)
         }
         switch (snapshot.state) {
           case Firebase.storage.TaskState.PAUSED:
@@ -108,25 +115,35 @@ function put (path, uploadData, progressFn) {
     // console.log('New pic uploaded. Size:', snapshot.totalBytes, 'bytes.')
     return snapshot.ref.getDownloadURL().then(url => {
       // console.log('File available at', url)
-      return { uploadData, url }
+      return { uploadData: uploadStruct, url }
     })
   })
 }
 
 /**
  * @param {string} userId
- * @param {Object<string, PostImageData>} attachments
+ * @param {PostImageData[]} attachments
  * @param {function(string, number): void} progressFn
  * @return {Promise<Object<string, PostImageData> | never>}
  */
 export function upload (userId, attachments, progressFn) {
-  const newAttachments = filterNewAttachments(attachments)
-  return Promise.all(newAttachments.map(newAttachment => {
-    return newAttachmentToUploadFileStructs(newAttachment)
-      .then(filesForUpload => {
-        return Promise.all(filesForUpload.map(fileData => {
-          const path = filePath(userId, fileData.name, fileData.sizeType, fileData.blob.type)
-          return put(path, fileData, progressFn)
+  return Promise.all(attachments.map(attachment => {
+    return thingsToUploadForAttachment(attachment)
+      .then(thingsToUpload => {
+        const totalProgress = {
+          max: thingsToUpload.length * 100,
+          total: 0,
+          parts: {}
+        }
+        return Promise.all(thingsToUpload.map(uploadStruct => {
+          const name = uploadStruct.name
+          const type = uploadStruct.sizeType
+          const path = filePath(userId, name, type, uploadStruct.blob.type)
+          return put(path, uploadStruct, (id, progress) => {
+            totalProgress.parts[type] = progress
+            const sum = Object.values(totalProgress.parts).reduce((r, p) => r + p)
+            progressFn(id, sum / totalProgress.max * 100)
+          })
         }))
       })
   }))
@@ -135,10 +152,14 @@ export function upload (userId, attachments, progressFn) {
         uploadedSizeTypes.forEach(sizeData => {
           const { name, sizeType, dimensions } = sizeData.uploadData
           if (!res.hasOwnProperty(name)) {
-            const { caption = '', order = 0 } = sizeData.uploadData.attachment
-            res[name] = { caption, order }
+            // const { caption = '', order = 0, } = sizeData.uploadData.attachment
+            res[name] = { attachment: sizeData.uploadData.attachment }
           }
-          res[name][sizeType] = { dimensions, url: sizeData.url }
+          if (sizeType) {
+            res[name][sizeType] = { dimensions, url: sizeData.url }
+          } else {
+            res[name].file = { url: sizeData.url }
+          }
         })
         return res
       }, {})
@@ -147,14 +168,14 @@ export function upload (userId, attachments, progressFn) {
 
 /**
  * @param {string} userId
- * @param {string} imageId
+ * @param {string} attachmentId
  * @param {string} size
  * @param {string} mimeType
  * @return {string}
  */
-function filePath (userId, imageId, size, mimeType) {
+function filePath (userId, attachmentId, size, mimeType) {
   const extension = stringIsExtension(mimeType) ? mimeType : mimeExtension[mimeType] || ''
-  return `${userId}/images/${imageId}-${size}` + (extension ? `.${extension}` : '')
+  return `${userId}/${attachmentId}` + (size && size !== 'original' ? `-${size}` : '') + (extension ? `.${extension}` : '')
 }
 
 /**
@@ -188,65 +209,76 @@ export function remove (userId, fileId, extension) {
   }))
 }
 
+// /**
+//  * @param {Object<string, PostImageData>} attachments
+//  * @return {NewImageAttachment[]}
+//  */
+// function filterNewAttachments (attachments) {
+//   return Object.entries(attachments).reduce((res, [id, attachment]) => {
+//     if (attachment.hasOwnProperty('file')) {
+//       res.push({ ...attachment, id })
+//     }
+//     return res
+//   }, [])
+// }
+
 /**
- * @param {Object<string, PostImageData>} attachments
- * @return {NewImageAttachment[]}
+ * @param {Blob|File} file
  */
-function filterNewAttachments (attachments) {
-  return Object.entries(attachments).reduce((res, [id, attachment]) => {
-    if (attachment.hasOwnProperty('file')) {
-      res.push({ ...attachment, id })
-    }
-    return res
-  }, [])
+export function uploadStructForFile (file) {
+  // @ts-ignore
+  return thingsToUploadForAttachment({ file })
 }
 
 /**
- * @param {NewImageAttachment} newAttachment
- * @return {Promise<UploadFileStruct[]>}
+ * @param {Attachment} attachment
+ * @return {Promise<UploadStruct[]>}
  */
-function newAttachmentToUploadFileStructs (newAttachment) {
-  const mimeType = newAttachment.file.type
-  const storageName = uniqueId()
-  /* DEBUG */
-  console.log('%c %c newAttachmentToUploadFileStructs storageName: ', 'background:#ffbb00;color:#000', 'color:#00aaff', storageName)
-  return Promise.all(Object.keys(imageSizeTypes).map(sizeType => {
-    return sizeTypeToUploadFileStruct(newAttachment, sizeType, mimeType, storageName)
-  }))
+function thingsToUploadForAttachment (attachment) {
+  const mimeType = attachment.file.type
+  const storageName = attachment.storageName || uniqueId()
+  if (mimeType.startsWith('image/') && mimeType !== 'image/gif') { // not supporting gif resizing yet
+    return Promise.all(Object.keys(imageSizeTypes).map(sizeType => {
+      return uploadStructForImgSizeType(attachment, sizeType, mimeType, storageName)
+    }))
+  } else {
+    return Promise.resolve([uploadStruct(attachment.file, storageName, 'original', null, attachment)])
+  }
 }
 
 /**
- * @param {NewImageAttachment} attachment
+ * @param {Attachment} attachment
  * @param {string} sizeType
  * @param {string} mimeType
  * @param {string} storageName
- * @return {Promise<UploadFileStruct>}
+ * @return {Promise<UploadStruct>}
  */
-function sizeTypeToUploadFileStruct (attachment, sizeType, mimeType, storageName) {
+function uploadStructForImgSizeType (attachment, sizeType, mimeType, storageName) {
   if (notResized(attachment, sizeType)) {
     return resizeForUpload(attachment, sizeType, mimeType, storageName)
   } else if (noResizedFileFor(attachment, sizeType)) {
     const raw = attachment[sizeType].raw
     return ImageLib.canvasToBlob(raw, mimeType)
-      .then(blob => uploadFileStruct(blob, storageName, sizeType, ImageLib.picDimensions(raw), attachment))
+      .then(blob => uploadStruct(blob, storageName, sizeType, ImageLib.picDimensions(raw), attachment))
   } else {
     const blob = attachment[sizeType].blob
     const dimensions = attachment[sizeType].dimensions
-    return Promise.resolve(uploadFileStruct(blob, storageName, sizeType, dimensions, attachment))
+    return Promise.resolve(uploadStruct(blob, storageName, sizeType, dimensions, attachment))
   }
 }
 
 /**
- * @param {NewImageAttachment} attachment
+ * @param {Attachment} attachment
  * @param {string} sizeType
  * @param {string} mime
  * @param {string} storageName
- * @return {Promise<UploadFileStruct>}
+ * @return {Promise<UploadStruct>}
  */
 function resizeForUpload (attachment, sizeType, mime, storageName) {
   let dimensions
   let action
   if (!attachment.image) {
+    // @ts-ignore
     action = ImageLib.imageFromFile(attachment.file)
       .then(image => {
         attachment.image = image
@@ -259,7 +291,7 @@ function resizeForUpload (attachment, sizeType, mime, storageName) {
       dimensions = resizedData.dimensions
       return ImageLib.canvasToBlob(resizedData.raw, mime)
     })
-    .then(blob => uploadFileStruct(blob, storageName, sizeType, dimensions, attachment))
+    .then(blob => uploadStruct(blob, storageName, sizeType, dimensions, attachment))
     .catch(e => {
       const errString = `Error on Resize Image (${attachment.id}): ${e.message}`
       console.warn(errString)
@@ -269,7 +301,7 @@ function resizeForUpload (attachment, sizeType, mime, storageName) {
 }
 
 /**
- * @param {NewImageAttachment} attachment
+ * @param {Attachment} attachment
  * @param {string} sizeType
  * @return {boolean}
  */
@@ -278,7 +310,7 @@ function notResized (attachment, sizeType) {
 }
 
 /**
- * @param {NewImageAttachment} attachment
+ * @param {Attachment} attachment
  * @param {string} sizeType
  */
 function noResizedFileFor (attachment, sizeType) {

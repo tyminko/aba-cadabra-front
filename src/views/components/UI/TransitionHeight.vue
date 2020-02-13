@@ -61,18 +61,6 @@ export default {
       })
     }
   }
-  // render (createElement, context) {
-  //   const data = {
-  //     props: {
-  //       name: `expand`,
-  //       minHeight: { type: Number, default: 0 }
-  //     },
-  //     on: {
-
-  //     }
-  //   }
-  //   return createElement(`transition`, data, context.children)
-  // }
 }
 </script>
 

@@ -152,7 +152,7 @@ export default {
   .push-enter-active, .push-leave-active {
     transition: left $transition-time;
   }
-  .push-enter, .push-leave-to /* .fade-leave-active below version 2.1.8 */ {
+  .push-enter, .push-leave-to {
     left: 100%;
   }
 </style>

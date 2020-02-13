@@ -1,3 +1,4 @@
+import axios from 'axios'
 import Pica from 'pica/dist/pica'
 
 const pica = new Pica()
@@ -9,6 +10,8 @@ export default {
     unsharpThreshold: 1,
     alpha: true
   },
+
+  imageQuality: 0.8,
 
   /**
    * @param {File} file
@@ -66,6 +69,45 @@ export default {
   },
 
   /**
+   * @param {string} url
+   */
+  async blobFromUrl (url) {
+    try {
+      const { data } = await axios({
+        url,
+        method: 'GET',
+        responseType: 'blob',
+        timeout: 60000,
+        maxContentLength: 100000000 })
+      return data
+    } catch (error) {
+      /* DEBUG */
+      console.error(`%c blobFromUrl %c error: `, 'background:#ffbb00;color:#000', 'color:#00aaff', error)
+      return Promise.resolve({ error })
+    }
+
+    // return new Promise((resolve, reject) => {
+    //   let xhr = new XMLHttpRequest()
+    //   xhr.responseType = 'blob'
+    //   xhr.open('GET', url)
+    //   // if (obj.headers) {
+    //   //     Object.keys(obj.headers).forEach(key => {
+    //   //         xhr.setRequestHeader(key, obj.headers[key]);
+    //   //     });
+    //   // }
+    //   xhr.onload = () => {
+    //     if (xhr.status >= 200 && xhr.status < 300) {
+    //       resolve(xhr.response)
+    //     } else {
+    //       reject(xhr.statusText)
+    //     }
+    //   }
+    //   xhr.onerror = () => reject(xhr.statusText)
+    //   xhr.send()
+    // })
+  },
+
+  /**
    * @param {HTMLCanvasElement} canvas
    * @param {string} mimeType
    * @param {number=} quality
@@ -73,6 +115,7 @@ export default {
    * @return {Promise<Blob>}
    */
   canvasToBlob (canvas, mimeType, quality) {
+    if (typeof quality === 'undefined') quality = this.imageQuality
     // @ts-ignore
     return pica.toBlob(canvas, mimeType, quality)
   },
