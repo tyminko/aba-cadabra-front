@@ -38,7 +38,9 @@ export default {
 <style lang="scss">
   @import "https://fonts.googleapis.com/icon?family=Material+Icons";
   @import "./styles/main.scss";
-
+  #app {
+    margin-top: 3rem;
+  }
   .user-menu {
     position: fixed;
     top: 0;

@@ -61,6 +61,8 @@ const mimeExtension = {
   'video/quicktime': 'mov'
 }
 
+const possibleExtensions = ['gif', 'jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'mp3', 'm4a', 'mp4', 'mov']
+
 const stringIsExtension = string => {
   return string === 'gif' || string === 'jpg' || string === 'png'
 }
@@ -174,7 +176,14 @@ export function upload (userId, attachments, progressFn) {
  * @return {string}
  */
 function filePath (userId, attachmentId, size, mimeType) {
-  const extension = stringIsExtension(mimeType) ? mimeType : mimeExtension[mimeType] || ''
+  let extension = ''
+  if (!possibleExtensions.includes(attachmentId.split('.').pop())) {
+    extension = stringIsExtension(mimeType) ? mimeType : mimeExtension[mimeType] || ''
+  } else {
+    const parts = attachmentId.split('.')
+    extension = parts.pop()
+    attachmentId = parts.join('.')
+  }
   return `${userId}/${attachmentId}` + (size && size !== 'original' ? `-${size}` : '') + (extension ? `.${extension}` : '')
 }
 
@@ -209,19 +218,6 @@ export function remove (userId, fileId, extension) {
   }))
 }
 
-// /**
-//  * @param {Object<string, PostImageData>} attachments
-//  * @return {NewImageAttachment[]}
-//  */
-// function filterNewAttachments (attachments) {
-//   return Object.entries(attachments).reduce((res, [id, attachment]) => {
-//     if (attachment.hasOwnProperty('file')) {
-//       res.push({ ...attachment, id })
-//     }
-//     return res
-//   }, [])
-// }
-
 /**
  * @param {Blob|File} file
  */
@@ -231,7 +227,7 @@ export function uploadStructForFile (file) {
 }
 
 /**
- * @param {Attachment} attachment
+ * @param {PostImageData} attachment
  * @return {Promise<UploadStruct[]>}
  */
 function thingsToUploadForAttachment (attachment) {

@@ -18,6 +18,7 @@
             class="item">
             <div class="counter">
               <span><b>{{i+1}}</b> ({{id}})</span>
+              <div class="trans" @click="transferPost(type, id)">▲</div>
               <span v-if="item.translations" class="trans">
                 <span
                   v-for="(trans, lng) in item.translations"
@@ -30,17 +31,18 @@
             </div>
             <h5>{{item.author ? item.author.displayName : '--'}}</h5>
             <template v-if="item.translations">
-              {{(item.translations[lang] ? item.translations[lang].title : (item.translations.en ? item.translations.en.title : item.title || ''))}}
+              {{(item.translations[lang] ? item.translations[lang].title : (item.translations.en ?
+              item.translations.en.title : item.title || ''))}}
             </template>
             <template v-else>
               {{item.title || ''}}
             </template>
             <div class="attachments">
               <div
-                v-for="attach in [...item.attachmnets, ...item.gallery]"
+                v-for="attach in [...(item.attachmnets||[]), ...(item.gallery||[])]"
                 :key="attach.wpID"
                 :class="{file:!attach.mime.startsWith('image/')}"
-                class="attach-box" >
+                class="attach-box">
                 <img
                   v-if="attach.mime.startsWith('image/')"
                   :src="attach.thumbnail">
@@ -48,7 +50,7 @@
               </div>
             </div>
             <div>
-              {{Math.ceil(item.progress.total)}}
+              {{Math.ceil(item.progress.total)}}%
             </div>
           </div>
         </div>
@@ -64,7 +66,7 @@
 <script>
 import { mapState } from 'vuex'
 import WP from '../../ABA-Data.json'
-import { db } from '../../lib/firebase'
+import { db, storage } from '../../lib/firebase'
 // import { transferFile } from '../../lib/image-transfer'
 import imgLib from '../../lib/image'
 import * as string from '../../lib/string'
@@ -72,8 +74,7 @@ import { upload } from '../../lib/storage'
 
 export default {
   name: 'TransferWPPosts',
-  components: {
-  },
+  components: {},
 
   data: () => ({
     transfered: [],
@@ -91,13 +92,40 @@ export default {
     },
     unsubscribe: null,
     unsubscribePosts: null,
-    lang: 'en'
+    lang: 'en',
+    uploadedAttachments: [],
+    uploadedAttachmentNames: [],
+    uploadedFiles: [],
+    errorFiles: [],
+    errorPosts: []
   }),
 
   computed: {
     ...mapState(['user']),
 
-    postTypes () {
+    allMetaFields () {
+      const metaMap = Object.values(this.postsByType).reduce((metaMap, posts) => {
+        const typeMetaMap = posts.reduce((res, post) => {
+          if (typeof post.meta === 'object') {
+            const map = Object.keys(post.meta).reduce((map, key) => {
+              if (key === 'institution') {
+                // !!! DEBUG !!!
+                console.log(`%c () %c ${post.post.post_type} ${post.post.ID} meta[${key}]: `, 'background:#ffbb11;color:#000', 'color:#00aaff', post.meta[key])
+              }
+              map[key] = true
+              return map
+            }, {})
+            res = { ...res, ...map }
+          }
+          return res
+        }, [])
+        metaMap = { ...metaMap, ...typeMetaMap }
+        return metaMap
+      }, {})
+      return Object.keys(metaMap).filter(key => !key.startsWith('_'))
+    },
+
+    postsByType () {
       if (!this.user || this.user.role !== 'admin') return []
       return Object.entries(WP).reduce((res, [key, posts]) => {
         if (key === 'attachment' || key === 'users' || key === 'page') return res
@@ -111,17 +139,17 @@ export default {
     },
 
     convertedPosts () {
-      return Object.entries(this.postTypes).reduce((res, [type, posts]) => {
-        res[type] = posts.reduce((res, item) => {
+      return Object.entries(this.postsByType).reduce((res, [type, posts]) => {
+        res[type] = posts.reduce((postsOfType, postRawData) => {
           const post = {
             published: true,
-            wpID: parseInt(item.post.ID),
-            author: this.postAuthor(item.post.post_author),
-            content: item.post.post_content,
-            created: this.wpTimeStringToTime(item.post.post_date_gmt),
-            modified: this.wpTimeStringToTime(item.post.post_modified_gmt),
-            attachments: this.getAttachmentsFromContent(item.post.post_content),
-            gallery: this.galleryAttachments(item),
+            wpID: parseInt(postRawData.post.ID),
+            author: this.postAuthor(postRawData.post.post_author),
+            content: postRawData.post.post_content,
+            created: this.wpTimeStringToTime(postRawData.post.post_date_gmt),
+            modified: this.wpTimeStringToTime(postRawData.post.post_modified_gmt),
+            attachments: this.getAttachmentsFromContent(postRawData.post.post_content),
+            gallery: this.galleryAttachments(postRawData),
             progress: {
               max: 100,
               parts: {},
@@ -140,18 +168,64 @@ export default {
             return true
           })
 
-          if (item.post.post_excerpt) {
-            post.excerpt = item.post.post_excerpt
+          if (postRawData.post.post_excerpt) {
+            post.excerpt = postRawData.post.post_excerpt
           }
-          if (item.post.post_title) {
-            post.title = item.post.post_title
-            const translations = this.getTitleTrans(item.post)
+          if (postRawData.post.post_title) {
+            post.title = postRawData.post.post_title
+            const translations = this.getTitleTrans(postRawData.post)
             if (translations) {
               post.translations = this.mergePostTranslations((post.translations || {}), translations)
             }
           }
-          res[post.wpID] = post
-          return res
+          if (typeof postRawData.meta === 'object') {
+            Object.entries(postRawData.meta).forEach(([key, value]) => {
+              switch (key) {
+                case 'ends':
+                  if (value) {
+                    post.endDate = new Date(value).getTime()
+                    if (!post.date) post.date = post.endDate
+                  }
+                  break
+                case 'end_date':
+                  if (value) {
+                    post.endDate = new Date(value.replace(/^(\d{4})(\d{2})(\d{2})/, '$1-$2-$3')).getTime()
+                    if (!post.date) post.date = post.endDate
+                  }
+                  break
+                case 'starts':
+                  if (value) { post.date = new Date(value).getTime() }
+                  break
+                case 'salon_date':
+                  if (value) {
+                    post.date = new Date(value.replace(/^(\d{4})(\d{2})(\d{2})/, '$1-$2-$3')).getTime()
+                  }
+                  break
+                case 'salon_number':
+                  if (value) { post.countNumber = value }
+                  break
+                case 'salon_location':
+                  if (value) { post.location = value }
+                  break
+                case 'institution':
+                  if (value) {
+                    const inst = this.postsByType.institutions.find(i => parseInt(i.post.ID) === parseInt(value))
+                    if (inst) {
+                      post.supportedBy = [{ name: inst.post.post_title, id: `wp${value}` }]
+                    }
+                  }
+                  break
+                case 'website':
+                  if (value) { post.website = value }
+                  break
+                case 'country':
+                  if (value) { post.country = value }
+              }
+            })
+          }
+
+          postsOfType[post.wpID] = post
+          return postsOfType
         }, {})
         return res
       }, {})
@@ -162,26 +236,16 @@ export default {
       return Object.entries(this.convertedPosts).reduce((res, [type, posts]) => {
         res[type] = Object.entries(posts).reduce((unsavedPosts, [id, post]) => {
           const unsavedPost = { ...post }
-          /* DEBUG */
-          console.log(`%c type %c: `, 'background:#ffbb00;color:#000', 'color:#00aaff', type)
-          /* DEBUG */
-          console.log(`%c %c id: `, 'background:#ffbb00;color:#000', 'color:#00aaff', id)
           const savedPost = (this.savedPosts[type] || {})[`wp${id}`] || null
-          /* DEBUG */
-          console.log(`%c %c savedPost: `, 'background:#ffbb00;color:#000', 'color:#00aaff', savedPost)
           let ok = !!savedPost
           if (ok) {
-            const attachments = post.attachmnets.map(attachment => {
+            const attachments = (post.attachmnets || []).map(attachment => {
               const a = { ...attachment }
               if (!a.mime.startsWith('image/')) ok = false // need to fix wrong inline replacements
               if (savedPost.attachmnets) {
                 const savedId = Object.keys(savedPost.attachmnets).find(id => savedPost.attachmnets[id].wpID === attachment.wpID)
-                /* DEBUG */
-                console.log(`%c savedPost.attachments %c savedId: `, 'background:#ffbb00;color:#000', 'color:#00aaff', savedId)
                 if (savedId) {
                   const savedA = savedPost.attachmnets[savedId]
-                  /* DEBUG */
-                  console.log(`%c attachments %c  savedA: `, 'background:#ffbb00;color:#000', 'color:#00aaff', savedA)
                   if (savedA.full || savedA.preview || savedA.original) {
                     a.savedId = savedId
                   }
@@ -197,15 +261,9 @@ export default {
             const gallery = post.gallery.map(attachment => {
               const a = { ...attachment }
               if (savedPost.gallery) {
-                /* DEBUG */
-                console.log(`%c %c Object.keys(savedPost.gallery): `, 'background:#ffbb00;color:#000', 'color:#00aaff', Object.keys(savedPost.gallery))
                 const savedId = Object.keys(savedPost.gallery).find(id => savedPost.gallery[id].wpID === attachment.wpID)
-                /* DEBUG */
-                console.log(`%c savedPost.gallery %c savedId: `, 'background:#ffbb00;color:#000', 'color:#00aaff', savedId)
                 if (savedId) {
                   const savedA = savedPost.gallery[savedId]
-                  /* DEBUG */
-                  console.log(`%c gallery %c savedA: `, 'background:#ffbb00;color:#000', 'color:#00aaff', savedA)
                   if (savedA.full || savedA.preview || savedA.original) {
                     a.savedId = savedId
                   }
@@ -242,7 +300,7 @@ export default {
     }
   },
 
-  created () {
+  async created () {
     this.unsubscribe = db.collection('profiles')
       .onSnapshot(snapshot => {
         this.profiles = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }))
@@ -259,6 +317,9 @@ export default {
         })
       )
     })
+
+    this.uploadedAttachments = await this.getUploadedAttachments()
+    this.uploadedAttachmentNames = await this.getUploadedAttachmentNames()
   },
 
   destroyed () {
@@ -271,14 +332,69 @@ export default {
   },
 
   methods: {
+    getUploadedAttachments () {
+      return this.readStorage().then(folders => {
+        return folders
+          .reduce((res, folder) => {
+            res = [...res, ...folder]
+            return res
+          }, [])
+          .reduce((res, item) => {
+            if (!res[item.name]) {
+              res[item.name] = {}
+            }
+            const size = item.path.match(/-(full|preview)\.[a-z]{3,4}$/)
+            if (size) {
+              res[item.name][size[1]] = { url: item.url }
+            } else {
+              res[item.name].original = { url: item.url }
+            }
+            return res
+          }, {})
+      })
+    },
+
+    async getUploadedAttachmentNames () {
+      const asc = 1
+      return Object.keys(this.uploadedAttachments)
+        .reduce((res, item) => {
+          if (!res.includes(item)) res.push(item)
+          return res
+        }, [])
+        .sort((a, b) => a > b ? asc : (b > a ? -asc : 0))
+    },
+
+    async readStorage (folder) {
+      try {
+        const rootRef = storage.ref(folder)
+        const subFolders = []
+        let items = []
+        const res = await rootRef.listAll()
+        res.prefixes.forEach(folderRef => {
+          subFolders.push(Promise.resolve(this.readStorage(folderRef.name)))
+        })
+        if (subFolders.length) {
+          items = await Promise.all(subFolders)
+        }
+        const files = await Promise.all(res.items.map(itemRef => {
+          return itemRef.getDownloadURL().then(url => {
+            return {
+              path: itemRef.fullPath,
+              url,
+              name: itemRef.fullPath.split('/').pop().replace(/(-full|-preview)\./, '.')
+            }
+          })
+        }))
+        return [...items, ...files]
+      } catch (error) {
+        console.log(`%c () %c error: `, 'background:#ffbb00;color:#000', 'color:#00aaff', error)
+      }
+    },
+
     updateProgressOnSavedPosts () {
       Object.entries(this.convertedPosts).forEach(([type, posts]) => {
         Object.keys(posts).forEach(id => {
-          /* DEBUG */
-          console.log(`%c %c this.postsToTransfer: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.postsToTransfer)
           const unsaved = (this.postsToTransfer[type] || {})[id]
-          /* DEBUG */
-          console.log(`%c %c unsaved: `, 'background:#ffbb00;color:#000', 'color:#00aaff', unsaved)
           if (this.savedPosts[type] && this.savedPosts[type][`wp${id}`] && !unsaved) {
             this.$set(this.convertedPosts[type][id].progress, 'total', 100)
           }
@@ -294,10 +410,59 @@ export default {
       this.totalProgress = sumProgress / (this.totalPostsCount * 100) * 100
     },
 
+    urlToStorageName (url) {
+      const nameWithFolders = url.match(/(\d{4}\/\d{2}\/.*)\..+$/)
+      return nameWithFolders ? nameWithFolders[0].replace(/\//g, '-').replace('jpeg', 'jpg') : null
+    },
+
     process () {
-      Object.entries(this.convertedPosts).forEach(([type, posts]) => {
-        Object.keys(posts).forEach(id => this.transferPost(type, id))
-      })
+      // Object.entries(this.convertedPosts).forEach(([type, posts]) => {
+      //   setTimeout(() => {
+      //     Object.keys(posts).forEach(id => this.transferPost(type, id))
+      //   }, 1000)
+      // })
+      Object.keys(this.convertedPosts.salons).forEach(id => this.transferPost('salons', id))
+    },
+
+    async prepareAttachmentsForUpload (post) {
+      const attachments = [
+        ...post.attachments.map(a => ({ ...a, placedIn: 'attachments' })),
+        ...post.gallery.map(a => ({ ...a, placedIn: 'gallery' }))
+      ].map(a => {
+        a.storageName = this.urlToStorageName(a.url)
+        if (this.uploadedAttachmentNames.includes(a.storageName)) {
+          a.uploaded = true
+          this.uploadedFiles.push({ postId: post.wpID, attachment: a })
+        }
+        return a
+      }).filter(a => !a.uploaded)
+
+      return Promise.all(attachments.map(async a => {
+        const file = await imgLib.blobFromUrl(a.url)
+        return { ...a, file, id: a.wpID }
+      }))
+        .then(readyAttachments => {
+          return readyAttachments.filter(a => {
+            if (!a.file.error) {
+              return a
+            } else {
+              this.errorFiles.push({ postId: post.wpID, attachment: a })
+            }
+          })
+        })
+    },
+
+    allUploadedForPost (convertedPost, uploaded) {
+      const attachments = [...(convertedPost.attachments || []), ...(convertedPost.gallery || [])]
+      return attachments.reduce((attachmentsMap, attachment) => {
+        const storageName = attachment.storageName
+        if (uploaded.hasOwnProperty(storageName)) {
+          attachmentsMap[storageName] = uploaded[storageName]
+        } else if (this.uploadedAttachments.hasOwnProperty(storageName)) {
+          attachmentsMap[storageName] = { ...this.uploadedAttachments[storageName], attachment }
+        }
+        return attachmentsMap
+      }, {})
     },
 
     async transferPost (postType, postId) {
@@ -306,108 +471,106 @@ export default {
         console.error(`Cant find Post Id: ${postId} of type: ${postType}!`)
         return
       }
-      if (this.savedPosts[postType][`wp${postId}`]) {
-        // this.$set(this.convertedPosts[postType][postId].progress, 'total', 100)
-        return
-      }
+
       try {
         this.processing = true
-        const attachments = await Promise.all(post.attachmnets.map(async a => {
-          const file = await imgLib.blobFromUrl(a.url)
-          const nameWithFolders = a.url.match(/(\d{4}\/\d{2}\/.*)\..+$/)
-          const storageName = nameWithFolders ? nameWithFolders[1].replace(/\//g, '-') : null
-          return { ...a, file, id: a.wpID, storageName, placedIn: 'attachments' }
-        }))
-        const gallery = await Promise.all(post.gallery.map(async a => {
-          const file = await imgLib.blobFromUrl(a.url)
-          const nameWithFolders = a.url.match(/(\d{4}\/\d{2}\/.*)\..+$/)
-          const storageName = nameWithFolders ? nameWithFolders[1].replace(/\//g, '-') : null
-          return { ...a, file, id: a.wpID, storageName, placedIn: 'gallery' }
-        }))
+        const readyToUpload = await this.prepareAttachmentsForUpload(post)
+        this.$set(this.convertedPosts[postType][postId].progress, 'max', readyToUpload.length * 100)
 
-        const readyAttachments = [...attachments.filter(a => !a.file.error), ...gallery.filter(a => !a.file.error)]
-
-        this.$set(this.convertedPosts[postType][postId].progress, 'max', readyAttachments.length * 100)
-
-        const uploaded = await upload(post.author.uid, readyAttachments, (id, progress) => {
+        const uploaded = await upload(post.author.uid, readyToUpload, (id, progress) => {
           this.$set(this.convertedPosts[postType][postId].progress.parts, id, progress)
           const sum = Object.values(post.progress.parts).reduce((r, p) => r + p)
           this.$set(this.convertedPosts[postType][postId].progress, 'total', sum / post.progress.max * 100)
           this.updateTotalProgress()
         })
 
-        const replacements = Object.entries(uploaded).reduce((res, [name, item]) => {
+        const allUploaded = this.allUploadedForPost(post, uploaded)
+        // !!! DEBUG !!!
+        console.log(`%c transferPost() %c allUploaded: `, 'background:#ffbb00;color:#000', 'color:#00aaff', allUploaded)
+
+        const replacements = Object.entries(allUploaded).reduce((replacements, [name, item]) => {
           if (item.attachment.toReplace) {
             const imgTag = `<img src="${(item.full || item.original || {}).url}">`
-            res.push({
+            replacements.push({
               toReplace: item.attachment.toReplace,
               replacement: item.attachment.caption
                 ? `<span class="img-with-caption">${imgTag}<span class="caption">${item.attachment.caption}</span></span>`
                 : imgTag
             })
           }
-          return res
+          return replacements
         }, [])
         let content = post.content
-        /* DEBUG */
         replacements.forEach(r => {
           content = content.replace(r.toReplace, r.replacement)
         })
-
-        const { wpID, author, created, modified, excerpt, title, translations } = post
-        const postData = { wpID, author, content, created, modified }
+        const {
+          published,
+          wpID,
+          author,
+          created,
+          modified,
+          excerpt,
+          title,
+          translations,
+          date,
+          endDate,
+          countNumber,
+          location,
+          supportedBy,
+          website,
+          country
+        } = post
+        const postData = { wpID, author, content, created, modified, published }
         if (excerpt) postData.excerpt = excerpt
         if (title) postData.title = title
         if (translations) postData.translations = translations
+        if (date) postData.date = date
+        if (endDate) postData.endDate = endDate
+        if (countNumber) postData.countNumber = countNumber
+        if (location) postData.location = location
+        if (supportedBy) postData.supportedBy = supportedBy
+        if (website) postData.website = website
+        if (country) postData.country = country
 
-        if (post.attachmnets.length) {
-          postData.attachmnets = post.attachmnets.reduce((res, attachment) => {
-            const fbKey = Object.keys(uploaded).find(key => uploaded[key].attachment.wpID === attachment.wpID)
-            const { mime, wpID, url, thumbnail, caption } = attachment
-            const id = fbKey || wpID
-            res[id] = { mime, wpID, wpUrl: url, wpThumbnail: thumbnail }
-            if (caption) res[id].caption = caption
-            if (fbKey) {
-              res[fbKey] = { mime, wpID, wpUrl: url, wpThumbnail: thumbnail }
-              const { full, preview, original } = uploaded[fbKey]
-              if (full) res[fbKey].full = full
-              if (preview) res[fbKey].preview = preview
-              if (original) res[fbKey].original = original
-            }
-            return res
-          }, {})
-        }
-        if (post.gallery.length) {
-          postData.gallery = post.gallery.reduce((res, attachment) => {
-            const fbKey = Object.keys(uploaded).find(key => uploaded[key].attachment.wpID === attachment.wpID)
-            console.log(`%c %c fbKey: `, 'background:#ffbb00;color:#000', 'color:#00aaff', fbKey)
-            const { mime, wpID, url, thumbnail } = attachment
-            if (fbKey) {
-              res[fbKey] = { mime, wpID, wpUrl: url, wpThumbnail: thumbnail }
-              const { full, preview, original } = uploaded[fbKey]
-              if (full) res[fbKey].full = full
-              if (preview) res[fbKey].preview = preview
-              if (original) res[fbKey].original = original
-            } else {
-              res[wpID] = { mime, wpID, wpUrl: url, wpThumbnail: thumbnail }
-            }
-            return res
-          }, {})
-        }
+        const attachTypes = ['attachments', 'gallery']
+        attachTypes.forEach(attachType => {
+          if (post[attachType].length) {
+            postData[attachType] = post[attachType].reduce((res, attachment) => {
+              let uploadedAttachment = {}
+              let storageKey = Object.keys(allUploaded).find(key => allUploaded[key].attachment.wpID === attachment.wpID)
+              if (storageKey) {
+                uploadedAttachment = allUploaded[storageKey]
+              }
+              const { mime, wpID, url, thumbnail, caption } = attachment
+              if (storageKey) {
+                res[storageKey] = { mime, wpID, wpUrl: url, wpThumbnail: thumbnail }
+                if (caption) res[storageKey].caption = caption
+                const { full, preview, original } = uploadedAttachment
+                if (full) res[storageKey].full = full
+                if (preview) res[storageKey].preview = preview
+                if (original) res[storageKey].original = original
+              } else {
+                res[wpID] = { mime, wpID, wpUrl: url, wpThumbnail: thumbnail }
+                if (caption) res[wpID].caption = caption
+                this.errorPosts.push(postData)
+              }
+              return res
+            }, {})
+          }
+        })
 
         const type = string.toCamel(postType)
         const pId = `wp${wpID}`
-        await db.collection(type).doc(pId).set(postData, { merge: true })
+        await db.collection(type).doc(pId).update(postData)
 
         this.$set(this.convertedPosts[postType][postId].progress, 'total', 100)
 
         this.processing = false
       } catch (err) {
         /* DEBUG */
-        console.log(`%c transferPost %postType, postIdc err: `, 'background:#ffbb00;color:#000', 'color:#00aaff', err)
+        console.log(`%c transferPost %c, ${postType} ${postId} err: `, 'background:#ffbb00;color:#000', 'color:#00aaff', err)
       }
-      // const firstUrl = `${this.publicPath}test.jpg` // WP.attachment[0].post.url
-      // transferFile(firstUrl)
     },
 
     postAuthor (wpAuthorId) {
@@ -421,32 +584,34 @@ export default {
       return (wpPost.meta.gallery || []).map(wpID => {
         wpID = parseInt(wpID)
         const attachment = this.getAttachment(wpID)
+        const url = this.getAttachmentUrl(attachment)
         return {
           wpID,
-          url: this.getAttachmentUrl(attachment),
+          url,
           thumbnail: attachment ? this.thumbnailUrl(attachment) : null,
-          mime: attachment ? attachment.post.post_mime_type : null
+          mime: attachment ? attachment.post.post_mime_type : null,
+          storageName: this.urlToStorageName(url)
         }
       })
     },
 
     /**
-     * @param {string} content
-     * @return {{
-     *  wpID: number,
-     *  toReplace: string,
-     *  url: string,
-     *  thumbnail: string|null,
-     *  caption: string|null,
-     *  mime: string
-     * }[]}
-     */
+       * @param {string} content
+       * @return {{
+       *  wpID: number,
+       *  toReplace: string,
+       *  url: string,
+       *  thumbnail: string|null,
+       *  caption: string|null,
+       *  mime: string
+       * }[]}
+       */
     getAttachmentsFromContent (content) {
       let res = this.extractImagesWithWpCaptions({ attachments: [], text: content })
       res = this.extractImagesWithWpID(res)
       res = this.extractABAImages(res)
       res = this.extractABAFileLinks(res)
-      return res.attachments
+      return res.attachments.map(a => ({ ...a, storageName: this.urlToStorageName(a.url) }))
     },
 
     extractImagesWithWpCaptions ({ attachments, text }) {
@@ -591,11 +756,11 @@ export default {
     },
 
     /**
-     * example: {en: {title: String, content: String}, de: {title: String}}
-     * @param { Object<string,Object<string,string>> } postTranslations
-     * @param { Object<string,Object<string,string>> } newTranslations
-     * @return { Object<string,Object<string,string>> }
-     */
+       * example: {en: {title: String, content: String}, de: {title: String}}
+       * @param { Object<string,Object<string,string>> } postTranslations
+       * @param { Object<string,Object<string,string>> } newTranslations
+       * @return { Object<string,Object<string,string>> }
+       */
     mergePostTranslations (postTranslations, newTranslations) {
       const merged = {}
       Object.entries(newTranslations).forEach(([lng, trans]) => {
@@ -605,9 +770,9 @@ export default {
     },
 
     /**
-     * @param {object} wpPost
-     * @return {Object<string,{title:string}>}
-     */
+       * @param {object} wpPost
+       * @return {Object<string,{title:string}>}
+       */
     getTitleTrans (wpPost) {
       if (!wpPost.post_title_langs) return null
       const langs = Object.keys(wpPost.post_title_langs)
@@ -619,8 +784,8 @@ export default {
         if (match) {
           const trans = this.cleanupString(match[1])
           if (lng !== 'en' &&
-                  translations.en &&
-                  translations.en === trans) {
+              translations.en &&
+              translations.en === trans) {
             return
           }
           translations[lng] = {
@@ -645,7 +810,7 @@ export default {
 </script>
 
 <style lang='scss'>
-  .transfer-wp-posts{
+  .transfer-wp-posts {
     display: flex;
     flex-flow: column;
     align-items: flex-start;
@@ -654,21 +819,25 @@ export default {
     & > * {
       flex-shrink: 0;
     }
+
     .main-section {
       flex-shrink: 1;
       flex-grow: 1;
       overflow: auto;
       margin: 20px 0;
       width: 100%;
+      padding: 20px;
 
       section {
         width: 100%;
+
         h3 {
           color: #0000ff;
           margin-bottom: 10px;
         }
       }
     }
+
     .posts {
       width: 100%;
       margin: 0 0 20px 0;
@@ -694,11 +863,13 @@ export default {
             padding: 0 5px;
             text-transform: uppercase;
             cursor: pointer;
+
             .active {
               font-weight: 900;
             }
           }
         }
+
         .attachments {
           display: flex;
 
