@@ -142,7 +142,7 @@ export default {
       return Object.entries(this.postsByType).reduce((res, [type, posts]) => {
         res[type] = posts.reduce((postsOfType, postRawData) => {
           const post = {
-            published: true,
+            status: 'published',
             wpID: parseInt(postRawData.post.ID),
             author: this.postAuthor(postRawData.post.post_author),
             content: postRawData.post.post_content,
@@ -416,12 +416,12 @@ export default {
     },
 
     process () {
-      // Object.entries(this.convertedPosts).forEach(([type, posts]) => {
-      //   setTimeout(() => {
-      //     Object.keys(posts).forEach(id => this.transferPost(type, id))
-      //   }, 1000)
-      // })
-      Object.keys(this.convertedPosts.salons).forEach(id => this.transferPost('salons', id))
+      Object.entries(this.convertedPosts).forEach(([type, posts]) => {
+        setTimeout(() => {
+          Object.keys(posts).forEach(id => this.transferPost(type, id))
+        })
+      })
+      // Object.keys(this.convertedPosts.salons).forEach(id => this.transferPost('salons', id))
     },
 
     async prepareAttachmentsForUpload (post) {
@@ -505,7 +505,7 @@ export default {
           content = content.replace(r.toReplace, r.replacement)
         })
         const {
-          published,
+          status,
           wpID,
           author,
           created,
@@ -521,8 +521,8 @@ export default {
           website,
           country
         } = post
-        const postData = { wpID, author, content, created, modified, published }
-        if (excerpt) postData.excerpt = excerpt
+        const postData = { wpID, author, content, created, modified, status }
+        postData.excerpt = excerpt || string.makeExcerpt(content, 30)
         if (title) postData.title = title
         if (translations) postData.translations = translations
         if (date) postData.date = date
@@ -533,12 +533,27 @@ export default {
         if (website) postData.website = website
         if (country) postData.country = country
 
+        const allUploadedKeys = Object.keys(allUploaded)
+
+        if (allUploadedKeys.length) {
+          const { full, preview, original, attachment } = allUploaded[allUploadedKeys[0]]
+          const thumbnail = {}
+          if (full) thumbnail.full = full
+          if (preview) thumbnail.preview = preview
+          if (original) thumbnail.original = original
+          if (attachment) {
+            if (attachment.mime) thumbnail.mime = attachment.mime
+            if (attachment.caption) thumbnail.caption = attachment.caption
+          }
+          postData.thumbnail = thumbnail
+        }
+
         const attachTypes = ['attachments', 'gallery']
         attachTypes.forEach(attachType => {
           if (post[attachType].length) {
             postData[attachType] = post[attachType].reduce((res, attachment) => {
               let uploadedAttachment = {}
-              let storageKey = Object.keys(allUploaded).find(key => allUploaded[key].attachment.wpID === attachment.wpID)
+              let storageKey = allUploadedKeys.find(key => allUploaded[key].attachment.wpID === attachment.wpID)
               if (storageKey) {
                 uploadedAttachment = allUploaded[storageKey]
               }
@@ -562,6 +577,8 @@ export default {
 
         const type = string.toCamel(postType)
         const pId = `wp${wpID}`
+        // !!! DEBUG !!!
+        console.log(`%c transferPost() %c postData: `, 'background:#ffbb00;color:#000', 'color:#00aaff', postData)
         await db.collection(type).doc(pId).update(postData)
 
         this.$set(this.convertedPosts[postType][postId].progress, 'total', 100)
