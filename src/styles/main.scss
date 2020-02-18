@@ -1,11 +1,30 @@
+@import "vars";
 @import "tailwindcss/base";
 html * {
   box-sizing: border-box;
+  h1 {
+    line-height: 1em;
+  }
+}
+
+input, textarea, button, a {
+  &:focus {
+    outline: none;
+  }
+}
+
+a {
+  &:focus, &:hover {
+    color: $color-prime;
+  }
+  &:focus {
+    text-decoration: underline;
+  }
 }
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
-@import "vars";
 @import "autofill";
+@import "buttons";
 
 //@import "anti-vuetify";
 //

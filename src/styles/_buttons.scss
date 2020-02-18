@@ -1,0 +1,9 @@
+button, .button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:focus {
+    color: $color-prime;
+  }
+}

@@ -5,9 +5,8 @@
     </div>
     <div
       ref="panel"
-      :class="[`from-${from}`, {open}]"
+      :class="[`from-${from}`, `align-${align}`, {open}]"
       class="sliding-panel"
-      :style="positionStyle"
       @click.native="toggle">
       <slot />
     </div>
@@ -23,17 +22,14 @@ export default {
   props: {
     from: { type: String, default: 'top' },
     align: { type: String, default: 'end' },
-    margin: { type: Number, default: 10 }
+    margin: { type: Number, default: 0 }
   },
 
   data: () => ({
-    open: false
+    open: true
   }),
 
   computed: {
-    positionStyle () {
-      return this.from === 'top' && this.align === 'end' ? { right: 0 + this.margin + 'px' } : {}
-    }
   },
 
   watch: {
@@ -119,6 +115,10 @@ export default {
       position: fixed;
       padding: 0;
 
+      box-sizing: border-box;
+      max-height: 100vh;
+      overflow: auto;
+
       z-index: $z-high;
 
       top: -1000px;
@@ -129,10 +129,20 @@ export default {
         transition: top $transition-time ease-in-out;
       }
 
+      &.align-end {
+        right: 0;
+      }
+      &.align-start {
+        left: 0;
+      }
+
       &.from-right {
         top: unset;
         right: -100%;
         transition: right $reverse-time $reverse-delay ease-in-out;
+
+        &.align-end {
+        }
 
         &.open {
           top: unset;

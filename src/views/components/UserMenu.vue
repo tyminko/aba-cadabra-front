@@ -1,10 +1,10 @@
 <template>
   <sliding-panel ref="menu" class="user-menu">
     <template v-slot:trigger="{on, open}">
-      <div class="user-menu-button" @click="on">
+      <button class="user-menu-button" @click="on">
         <i v-if="user" class="material-icons dimmed" :class="{open, user}">{{open ? 'sentiment_very_satisfied' : 'sentiment_satisfied'}}</i>
         <i v-else class="material-icons dimmed" :class="{open}">chevron_right</i>
-      </div>
+      </button>
     </template>
     <div class="user-actions-wrapper">
       <login-form v-if="!user" />
@@ -68,7 +68,9 @@ export default {
 
 <style lang='scss'>
   @import '../../styles/vars';
+  @import '../../styles/mixins';
   .user-menu {
+    margin-left: auto;
     * {
      box-sizing: border-box;
     }
@@ -78,20 +80,29 @@ export default {
       display: flex;
       align-items: center;
       justify-content: center;
+      cursor: pointer;
+      margin-right: $base-padding / 2;
 
       i {
         transition: transform 0.15s;
         &.open {
-          color: #000;
+          /*color: #000;*/
           &:not(.user) {
             transform: rotate(90deg);
           }
         }
       }
     }
+    .sliding-panel {
+      width: 100%;
+      border: $border-thick-w solid $color-prime;
+      @include wider-then-phone {
+        width: auto;
+        margin-right: $base-padding / 2;
+      }
+    }
     .user-actions-wrapper {
-      padding-top: calc(#{$base-size} - 5px);
-      border: 5px solid $color-prime;
+      padding-top: calc(#{$base-size} - #{$border-thick-w});
       background: $color-bg;
       overflow: hidden;
 

@@ -1,8 +1,12 @@
 $base-size: 48rem / 16; // 48px (3rem) based on default font size 16px
 $base-padding: $base-size / 3;
+$border-thick-w: 5px;
+
+$max-width-phone: 480px;
+$max-width-tablet: 1024px;
 
 $color-bg: #fff;
-$color-bg-semitransparent: transparentize($color-bg, 0.3);
+$color-bg-semitransparent: transparentize($color-bg, 0.2);
 $color-white-semitransparent: transparentize(white, 0.3);
 
 $color-prime: #0000ff;
@@ -10,7 +14,6 @@ $color-prime-semi: #0000ff70;
 $color-dimmed: #999999;
 
 $z-index-header: 40;
-
 $z-high: 500;
 
 $transition-time: 0.2s;

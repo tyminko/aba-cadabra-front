@@ -2,21 +2,20 @@
   <div class="main-header">
     <nav>
       <router-link :to="{name: 'home'}" class="nav-item">
-        Home
+        ABA
       </router-link>
-      <router-link :to="{name: 'about'}" class="nav-item">
-        About
-      </router-link>
+      <user-menu class="user-menu" />
     </nav>
   </div>
 </template>
 
 <script>
 import { mapState, mapActions } from 'vuex'
+import UserMenu from './UserMenu'
 
 export default {
   name: 'MainHeader',
-  components: { },
+  components: { UserMenu },
   data: () => ({}),
 
   computed: {
@@ -36,16 +35,12 @@ export default {
   @import "../../styles/vars";
 
   .main-header{
-    position: fixed;
-    top: 0;
-    left: 0;
     height: $base-size;
-    width: 100vw;
 
     display: flex;
     align-items: center;
 
-    padding: 0 $base-padding;
+    padding: 0;
 
     z-index: $z-index-header;
 
@@ -54,15 +49,14 @@ export default {
     nav {
       display: flex;
       align-items: center;
-      height: 100%;
       width: 100%;
-      // background: transparentize($color-bg, 0.1);
       pointer-events: all;
 
       a {
-        text-decoration: none;
         &.nav-item {
           margin-right: $base-padding;
+          background: $color-bg-semitransparent;
+          padding: $base-padding /2 $base-padding;
         }
       }
     }

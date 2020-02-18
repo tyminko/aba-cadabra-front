@@ -1,22 +1,41 @@
 <template>
-  <div id="app" class="bg">
-    <main-header />
-    <user-menu class="user-menu" />
-    <div>
-      <keep-alive>
-        <router-view :key="$route.fullPath" />
-      </keep-alive>
-    </div>
+  <div id="app">
+    <layout-with-push-sidebar>
+      <template v-slot:header>
+        <main-header />
+      </template>
+      <template v-slot:sidebar>
+        <ul class="sidebar-menu">
+          <li>
+            <router-link :to="{name:''}">About</router-link>
+          </li>
+          <li>
+            <router-link :to="{name:''}">Salons</router-link>
+          </li>
+          <li>
+            <router-link :to="{name:''}">Residency</router-link>
+          </li>
+          <li>
+            <router-link :to="{name:''}">Residents</router-link>
+          </li>
+        </ul>
+      </template>
+      <template v-slot:content>
+        <keep-alive>
+          <router-view :key="$route.fullPath" />
+        </keep-alive>
+      </template>
+    </layout-with-push-sidebar>
   </div>
 </template>
 <script>
 import { mapState, mapActions } from 'vuex'
+import LayoutWithPushSidebar from './views/components/UI/LayoutWithPushSidebar'
 import MainHeader from './views/components/MainHeader'
-import UserMenu from './views/components/UserMenu'
 
 export default {
   name: 'App',
-  components: { MainHeader, UserMenu },
+  components: { LayoutWithPushSidebar, MainHeader },
   computed: {
     ...mapState(['requestToLogin'])
   },
@@ -38,14 +57,17 @@ export default {
 <style lang="scss">
   @import "https://fonts.googleapis.com/icon?family=Material+Icons";
   @import "./styles/main.scss";
-  #app {
-    margin-top: 3rem;
-  }
-  .user-menu {
-    position: fixed;
-    top: 0;
-    right: 0;
-    z-index: $z-high;
-    margin-right: 10px;
+
+  .sidebar-menu {
+    padding: 0 $base-padding;
+    li {
+      font-size: 150%;
+      padding: $base-padding / 2 0;
+      color: $color-prime;
+      &:hover {
+        color: $color-prime;
+        text-decoration: underline;
+      }
+    }
   }
 </style>

@@ -1,3 +1,15 @@
-@mixin text-ellipsis-extended () {
-  
+@mixin wider-then ($size) {
+  @media (min-width: $size) {
+    @content
+  }
+}
+@mixin wider-then-phone () {
+  @include wider-then($max-width-phone) {
+    @content
+  }
+}
+@mixin wider-then-tablet () {
+  @include wider-then($max-width-tablet) {
+    @content
+  }
 }

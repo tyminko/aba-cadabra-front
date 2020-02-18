@@ -1,3 +1,5 @@
+const plugin = require('tailwindcss/plugin')
+
 module.exports = {
   prefix: '',
   important: false,
@@ -690,5 +692,13 @@ module.exports = {
     transitionDuration: ['responsive']
   },
   corePlugins: {},
-  plugins: []
+  plugins: [
+    plugin(function ({ addBase, config }) {
+      addBase({
+        'h1': { fontSize: config('theme.fontSize.4xl') },
+        'h2': { fontSize: config('theme.fontSize.2xl') },
+        'h3': { fontSize: config('theme.fontSize.xl') }
+      })
+    })
+  ]
 }
