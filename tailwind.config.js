@@ -17,16 +17,19 @@ module.exports = {
       black: '#000',
       white: '#fff',
 
+      'aba-blue': '#0000ff',
+      'aba-blue-semi': '#0000ff70',
+
       gray: {
-        100: '#f7fafc',
-        200: '#edf2f7',
-        300: '#e2e8f0',
-        400: '#cbd5e0',
-        500: '#a0aec0',
-        600: '#718096',
-        700: '#4a5568',
-        800: '#2d3748',
-        900: '#1a202c'
+        100: '#fafafa',
+        200: '#f5f5f5',
+        300: '#f0f0f0',
+        400: '#dedede',
+        500: '#bfbfbf',
+        600: '#949494',
+        700: '#666666',
+        800: '#474747',
+        900: '#2b2b2b'
       },
       red: {
         100: '#fff5f5',
@@ -147,7 +150,9 @@ module.exports = {
       '40': '10rem',
       '48': '12rem',
       '56': '14rem',
-      '64': '16rem'
+      '64': '16rem',
+      'basic': '48px',
+      'half': '24px'
     },
     backgroundColor: theme => theme('colors'),
     backgroundPosition: {

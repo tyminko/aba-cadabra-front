@@ -115,7 +115,7 @@ export default {
   $max-width-disable: 800px;
   $transition-time: 0.15s;
   .layout-wrap {
-    header {
+    & > header {
       display: flex;
       height: $base-size;
       width: 100vw;

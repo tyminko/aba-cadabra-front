@@ -13,10 +13,17 @@ $color-prime: #0000ff;
 $color-prime-semi: #0000ff70;
 $color-dimmed: #999999;
 
+$text-color: #373737;
+
 $z-index-header: 40;
 $z-high: 500;
 
 $transition-time: 0.2s;
+
+$h1: $base-size;
+$h2: $base-size * 0.75;
+$h3: $base-size * 0.5;
+$font-size-caption: 12px;
 
 $font-family-sans-serif:
   // Safari for macOS and iOS (San Francisco)
