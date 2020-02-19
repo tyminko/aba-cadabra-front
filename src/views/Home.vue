@@ -1,23 +1,23 @@
 <template>
   <div class="home">
     <div class="feed-grid">
-      <div v-for="post in feed"
-           :key="post.id"
-           :class="cellSize()"
+      <div v-for="(post, id) in feed"
+           :key="post.postId"
+           ref="feed-items"
+           :class="cellSize(id)"
            class="cell break-words flex flex-col">
         <header class="flex-grow-0">
           <div class="flex flex-align-center">
             <div class="badge mr-2 bg-gray-200">{{postType(post.postType)}}</div>
             <popper v-if="adminOrEditor"
                     placement="right"
-                    arrow-size="18"
                     class="ml-auto">
               <template v-slot:reference="{show}">
                 <span class="edit-button badge w-8 text-gray-600 hover:text-aba-blue" :class="{active:show}">
                   <i class="material-icons text-base cursor-pointer">edit</i>
                 </span>
               </template>
-              <post-editor-palete/>
+              <post-editor-palette :current="cellSize(id)" @set-size="setCellSize(id, $event)"/>
             </popper>
           </div>
           <h1 class="mt-1">{{post.title}}</h1>
@@ -25,10 +25,12 @@
         </header>
         <div v-if="post.thumbnail && post.thumbnail.mime.startsWith('image')"
              class="thumbnail-box flex-grow min-h-0">
-          <img :src="post.thumbnail.preview.url || post.thumbnail.full.url">
+          <img :src="post.thumbnail.preview.url || post.thumbnail.full.url" @load="formatText(id)">
         </div>
         <div v-else class="patch flex-grow min-h-0 bg-gray-800" />
-        <div class="min-h-0 overflow-hidden">{{post.excerpt}}</div>
+        <div :ref="`feed-text-${id}`" class="excerpt min-h-0 overflow-hidden mt-2 mb-4 min-h-line">
+          <div>{{post.excerpt}}</div>
+        </div>
       </div>
     </div>
   </div>
@@ -37,17 +39,19 @@
 <script>
 import { db } from '../lib/firebase'
 import { mapState } from 'vuex'
+import Ftellipsis from 'ftellipsis'
 import Popper from './components/UI/Popper.js'
-import PostEditorPalete from './admin/PostEditorPalette'
+import PostEditorPalette from './admin/PostEditorPalette'
 
 export default {
   name: 'Home',
-  components: { Popper, PostEditorPalete },
+  components: { Popper, PostEditorPalette },
   props: {},
 
   data: () => ({
     feed: {},
-    unsubscribe: null
+    unsubscribe: null,
+    sizes: {}
   }),
 
   computed: {
@@ -57,17 +61,59 @@ export default {
     }
   },
 
+  watch: {
+    // feed: {
+    //   async handler (val) {
+    //     // setTimeout(() => {
+    //     //   // !!! DEBUG !!!
+    //     //   console.log(`%c handler() %c val: `, 'background:#ffcc00;color:#000', 'color:#00aaff', val)
+    //     //   if (this.$refs['feed-items']) {
+    //     //     this.$refs['feed-items'].forEach(el => {
+    //     //       // !!! DEBUG !!!
+    //     //       console.log(`%c SET ELL %c el: `, 'background:#ffcc00;color:#000', 'color:#00aaff', el)
+    //     //       const excerptEl = el.querySelector('.excerpt')
+    //     //       console.log(`%c () %c excerptEl: `, 'background:#ffbb00;color:#000', 'color:#00aaff', excerptEl)
+    //     //       const ellipsis = new Ftellipsis(excerptEl)
+    //     //       // !!! DEBUG !!!
+    //     //       console.log(`%c () %c ellipsis: `, 'background:#ffcc00;color:#000', 'color:#00aaff', ellipsis)
+    //     //       ellipsis.calc()
+    //     //       ellipsis.set()
+    //     //     })
+    //     //   }
+    //     // }, 200)
+    //   },
+    //   deep: true
+    // }
+  },
+
   mounted () {
-    this.getWorks()
+    this.getFeed()
   },
 
   methods: {
-    cellSize () {
-      const r = Math.random()
-      if (r < 0.1) return 'vertical'
-      if (r > 0.5 && r < 0.7) return 'horizontal'
-      if (r > 0.9) return 'big'
-      return false
+    async formatText (id) {
+      if (this.$refs[`feed-text-${id}`]) {
+        await this.$nextTick()
+        const el = this.$refs[`feed-text-${id}`][0]
+        const ellipsis = new Ftellipsis(el)
+        // !!! DEBUG !!!
+        console.log(`%c formatText() %c ellipsis: `, 'background:#ffbb00;color:#000', 'color:#00aaff', ellipsis)
+        ellipsis.calc()
+        ellipsis.set()
+        el.style.flexShrink = 0
+      }
+    },
+
+    cellSize (id) {
+      if (this.feed[id] && this.feed[id].cardSize) return this.feed[id].cardSize
+      return ''
+      // const r = Math.random()
+      // let s = ''
+      // if (r < 0.1) s = 'vertical'
+      // if (r > 0.5 && r < 0.7) s = 'horizontal'
+      // if (r > 0.9) s = 'big'
+      // this.sizes[id] = s
+      // return s
     },
 
     formatDate (timestamp) {
@@ -81,21 +127,31 @@ export default {
       return string === 'post' ? 'blog' : string
     },
 
-    getWorks () {
+    setCellSize (id, size) {
+      db.collection('feed').doc(id).update({
+        cardSize: size
+      })
+    },
+
+    getFeed () {
       this.unsubscribe = db.collection('feed')
         .where('status', '==', 'published').orderBy('date', 'desc')
         .onSnapshot(
           querySnapshot => {
-            querySnapshot.forEach(doc => {
-              const salon = doc.data()
-              // if (!work.posterImage && work.hasOwnProperty('attachments')) {
-              //   work.posterImage = Object.values(work.attachments).sort((a, b) => a.order - b.order)[0]
-              // }
-              this.$set(this.feed, doc.id, salon)
+            querySnapshot.forEach(async doc => {
+              const feedItem = doc.data()
+              this.$set(this.feed, doc.id, feedItem)
+              // setTimeout(() => {
+              //   if (this.$refs[`feed-text-${doc.id}`]) {
+              //     const el = this.$refs[`feed-text-${doc.id}`][0]
+              //     const ellipsis = new Ftellipsis(el)
+              //     ellipsis.calc()
+              //     ellipsis.set()
+              //   }
+              // }, 200)
             })
           },
           err => {
-            // eslint-disable-next-line no-console
             console.error('getFeed:', err)
           }
         )
@@ -109,7 +165,7 @@ export default {
   @import "../styles/mixins";
   .home {
     .feed-grid {
-      --popper-border-width: 4px;
+      /*--popper-border-width: 4px;*/
 
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

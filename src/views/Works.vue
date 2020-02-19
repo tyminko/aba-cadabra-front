@@ -77,7 +77,7 @@ export default {
           },
           err => {
             // eslint-disable-next-line no-console
-            console.error('getWorks:', err)
+            console.error('getFeed:', err)
           }
         )
     },
