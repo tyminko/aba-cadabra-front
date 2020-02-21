@@ -1,43 +1,47 @@
 <template>
   <transition name="fade">
-    <div v-if="open" class="popover-modal">
-      <div v-click-outside="requestClose" class="modal-content-box content-box">
-        <header>
-          <button class="cancel micro transparent" @click="requestClose">
-            <i class="ico-close" />
+    <div v-if="open"
+         v-click-outside="requestClose"
+         class="popover-modal">
+      <div class="modal-shadow" @click="requestClose"/>
+      <div class="w-full h-full bg-white rounded-sm">
+        <header class="flex h-base items-center">
+          <button class="w-base h-base ml-auto" @click="requestClose">
+            <i class="material-icons">close</i>
           </button>
         </header>
-        <div class="modal-content">
-          <slot />
-        </div>
+        <slot/>
       </div>
     </div>
   </transition>
 </template>
 
 <script>
+import { scrollGuard } from '../../../lib/prvent-scroll-behind'
 import clickOutside from 'vue-click-outside'
 
 export default {
   name: 'PopoverModal',
   directives: { clickOutside },
   props: {
-    open: Boolean
+    open: { type: Boolean, required: true }
   },
 
   data: () => ({
-    allowClickOutside: false
+    allowClickOutside: true
   }),
 
   computed: {},
 
   watch: {
     open (value) {
+      this.guardScrollOnOpenClose()
       this.setAllowClickOutside()
     }
   },
 
   created () {
+    scrollGuard.init()
     window.addEventListener('keydown', e => {
       if (e.key === 'Escape' || e.keyCode === 27) {
         this.requestClose()
@@ -46,6 +50,7 @@ export default {
   },
 
   mounted () {
+    this.guardScrollOnOpenClose()
     this.setAllowClickOutside()
   },
 
@@ -53,6 +58,14 @@ export default {
     requestClose () {
       if (this.open && this.allowClickOutside) {
         this.$emit('close')
+      }
+    },
+
+    guardScrollOnOpenClose () {
+      if (this.open) {
+        scrollGuard.onShowModal()
+      } else {
+        scrollGuard.onCloseModal()
       }
     },
 
@@ -67,6 +80,7 @@ export default {
 }
 </script>
 
+<!--suppress CssInvalidAtRule -->
 <style lang="scss">
   // @import "../../../assets/styles/vars";
   // @import "../../../assets/styles/mixins";
@@ -77,20 +91,28 @@ export default {
 
   .popover-modal {
     position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    width: 100vw;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     z-index: 9999;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 
-    background: rgba(0, 0, 0, 0.5);
+    .modal-shadow {
+      content: '';
+      position: fixed;
+      height: calc(100vh + 10px);
+      width: calc(100vw + 10px);
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.5);
+      z-index: -1;
+    }
 
     .modal-content-box {
       position: relative;
-      min-width: $basic-size * 2;
+      width: 100%;
+      max-width: min-content;
+      /*min-width: $basic-size * 2;
       min-height: $basic-size * 2;
       max-width: 100%;
       max-height: 100%;
@@ -112,7 +134,7 @@ export default {
 
         max-height: calc(100vh - #{($tag-inline-height + 2 * $basic-padding)});
         overflow-y: auto;
-      }
+      }*/
     }
   }
 

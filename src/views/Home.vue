@@ -13,11 +13,17 @@
                     placement="right"
                     class="ml-auto">
               <template v-slot:reference="{show}">
-                <span class="edit-button badge w-8 text-gray-600 hover:text-aba-blue" :class="{active:show}">
+                <span class="edit-button badge w-8 text-gray-600 hover:text-aba-blue"
+                      :class="{active:show}">
                   <i class="material-icons text-base cursor-pointer">edit</i>
                 </span>
               </template>
-              <post-editor-palette :current="cellSize(id)" @set-size="setCellSize(id, $event)"/>
+              <template v-slot:default="{hide}">
+                <post-editor-palette :current="cellSize(id)"
+                                     @close="hide"
+                                     @set-size="setCellSize(id, $event)"
+                                     @open-editor="openEditor(post.postId)"/>
+              </template>
             </popper>
           </div>
           <h1 class="mt-1">{{post.title}}</h1>
@@ -25,7 +31,8 @@
         </header>
         <div v-if="post.thumbnail && post.thumbnail.mime.startsWith('image')"
              class="thumbnail-box flex-grow min-h-0">
-          <img :src="post.thumbnail.preview.url || post.thumbnail.full.url" @load="formatText(id)">
+          <!--suppress HtmlUnknownTarget -->
+          <img :src="thumbnailUrl(post)" @load="formatText(id)">
         </div>
         <div v-else class="patch flex-grow min-h-0 bg-gray-800" />
         <div :ref="`feed-text-${id}`" class="excerpt min-h-0 overflow-hidden mt-2 mb-4 min-h-line">
@@ -33,6 +40,7 @@
         </div>
       </div>
     </div>
+    <post-editor v-if="adminOrEditor" :open="shouldOpenEditor" @close="shouldOpenEditor=false" :post-id="editorPostId"/>
   </div>
 </template>
 
@@ -41,17 +49,19 @@ import { db } from '../lib/firebase'
 import { mapState } from 'vuex'
 import Ftellipsis from 'ftellipsis'
 import Popper from './components/UI/Popper.js'
-import PostEditorPalette from './admin/PostEditorPalette'
+import PostEditorPalette from './editor/PostEditorPalette'
+import PostEditor from './editor/PostEditor'
 
 export default {
   name: 'Home',
-  components: { Popper, PostEditorPalette },
+  components: { Popper, PostEditorPalette, PostEditor },
   props: {},
 
   data: () => ({
     feed: {},
     unsubscribe: null,
-    sizes: {}
+    shouldOpenEditor: false,
+    editorPostId: null
   }),
 
   computed: {
@@ -62,28 +72,6 @@ export default {
   },
 
   watch: {
-    // feed: {
-    //   async handler (val) {
-    //     // setTimeout(() => {
-    //     //   // !!! DEBUG !!!
-    //     //   console.log(`%c handler() %c val: `, 'background:#ffcc00;color:#000', 'color:#00aaff', val)
-    //     //   if (this.$refs['feed-items']) {
-    //     //     this.$refs['feed-items'].forEach(el => {
-    //     //       // !!! DEBUG !!!
-    //     //       console.log(`%c SET ELL %c el: `, 'background:#ffcc00;color:#000', 'color:#00aaff', el)
-    //     //       const excerptEl = el.querySelector('.excerpt')
-    //     //       console.log(`%c () %c excerptEl: `, 'background:#ffbb00;color:#000', 'color:#00aaff', excerptEl)
-    //     //       const ellipsis = new Ftellipsis(excerptEl)
-    //     //       // !!! DEBUG !!!
-    //     //       console.log(`%c () %c ellipsis: `, 'background:#ffcc00;color:#000', 'color:#00aaff', ellipsis)
-    //     //       ellipsis.calc()
-    //     //       ellipsis.set()
-    //     //     })
-    //     //   }
-    //     // }, 200)
-    //   },
-    //   deep: true
-    // }
   },
 
   mounted () {
@@ -91,13 +79,17 @@ export default {
   },
 
   methods: {
+    thumbnailUrl (post) {
+      return post.cardSize
+        ? post.thumbnail.full.url || post.thumbnail.preview.url
+        : post.thumbnail.preview.url || post.thumbnail.full.url
+    },
+
     async formatText (id) {
       if (this.$refs[`feed-text-${id}`]) {
         await this.$nextTick()
         const el = this.$refs[`feed-text-${id}`][0]
         const ellipsis = new Ftellipsis(el)
-        // !!! DEBUG !!!
-        console.log(`%c formatText() %c ellipsis: `, 'background:#ffbb00;color:#000', 'color:#00aaff', ellipsis)
         ellipsis.calc()
         ellipsis.set()
         el.style.flexShrink = 0
@@ -105,15 +97,15 @@ export default {
     },
 
     cellSize (id) {
-      if (this.feed[id] && this.feed[id].cardSize) return this.feed[id].cardSize
+      if (this.feed[id] && this.feed[id].cardSize) {
+        return this.feed[id].cardSize
+      }
       return ''
-      // const r = Math.random()
-      // let s = ''
-      // if (r < 0.1) s = 'vertical'
-      // if (r > 0.5 && r < 0.7) s = 'horizontal'
-      // if (r > 0.9) s = 'big'
-      // this.sizes[id] = s
-      // return s
+    },
+
+    openEditor (postId) {
+      this.editorPostId = postId
+      this.shouldOpenEditor = true
     },
 
     formatDate (timestamp) {
@@ -197,7 +189,7 @@ export default {
         .edit-button.active {
           background: transparentize($color-dimmed, 0.8);
           border-radius: 50%;
-          color: $color-prime;
+          color: $color-aba-blue;
         }
 
         &:hover {

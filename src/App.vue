@@ -63,9 +63,9 @@ export default {
     li {
       font-size: 150%;
       padding: $base-padding / 2 0;
-      color: $color-prime;
+      color: $color-aba-blue;
       &:hover {
-        color: $color-prime;
+        color: $color-aba-blue;
         text-decoration: underline;
       }
     }

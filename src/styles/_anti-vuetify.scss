@@ -23,7 +23,7 @@ button::before {
     }
     .v-card__text {
       // padding: 0 $base-padding / 2 $base-padding / 2;
-    } 
+    }
   }
 
   &.v-sheet.v-card, .v-dialog, .v-menu__content {
@@ -32,7 +32,7 @@ button::before {
   }
 
   &.v-text-field > .v-input__control > .v-input__slot:before {
-    border-color: $color-prime-semi;
+    border-color: $color-aba-blue-semi;
   }
 
   .v-text-field input {
@@ -54,6 +54,6 @@ button::before {
 
 ::selection {
   background-color: #eaf3ff !important;
-  color: $color-prime !important;
+  color: $color-aba-blue !important;
   text-shadow: none;
 }

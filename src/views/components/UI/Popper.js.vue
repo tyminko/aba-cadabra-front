@@ -3,7 +3,7 @@
     <transition :name="transitionName" @after-leave="doDestroy">
       <span ref="popper" v-show="!disabled && showPopper" class="popper">
         <span class="popper-content">
-          <slot/>
+          <slot :hide="hide"/>
         </span>
       </span>
     </transition>
@@ -447,7 +447,7 @@ export default {
 
   :root {
     --popper-bg-color: #{$color-bg};
-    --popper-border-color: #{$color-prime};
+    --popper-border-color: #{$color-aba-blue};
     --popper-text-color: #{$text-color};
     --popper-border-width: 2px;
     --popper-arrow-size: 12px;

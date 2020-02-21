@@ -21,7 +21,7 @@
       </span>
     </section>
     <section class="text-sm py-3 border-b border-aba-blue-semi">
-      Edit
+      <a class="block min-h-full cursor-pointer" @click.prevent="openEditor">Edit</a>
     </section>
     <section class="text-sm py-3 border-b border-aba-blue-semi">
       Hide
@@ -44,7 +44,12 @@ export default {
   computed: {},
 
   methods: {
+    openEditor () {
+      this.$emit('close')
+      this.$emit('open-editor')
+    },
     setSize (size) {
+      this.$emit('close')
       this.$emit('set-size', this.current === size ? '' : size)
     }
   }
@@ -79,7 +84,7 @@ export default {
       }
       &.active {
         i {
-          color: $color-prime;
+          color: $color-aba-blue;
           font-weight: 600;
         }
         &:before {

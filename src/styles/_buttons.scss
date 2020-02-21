@@ -1,9 +1,14 @@
+//noinspection CssInvalidAtRule
 button, .button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @apply h-3/4base flex items-center justify-center px-base rounded;
 
   &:focus {
-    color: $color-prime;
+    @apply text-aba-blue;
+  }
+  &:hover {
+    @apply text-aba-blue;
+  }
+  &:active {
+    @apply bg-gray-200;
   }
 }

@@ -95,7 +95,7 @@ export default {
     }
     .sliding-panel {
       width: 100%;
-      border: $border-thick-w solid $color-prime;
+      border: $border-thick-w solid $color-aba-blue;
       @include wider-then-phone {
         width: auto;
         margin-right: $base-padding / 2;
