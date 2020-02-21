@@ -15,6 +15,7 @@
     "firebase": "^7.5.1",
     "ftellipsis": "^0.2.3",
     "pica": "^5.1.0",
+    "tiptap": "^1.26.6",
     "vue": "^2.6.10",
     "vue-click-outside": "^1.0.7",
     "vue-expandable-text-line": "^2.0.4",

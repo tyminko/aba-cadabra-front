@@ -41,6 +41,10 @@ module.exports = {
       maxWidth: {
         'text': '35em'
       },
+      minHeight: {
+        'base': `${baseSize}rem`,
+        'x2': `${baseSize * 2}rem`
+      },
       borderWidth: {
         'xl': `${baseSize / 12}rem`
       }

@@ -112,29 +112,6 @@ export default {
       position: relative;
       width: 100%;
       max-width: min-content;
-      /*min-width: $basic-size * 2;
-      min-height: $basic-size * 2;
-      max-width: 100%;
-      max-height: 100%;
-      margin: 1rem;
-
-      border-radius: 3px;
-      overflow: hidden;
-
-      background: #fff;
-
-      transition: width 0.2s, height 0.2s;
-
-      header {
-        background: transparent !important;
-      }
-
-      .modal-content {
-        padding: 0 $basic-padding;
-
-        max-height: calc(100vh - #{($tag-inline-height + 2 * $basic-padding)});
-        overflow-y: auto;
-      }*/
     }
   }
 
