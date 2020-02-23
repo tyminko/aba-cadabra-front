@@ -2,32 +2,15 @@
   <popover-modal :open="open"
                  class="editor w-full max-w-text"
                  @close="close">
-    <form @submit.prevent="savePost"
-          class="post-editor pb-base">
+    <form @submit.prevent="savePost" class="post-editor pb-base">
       <div class="form-body px-base pb-base overflow-auto">
         <px-input v-model="postData.title"
                   :placeholder="`${type} title`"
                   class="xl"/>
-<!--        <px-input v-model="postData.content"-->
-<!--                  placeholder="Text"-->
-<!--                  type="textarea"/>-->
-        <label class="px-label">
+        <label class="px-label mb-0" :class="{focus:textEditorFocused}">
           <span>Content</span>
         </label>
-        <div class="toolbar h-2/3 flex justify-center sticky top-0 bg-white">
-          <button class="w-2/3base mr-sm" @click.stop="commandBold">
-            <i class="material-icons text-xl text-gray-600">format_bold</i>
-          </button>
-          <button class="w-2/3base mr-sm"><i class="material-icons text-xl text-gray-600">format_italic</i></button>
-          <button class="w-2/3base"><i class="material-icons text-xl text-gray-600">insert_link</i></button>
-        </div>
-          <div ref="content" contenteditable="true"
-               placeholder="Text"
-               class="editor min-h-base px-sm py-base focus:outline-none"
-               @input="updateContent">
-            text
-          </div>
-        <div v-html="postData.content"/>
+        <text-editor v-model="postData.content" @focus="textEditorFocused=true" @blur="textEditorFocused=false"/>
       </div>
       <footer class="flex h-base items-center justify-end px-sm">
         <button>Cancel</button>
@@ -54,10 +37,11 @@ tags: autocomplete (tags)
 <script>
 import PopoverModal from '../components/UI/PopoverModal'
 import PxInput from '../components/UI/inputs/PxInput'
+import TextEditor from '../components/UI/TextEditor'
 
 export default {
   name: 'PostEditor',
-  components: { PopoverModal, PxInput },
+  components: { PopoverModal, PxInput, TextEditor },
   props: {
     open: { type: Boolean, required: true },
     postId: { type: String, default: '' },
@@ -71,14 +55,15 @@ export default {
       date: '',
       endDate: '',
       status: '',
-      content: '',
+      content: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Reprehenderit officiis deleniti voluptate cupiditate minus veritatis eligendi dolorum itaque nulla tenetur dolores quaerat molestiae harum, nihil consequuntur reiciendis natus aut facere.',
       excerpt: '',
       gallery: '',
       countNumber: '',
       participants: '',
       supportedBy: '',
       tags: ''
-    }
+    },
+    textEditorFocused: false
   }),
 
   computed: {
@@ -94,12 +79,6 @@ export default {
   },
 
   methods: {
-    commandBold () {
-      document.execCommand('bold')
-    },
-    updateContent (e) {
-      this.$set(this.postData, 'content', this.$refs.content.innerHTML)
-    },
     savePost () {},
     close () {
       const allSave = true
@@ -111,21 +90,12 @@ export default {
 }
 </script>
 
+<!--suppress CssInvalidFunction -->
 <style lang="css">
   .form-body {
     max-height: calc(100vh - theme('padding.base') * 3 - theme('spacing.base') * 2);
   }
-  .editor:after {
-    content: '';
-    display: block;
-    width: 100%;
-    height: 0;
-    border-bottom: 1px solid theme('colors.aba-blue-semi');
-    position: sticky;
-    transform: translateY(theme('padding.base'));
-    bottom: 0;
-  }
-  .editor:focus:after {
-    @aply border-b-aba-blue;
+  .form-body .px-label.mb-0 {
+    @apply mb-0;
   }
 </style>

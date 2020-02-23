@@ -1,7 +1,6 @@
 <template>
   <transition name="fade">
     <div v-if="open"
-         v-click-outside="requestClose"
          class="popover-modal">
       <div class="modal-shadow" @click="requestClose"/>
       <div class="w-full h-full bg-white rounded-sm">

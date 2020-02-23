@@ -20,9 +20,9 @@ export default {
   name: 'Popper',
   props: {
     trigger: {
-      type: String,
+      type: [String, Boolean],
       default: 'click',
-      validator: value => ['click', 'hover'].indexOf(value) > -1
+      validator: value => (typeof value === 'boolean' || ['click', 'hover'].indexOf(value) > -1)
     },
     modifiers: { type: Array, default: () => ([]) },
     strategy: { type: String, default: '' },
@@ -63,9 +63,11 @@ export default {
         'cursor'
       ].includes(val)
     },
+    position: { type: Object, default: null },
     disabled: Boolean,
     noArrow: Boolean,
     arrowSize: { type: Number, default: 12 },
+    referenceSelector: { type: String, default: '' },
     boundariesSelector: { type: String, default: '' },
     boundariesPadding: { type: Number, default: 0 },
     delayOnMouseEnter: { type: Number, default: 100 },
@@ -80,7 +82,7 @@ export default {
     return {
       referenceEl: null,
       virtualReferenceEl: null,
-      popperJS: null,
+      popperInstance: null,
       showPopper: false,
       timer: null
     }
@@ -88,7 +90,9 @@ export default {
 
   computed: {
     triggerAction () {
-      return this.touchable ? 'click' : this.trigger
+      return typeof this.trigger === 'boolean'
+        ? null
+        : this.touchable ? 'click' : this.trigger
     },
 
     transitionName () {
@@ -141,6 +145,26 @@ export default {
   },
 
   watch: {
+    position (value) {
+      if (this.placement.startsWith('cursor-')) {
+        const { x, y } = value
+        this.updateVirtualReferenceEl(x, y)
+      }
+    },
+
+    async trigger (value) {
+      if (typeof this.trigger === 'boolean') {
+        if (value) {
+          this.show()
+          await this.$nextTick()
+          const { x, y } = this.position
+          this.updateVirtualReferenceEl(x, y)
+        } else {
+          this.hide()
+        }
+      }
+    },
+
     arrowSize () {
       this.setArrowSize()
     },
@@ -174,7 +198,11 @@ export default {
   },
 
   mounted () {
-    this.referenceEl = this.reference || this.$refs.reference
+    if (this.referenceSelector) {
+      this.referenceEl = document.querySelector(this.referenceSelector)
+    } else {
+      this.referenceEl = this.reference || this.$refs.reference
+    }
     this.popper = this.$refs.popper
     this.setArrowSize()
     this.setupListenersForTrigger(this.triggerAction)
@@ -203,9 +231,9 @@ export default {
 
     async show (e) {
       this.showPopper = true
-      if (this.placement.startsWith('cursor')) {
+      if (this.placement.startsWith('cursor') && typeof this.trigger !== 'boolean') {
         await this.$nextTick()
-        this.updateVirtualReferenceEl(e)
+        this.updateVirtualReferenceElOnEvent(e)
       }
     },
 
@@ -237,8 +265,6 @@ export default {
     removeListenersForTrigger (trigger) {
       const el = this.$refs['popper-root'] || null
       if (!el) return
-      // !!! DEBUG !!!
-      console.log(`%c removeListenersForTrigger() %c el: `, 'background:#ffbb00;color:#000', 'color:#00aaff', el)
       switch (trigger) {
         case 'click':
           el.removeEventListener('click', this.toggle)
@@ -275,9 +301,9 @@ export default {
         return
       }
 
-      if (this.popperJS) {
-        this.popperJS.destroy()
-        this.popperJS = null
+      if (this.popperInstance) {
+        this.popperInstance.destroy()
+        this.popperInstance = null
       }
 
       if (this.appendedToBody) {
@@ -296,20 +322,23 @@ export default {
         document.body.appendChild(this.popper.parentElement)
       }
 
-      if (this.popperJS && this.popperJS.destroy) {
-        this.popperJS.destroy()
+      if (this.popperInstance && this.popperInstance.destroy) {
+        this.popperInstance.destroy()
       }
 
-      if (this.placement.startsWith('cursor-')) {
-        this.virtualReferenceEl = {
-          getBoundingClientRect: this.generateGetBoundingClientRect()
+      if (this.placement.startsWith('cursor')) {
+        if (!this.virtualReferenceEl) {
+          this.virtualReferenceEl = {
+            getBoundingClientRect: this.generateGetBoundingClientRect()
+          }
         }
-        this.popperJS = createPopper(this.virtualReferenceEl, this.popper, this.popperOptions)
+        this.popperInstance = createPopper(this.virtualReferenceEl, this.popper, this.popperOptions)
+        window.addEventListener('resize', this.updateVirtualReferenceElOnEvent)
         this.getScrollableParents(this.$refs['popper-root'], []).forEach(el => {
-          el.addEventListener('scroll', this.updateVirtualReferenceEl)
+          el.addEventListener('scroll', this.updateVirtualReferenceElOnEvent)
         })
       } else {
-        this.popperJS = createPopper(this.referenceEl, this.popper, this.popperOptions)
+        this.popperInstance = createPopper(this.referenceEl, this.popper, this.popperOptions)
       }
     },
 
@@ -321,7 +350,7 @@ export default {
       if (this.placement.startsWith('cursor-')) {
         if (this.$refs['popper-root']) {
           this.getScrollableParents(this.$refs['popper-root'], []).forEach(el => {
-            el.removeEventListener('scroll', this.updateVirtualReferenceEl)
+            el.removeEventListener('scroll', this.updateVirtualReferenceElOnEvent)
           })
         }
       }
@@ -330,38 +359,51 @@ export default {
     },
 
     generateGetBoundingClientRect (x = 0, y = 0) {
-      let { height, width, top, right, bottom, left } = this.referenceEl.getBoundingClientRect()
+      const rect = this.referenceEl
+        ? this.referenceEl.getBoundingClientRect()
+        : { height: 0, width: 0, top: 0, right: 0, bottom: 0, left: 0 }
+
+      let { height, width, top, right, bottom, left } = rect
       switch (this.popperPlacementAxis) {
-        case 'x':
-          height = 0
-          top = y
-          bottom = y
-          break
-        case 'y':
-          width = 0
-          left = x
-          right = x
-          break
+        // case 'x':
+        //   height = 0
+        //   top = y
+        //   bottom = y
+        //   break
+        // case 'y':
+        //   width = 0
+        //   left = x
+        //   right = x
+        //   break
         default:
-          height = width = Math.min(height, width)
-          const half = height / 2
-          top = y - half
-          bottom = y + half
-          left = x - half
-          right = x + half
+          // height = width = Math.min(height, width)
+          // const half = height / 2
+          width = 0
+          height = 0
+          top = y // - half
+          bottom = y // + half
+          left = x // - half
+          right = x // + half
       }
       return () => ({ width, height, top, right, bottom, left })
     },
 
-    updateVirtualReferenceEl ({ clientX: x, clientY: y }) {
+    updateVirtualReferenceElOnEvent ({ clientX: x, clientY: y }) {
       if ((!x || !y)) {
         // if it happens on scroll
         const { top, right, bottom, left } = this.virtualReferenceEl.getBoundingClientRect()
         x = left + (right - left) / 2
         y = top + (bottom - top) / 2
       }
+      this.updateVirtualReferenceEl(x, y)
+    },
+
+    updateVirtualReferenceEl (x, y) {
+      if (!this.virtualReferenceEl) this.virtualReferenceEl = {}
       this.virtualReferenceEl.getBoundingClientRect = this.generateGetBoundingClientRect(x, y)
-      if (this.popperJS) this.popperJS.update()
+      if (this.popperInstance) {
+        this.popperInstance.update()
+      }
     },
 
     appendArrow (element) {
@@ -376,7 +418,7 @@ export default {
     },
 
     updatePopper () {
-      this.popperJS ? this.popperJS.update() : this.createPopper()
+      this.popperInstance ? this.popperInstance.update() : this.createPopper()
     },
 
     onMouseOver (e) {
@@ -384,7 +426,7 @@ export default {
       this._timer = setTimeout(async () => {
         this.showPopper = true
         await this.$nextTick()
-        this.updateVirtualReferenceEl(e)
+        this.updateVirtualReferenceElOnEvent(e)
       }, this.delayOnMouseEnter)
     },
 

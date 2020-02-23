@@ -3,33 +3,23 @@
     <span v-if="labelText" :class="labelVisible ? 'opacity-1' : 'opacity-0'">
       {{labelText}}
     </span>
-    <textarea v-if="type === `textarea`"
-              ref="input"
-              v-model="model"
-              v-input-auto-width="autoWidthOptions"
-              :placeholder="placeholderText"
-              class="px-input box-content"
-              @focus="onFocus"
-              @blur="onBlur">
-    </textarea>
-    <input v-else
-           ref="input"
-           :type="type"
-           v-model="model"
-           v-input-auto-width="autoWidthOptions"
-           :placeholder="placeholderText"
-           class="px-input"
-           @focus="onFocus"
-           @blur="onBlur">
+    <input-flex ref="input"
+                :type="type"
+                v-model="model"
+                :placeholder="placeholderText"
+                min-width="200"
+                class="px-input"
+                @focus="onFocus"
+                @blur="onBlur"/>
   </label>
 </template>
 
 <script>
-import inputAutoWidth from 'vue-input-autowidth'
+import InputFlex from './InputFlex'
 
 export default {
   name: 'PxInput',
-  directives: { inputAutoWidth },
+  components: { InputFlex },
   props: {
     value: String,
     type: { type: String, default: 'text' },
@@ -37,11 +27,7 @@ export default {
     label: String
   },
 
-  data: () => ({
-    defaultMinWidth: 96,
-    defaultComfortZone: 12,
-    minWidth: 240
-  }),
+  data: () => ({}),
 
   computed: {
     model: {
@@ -50,14 +36,6 @@ export default {
       },
       set (val) {
         this.$emit('input', val)
-      }
-    },
-
-    autoWidthOptions () {
-      return {
-        maxWidth: '100%',
-        minWidth: `${this.minWidth}px`,
-        comfortZone: this.type === 'textarea' ? 0 : this.defaultComfortZone
       }
     },
 
@@ -74,15 +52,9 @@ export default {
     }
   },
 
-  mounted () {
-    this.minWidth = this.placeholderWidth()
-  },
+  mounted () {},
 
-  watch: {
-    placeholder () {
-      this.minWidth = this.placeholderWidth()
-    }
-  },
+  watch: {},
 
   methods: {
     focus () {
@@ -95,15 +67,6 @@ export default {
 
     onBlur () {
       this.$el.classList.remove('focus')
-    },
-
-    placeholderWidth () {
-      if (!this.$refs.input) return
-      const val = this.$refs.input.value
-      this.$refs.input.value = this.placeholder
-      const { width } = window.getComputedStyle(this.$refs.input)
-      this.$refs.input.value = val
-      return width || this.defaultMinWidth
     }
   }
 }
@@ -111,9 +74,9 @@ export default {
 
 <!--suppress CssInvalidAtRule -->
 <style lang="css">
-  .px-label { @apply block mb-base; }
+  .px-label { @apply block mb-6; }
   .px-label  span {
-    @apply block pl-sm text-xs text-gray-600 capitalize transition-opacity duration-100;
+    @apply block relative -mb-2 pl-sm text-xs text-gray-600 capitalize transition-opacity duration-100 z-10;
   }
   .px-label.focus > span { @apply text-aba-blue; }
 

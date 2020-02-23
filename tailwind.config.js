@@ -4,6 +4,7 @@ module.exports = {
     extend: {
       colors: {
         'aba-blue': '#0000ff',
+        'aba-blue-dark': '#001776',
         'aba-blue-semi': 'rgba(0,61,255,0.44)',
         'shadow': 'rgba(0,0,0,0.2)',
         gray: {
@@ -30,6 +31,7 @@ module.exports = {
       },
       padding: {
         'base': `${baseSize / 3}rem`,
+        'xs': `${baseSize / 12}rem`,
         'sm': `${baseSize / 6}rem`,
         'xl': `${baseSize / 3 * 2}rem`
       },
@@ -47,6 +49,9 @@ module.exports = {
       },
       borderWidth: {
         'xl': `${baseSize / 12}rem`
+      },
+      boxShadow: {
+        soft: '0 2px 60px rgba(0, 0, 0, 0.05)'
       }
     }
   },
