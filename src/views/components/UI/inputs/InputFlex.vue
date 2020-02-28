@@ -18,18 +18,22 @@ export default {
     placeholder: String,
     type: { type: String, default: 'text' },
     minWidth: { type: [String, Number], default: 0 },
-    comfortZone: { type: [String, Number], default: 12 }
+    comfortZone: { type: [String, Number], default: 0 }
   },
 
   data: () => ({
+    tempValue: '',
     defaultMinWidth: 96,
     actualMinWidth: 0
   }),
 
   computed: {
     model: {
-      get () { return this.value },
-      set (val) { this.$emit('input', val) }
+      get () { return this.tempValue },
+      set (val) {
+        this.tempValue = val
+        this.$emit('input', val)
+      }
     },
     autoWidthOptions () {
       return {
@@ -41,12 +45,16 @@ export default {
   },
 
   watch: {
+    value (val) {
+      this.tempValue = val
+    },
     async placeholder () {
       this.actualMinWidth = this.minWidth || await this.placeholderWidth()
     }
   },
 
   async mounted () {
+    this.tempValue = this.value
     this.actualMinWidth = this.minWidth || await this.placeholderWidth()
   },
 

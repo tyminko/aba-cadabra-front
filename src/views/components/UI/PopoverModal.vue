@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import { scrollGuard } from '../../../lib/prvent-scroll-behind'
+import { bodyScrollGuard } from '../../../lib/control-body-scroll'
 import clickOutside from 'vue-click-outside'
 
 export default {
@@ -30,27 +30,25 @@ export default {
     allowClickOutside: true
   }),
 
-  computed: {},
-
-  watch: {
-    open (value) {
-      this.guardScrollOnOpenClose()
-      this.setAllowClickOutside()
-    }
-  },
-
   created () {
-    scrollGuard.init()
+    bodyScrollGuard.init()
     window.addEventListener('keydown', e => {
       if (e.key === 'Escape' || e.keyCode === 27) {
-        this.requestClose()
+        this.$emit('esc', e)
       }
     })
   },
 
   mounted () {
-    this.guardScrollOnOpenClose()
+    this.setBodyScroll(this.open)
     this.setAllowClickOutside()
+  },
+
+  watch: {
+    open (value) {
+      this.setBodyScroll(value)
+      this.setAllowClickOutside()
+    }
   },
 
   methods: {
@@ -60,12 +58,16 @@ export default {
       }
     },
 
-    guardScrollOnOpenClose () {
-      if (this.open) {
-        scrollGuard.onShowModal()
+    setBodyScroll (on) {
+      if (on) {
+        bodyScrollGuard.releaseBodyScroll()
       } else {
-        scrollGuard.onCloseModal()
+        bodyScrollGuard.freezeBodyScroll()
       }
+    },
+
+    releaseBgScroll () {
+      this.setBodyScroll(true)
     },
 
     setAllowClickOutside () {

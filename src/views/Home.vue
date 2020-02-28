@@ -19,18 +19,20 @@
                 </span>
               </template>
               <template v-slot:default="{hide}">
-                <post-editor-palette :current="cellSize(id)"
-                                     @close="hide"
-                                     @set-size="setCellSize(id, $event)"
-                                     @open-editor="openEditor(post.postId)"/>
+                <post-editor-palette
+                  :current="cellSize(id)"
+                  @close="hide"
+                  @set-size="setCellSize(id, $event)"
+                  @open-editor="openEditor(post.postType, post.postId)"/>
               </template>
             </popper>
           </div>
           <h1 class="mt-1">{{post.title}}</h1>
           <div class="mt-1">{{formatDate(post.date)}}</div>
         </header>
-        <div v-if="post.thumbnail && post.thumbnail.mime.startsWith('image')"
-             class="thumbnail-box flex-grow min-h-0">
+        <div
+          v-if="post.thumbnail && post.thumbnail.mime.startsWith('image')"
+          class="thumbnail-box flex-grow min-h-0">
           <!--suppress HtmlUnknownTarget -->
           <img :src="thumbnailUrl(post)" @load="formatText(id)">
         </div>
@@ -40,13 +42,19 @@
         </div>
       </div>
     </div>
-    <post-editor v-if="adminOrEditor" :open="shouldOpenEditor" @close="shouldOpenEditor=false" :post-id="editorPostId"/>
+    <post-editor
+      v-if="adminOrEditor && shouldOpenEditor"
+      :open="shouldOpenEditor"
+      :post-id="editorPostId"
+      :type="editorPostType"
+      @close="closeEditor"/>
   </div>
 </template>
 
 <script>
 import { db } from '../lib/firebase'
 import { mapState } from 'vuex'
+import * as date from '../lib/date'
 import Ftellipsis from 'ftellipsis'
 import Popper from './components/UI/Popper.js'
 import PostEditorPalette from './editor/PostEditorPalette'
@@ -61,7 +69,8 @@ export default {
     feed: {},
     unsubscribe: null,
     shouldOpenEditor: false,
-    editorPostId: null
+    editorPostId: null,
+    editorPostType: null
   }),
 
   computed: {
@@ -79,6 +88,12 @@ export default {
   },
 
   methods: {
+    closeEditor () {
+      this.shouldOpenEditor = false
+      this.editorPostId = null
+      this.editorPostType = null
+    },
+
     thumbnailUrl (post) {
       return post.cardSize
         ? post.thumbnail.full.url || post.thumbnail.preview.url
@@ -103,16 +118,14 @@ export default {
       return ''
     },
 
-    openEditor (postId) {
+    openEditor (postType, postId) {
       this.editorPostId = postId
+      this.editorPostType = postType
       this.shouldOpenEditor = true
     },
 
     formatDate (timestamp) {
-      return new Date(timestamp).toLocaleDateString('de-DE', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric' })
+      return date.format(timestamp)
     },
 
     postType (string) {

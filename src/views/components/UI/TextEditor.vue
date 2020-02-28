@@ -1,6 +1,7 @@
 <template>
   <div class="text-editor transition-opacity">
     <editor-menu-bubble
+      ref="menu-host"
       :editor="editor"
       :keep-in-bounds="false"
       v-slot="{ commands, isActive, getMarkAttrs, menu }">
@@ -12,7 +13,7 @@
         boundaries-selector="body"
         :position="convertMenuToPopperPosition(menu)"
         class="menu-bubble">
-        <div class="menu flex items-center">
+        <div ref="menu-content" :id="menuId" class="menu flex items-center">
           <button :class="{ active: isActive.bold() }" @click="commands.bold">
             <i class="material-icons text-xl text-gray-100">format_bold</i>
           </button>
@@ -60,6 +61,7 @@
 <script>
 import { Editor, EditorContent, EditorMenuBubble } from 'tiptap'
 import { Bold, Italic, Link, History } from 'tiptap-extensions'
+import simpleID from '../../../lib/simpleID'
 import InputFlex from './inputs/InputFlex'
 import Popper from './Popper.js'
 import inputAutoWidth from 'vue-input-autowidth'
@@ -76,9 +78,9 @@ export default {
   data: () => ({
     linkUrl: null,
     linkMenuIsActive: false,
-    keepInBounds: true,
     editor: null,
-    toolbarVisible: false
+    emitAfterOnUpdate: false,
+    menuId: simpleID()
   }),
 
   computed: {
@@ -96,23 +98,61 @@ export default {
         new History()
       ]
     })
+
     this.editor.on('update', ({ getHTML }) => {
+      this.emitAfterOnUpdate = true
       this.$emit('input', getHTML())
     })
-    this.editor.on('focus', this.onFocus)
-    this.editor.on('blur', this.onBlur)
-  },
 
-  methods: {
-    onFocus () {
+    this.editor.on('focus', () => {
       if (!this.$refs['editor-content']) return
       this.$refs['editor-content'].$el.classList.add('focus')
       this.$emit('focus')
-    },
-    onBlur () {
+    })
+
+    this.editor.on('blur', () => {
       if (!this.$refs['editor-content']) return
       this.$refs['editor-content'].$el.classList.remove('focus')
       this.$emit('blur')
+    })
+  },
+
+  mounted () {
+    window.addEventListener('keydown', this.onEsc)
+    this.getScrollableParents(this.$refs['menu'].$el, []).forEach(el => {
+      el.addEventListener('scroll', this.hideMenu)
+    })
+  },
+
+  watch: {
+    value (newValue) {
+      if (this.emitAfterOnUpdate) {
+        this.emitAfterOnUpdate = false
+        return
+      }
+      if (this.editor) this.editor.setContent(newValue)
+    }
+  },
+
+  methods: {
+    /**
+     * @param {Event} e
+     */
+    onEsc (e) {
+      if (e.key === 'Escape' || e.keyCode === 27) {
+        if (this.$refs['menu-host'] && this.$refs['menu-host'].menu.isActive) {
+          e.stopImmediatePropagation()
+          this.hideMenu()
+          return true
+        }
+      }
+    },
+
+    hideMenu () {
+      if (this.$refs['menu-host']) {
+        this.hideLinkMenu()
+        this.$refs['menu-host'].menu.isActive = false
+      }
     },
 
     showLinkMenu (attrs) {
@@ -122,10 +162,12 @@ export default {
         this.$refs.linkInput.focus()
       })
     },
+
     hideLinkMenu () {
       this.linkUrl = null
       this.linkMenuIsActive = false
     },
+
     setLinkUrl (command, url) {
       command({ href: url })
       this.hideLinkMenu()
@@ -139,17 +181,34 @@ export default {
       if (this.$refs['editor-content']) {
         const el = this.$refs['editor-content'].$el
         const rect = el.offsetParent.getBoundingClientRect()
-        return { x: rect.x + left, y: (rect.bottom - bottom) + 10 }
+        return { x: rect.x + left, y: (rect.bottom - bottom) + 2 }
       }
+    },
+    /**
+     * @param {HTMLElement} el
+     * @param {HTMLElement[]=} parents
+     * @return {HTMLElement[]}
+     */
+    getScrollableParents (el, parents = []) {
+      const { position, overflow, overflowY, overflowX } = window.getComputedStyle(el)
+      if (/(auto|scroll)/.test(overflow + overflowY + overflowX)) {
+        parents = [...parents, el]
+      }
+      if (position !== 'fixed' && el.parentElement && el.parentElement instanceof Element) {
+        parents = this.getScrollableParents(el.parentElement, parents)
+      }
+      return parents
     }
   },
 
   beforeDestroy () {
     this.editor.destroy()
+    window.removeEventListener('keydown', this.onEsc)
   }
 }
 </script>
 
+<!--suppress CssInvalidAtRule, CssInvalidFunction -->
 <style lang="css">
   .text-area:after {
     content: '';
@@ -180,6 +239,7 @@ export default {
     @apply px-sm;
   }
 </style>
+<!--suppress CssInvalidAtRule -->
 <style lang="scss">
   .text-editor {
     .ProseMirror {

@@ -21,18 +21,12 @@ a {
     text-decoration: underline;
   }
 }
+
+p {
+  margin-bottom: 1em;
+}
+
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 @import "autofill";
 @import "buttons";
-
-//@import "anti-vuetify";
-//
-
-//html {
-//  font-size: 100%;
-//}
-//
-//.dimmed {
-//  color: $color-dimmed;
-//}

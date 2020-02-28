@@ -1,6 +1,6 @@
 //noinspection CssInvalidAtRule
 button, .button {
-  @apply h-3/4base flex items-center justify-center px-base rounded;
+  @apply h-3/4base flex items-center justify-center px-base;
 
   &:focus {
     @apply text-aba-blue;
@@ -9,10 +9,28 @@ button, .button {
     @apply text-aba-blue;
   }
   &:active {
-    @apply bg-gray-200;
+    @apply bg-gray-200 rounded-3/8base;
   }
   &:disabled {
     pointer-events: none;
     opacity: 0.5;
+  }
+
+  &.compact {
+    @apply w-3/4base px-0;
+  }
+
+  &.large {
+    @apply h-base w-base;
+    &:active {
+      @apply rounded-1/2base;
+    }
+  }
+
+  &.rounded {
+    @apply rounded-3/8base;
+    &.large {
+      @apply rounded-1/2base;
+    }
   }
 }

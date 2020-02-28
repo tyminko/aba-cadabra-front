@@ -1,16 +1,25 @@
 <template>
-  <label class="px-label">
-    <span v-if="labelText" :class="labelVisible ? 'opacity-1' : 'opacity-0'">
+  <label class="px-label" :class="{error}">
+    <span v-if="labelText" class="label" :class="labelVisible ? 'opacity-1' : 'opacity-0'">
       {{labelText}}
     </span>
-    <input-flex ref="input"
-                :type="type"
-                v-model="model"
-                :placeholder="placeholderText"
-                min-width="200"
-                class="px-input"
-                @focus="onFocus"
-                @blur="onBlur"/>
+    <span class="flex items-center">
+      <slot>
+        <input-flex
+          ref="input"
+          :type="type"
+          v-model="model"
+          :placeholder="placeholderText"
+          :min-width="minWidth"
+          :class="{error}"
+          class="px-input"
+          @focus="onFocus"
+          @blur="onBlur"/>
+      </slot>
+      <slot name="add-on" />
+    </span>
+    <span v-if="errorText" class="px-sm text-xs text-red-700">{{errorText}}</span>
+    <span v-else class="desc px-sm text-xs text-gray-500"><slot name="desc"/></span>
   </label>
 </template>
 
@@ -24,10 +33,17 @@ export default {
     value: String,
     type: { type: String, default: 'text' },
     placeholder: String,
-    label: String
+    label: String,
+    minWidth: { type: [String, Number], default: 200 },
+    error: [String, Boolean],
+    lazy: Boolean
   },
 
-  data: () => ({}),
+  data: () => ({
+    lazyValue: '',
+    lazyDelay: 1000,
+    lazyTimeout: null
+  }),
 
   computed: {
     model: {
@@ -35,7 +51,16 @@ export default {
         return this.value
       },
       set (val) {
-        this.$emit('input', val)
+        if (this.lazy) {
+          clearTimeout(this.lazyTimeout)
+          this.lazyValue = val
+          this.lazyTimeout = setTimeout(() => {
+            this.$emit('input', val)
+            this.lazyValue = ''
+          }, this.lazyDelay)
+        } else {
+          this.$emit('input', val)
+        }
       }
     },
 
@@ -49,6 +74,10 @@ export default {
 
     labelVisible () {
       return !!this.model
+    },
+
+    errorText () {
+      return this.error && typeof this.error === 'string' ? this.error : ''
     }
   },
 
@@ -57,6 +86,10 @@ export default {
   watch: {},
 
   methods: {
+    onChange (val) {
+      this.$el.classList.remove('change', val)
+    },
+
     focus () {
       this.$refs.input.focus()
     },
@@ -67,6 +100,12 @@ export default {
 
     onBlur () {
       this.$el.classList.remove('focus')
+      if (this.lazy) {
+        clearTimeout(this.lazyTimeout)
+        this.$emit('input', this.lazyValue)
+        this.lazyValue = ''
+      }
+      this.$emit('blur')
     }
   }
 }
@@ -75,10 +114,12 @@ export default {
 <!--suppress CssInvalidAtRule -->
 <style lang="css">
   .px-label { @apply block mb-6; }
-  .px-label  span {
-    @apply block relative -mb-2 pl-sm text-xs text-gray-600 capitalize transition-opacity duration-100 z-10;
+  .px-label  span.label {
+    @apply block relative -mb-1 pl-sm text-xs text-gray-600 capitalize transition-opacity duration-100 z-10;
   }
-  .px-label.focus > span { @apply text-aba-blue; }
+  .px-label.focus > .label { @apply text-aba-blue; }
+  .px-label.error > .label { @apply text-red-500; }
+  .px-label.error.focus > .label{ @apply text-red-700; }
 
   .px-input {
     @apply h-2/3base py-0 px-sm border-aba-blue-semi border-b;
@@ -86,11 +127,18 @@ export default {
     max-width: calc(100% - theme('padding.sm') * 2) !important;
     text-overflow: ellipsis;
   }
-
   .px-input::placeholder {
     @apply italic capitalize font-light text-gray-400;
   }
+  .px-input.error {
+    @apply text-aba-blue border-red-300;
+  }
+  .px-input.error::placeholder {
+    @apply text-red-400;
+  }
   .px-input:focus { @apply text-aba-blue border-aba-blue; }
+  .px-input.error { @apply text-red-500 border-red-500; }
+  .px-input.error:focus { @apply text-red-700 border-red-600; }
 
   .px-label.xl .px-input { @apply h-base text-xl; }
 </style>

@@ -2,6 +2,9 @@ const baseSize = 3 // rem
 module.exports = {
   theme: {
     extend: {
+      screens: {
+        text: '35em'
+      },
       colors: {
         'aba-blue': '#0000ff',
         'aba-blue-dark': '#001776',
@@ -26,6 +29,8 @@ module.exports = {
         '1/2base': `${baseSize / 2}rem`,
         '2/3base': `${baseSize / 3 * 2}rem`,
         '3/4base': `${baseSize * 0.75}rem`,
+        '5/6base': `${baseSize / 6 * 5}rem`,
+        '3/8base': `${baseSize * 0.375}rem`,
         'x2': `${baseSize * 2}rem`,
         'x3': `${baseSize * 3}rem`
       },
@@ -37,11 +42,15 @@ module.exports = {
       },
       margin: {
         'base': `${baseSize / 3}rem`,
+        '-base': `-${baseSize / 3}rem`,
         'sm': `${baseSize / 6}rem`,
-        'xl': `${baseSize / 3 * 2}rem`
+        '-sm': `-${baseSize / 6}rem`,
+        'xl': `${baseSize / 3 * 2}rem`,
+        '-xl': `-${baseSize / 3 * 2}rem`
       },
       maxWidth: {
-        'text': '35em'
+        'text': '35em',
+        '5/6base': `${baseSize / 6 * 5}rem`
       },
       minHeight: {
         'base': `${baseSize}rem`,
@@ -50,11 +59,20 @@ module.exports = {
       borderWidth: {
         'xl': `${baseSize / 12}rem`
       },
+      borderRadius: {
+        '1/2base': `${baseSize * 0.5}rem`,
+        '3/8base': `${baseSize * 0.375}rem`,
+        '1/2': '50%'
+      },
       boxShadow: {
         soft: '0 2px 60px rgba(0, 0, 0, 0.05)'
       }
     }
   },
-  variants: {},
+  variants: {
+    extend: {
+      backgroundColor: ['responsive', 'hover', 'focus', 'before']
+    }
+  },
   plugins: []
 }

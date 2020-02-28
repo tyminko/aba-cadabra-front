@@ -1,7 +1,7 @@
 <template>
   <span ref="popper-root">
     <transition :name="transitionName" @after-leave="doDestroy">
-      <span ref="popper" v-show="!disabled && showPopper" class="popper">
+      <span v-if="!disabled && showPopper" ref="popper" :id="id" class="popper">
         <span class="popper-content">
           <slot :hide="hide"/>
         </span>
@@ -14,6 +14,7 @@
 </template>
 
 <script>
+import simpleID from '../../../lib/simpleID'
 import { createPopper } from '@popperjs/core'
 
 export default {
@@ -69,7 +70,7 @@ export default {
     arrowSize: { type: Number, default: 12 },
     referenceSelector: { type: String, default: '' },
     boundariesSelector: { type: String, default: '' },
-    boundariesPadding: { type: Number, default: 0 },
+    boundariesPadding: { type: [String, Number], default: 0 },
     delayOnMouseEnter: { type: Number, default: 100 },
     delayOnMouseLeave: { type: Number, default: 200 },
     forceShow: Boolean,
@@ -84,7 +85,8 @@ export default {
       virtualReferenceEl: null,
       popperInstance: null,
       showPopper: false,
-      timer: null
+      timer: null,
+      id: simpleID()
     }
   },
 
@@ -169,11 +171,15 @@ export default {
       this.setArrowSize()
     },
 
-    showPopper (value) {
+    async showPopper (value) {
       if (value) {
-        this.$emit('show', this)
+        await this.$nextTick()
+        this.popper = this.$refs.popper
         this.updatePopper()
+        this.$emit('toggle', true)
+        this.$emit('show', this)
       } else {
+        this.$emit('toggle', false)
         this.$emit('hide', this)
       }
     },
@@ -239,10 +245,11 @@ export default {
 
     hide () {
       this.showPopper = false
+      this.appendedArrow = false
     },
 
     setupListenersForTrigger (trigger) {
-      const el = this.$refs.reference || null
+      const el = this.referenceEl || this.$refs.reference || null
       if (!el) return
       switch (trigger) {
         case 'click':
@@ -294,6 +301,7 @@ export default {
 
     doClose () {
       this.showPopper = false
+      this.appendedArrow = false
     },
 
     doDestroy () {
@@ -355,6 +363,7 @@ export default {
         }
       }
       this.showPopper = false
+      this.appendedArrow = false
       this.doDestroy()
     },
 
@@ -438,10 +447,11 @@ export default {
     },
 
     hideOnClickOutside (e) {
-      if (!this.$el || !this.referenceEl ||
+      if (!this.$refs.popper ||
+          !this.$el || !this.referenceEl ||
           this.elementContains(this.$el, e.target) ||
           this.elementContains(this.referenceEl, e.target) ||
-          !this.popper || this.elementContains(this.popper, e.target)
+          this.elementContains(this.$refs.popper, e.target)
       ) {
         return
       }
@@ -554,7 +564,7 @@ export default {
   .popper {
     max-width: calc(100% - #{$base-padding * 2});
     max-height: 100%;
-    padding: $base-padding * 0.8 $base-padding;
+    @apply p-base;
 
     width: auto;
     background-color: var(--popper-bg-color);

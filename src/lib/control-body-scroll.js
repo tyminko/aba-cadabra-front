@@ -1,13 +1,13 @@
-export const scrollGuard = {
+export const bodyScrollGuard = {
   scrollY: 0,
   lastScrollY: 0,
-  onShowModal () {
+  freezeBodyScroll () {
     this.lastScrollY = this.scrollY
     const body = document.body
     body.style.position = 'fixed'
     body.style.top = `-${this.lastScrollY}px`
   },
-  onCloseModal () {
+  releaseBodyScroll () {
     const body = document.body
     body.style.position = ''
     body.style.top = ''
