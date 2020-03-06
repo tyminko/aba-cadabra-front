@@ -10,7 +10,7 @@
       <span
         ref="caption-text"
         :contenteditable="startEditing"
-        class="caption-text leading-tight text-sm inline-block min-w-1/8base"
+        class="caption-text leading-tight text-sm inline-block min-w-full"
         @keydown.enter="finishCaptionEditing"
         @keydown.esc="onEsc">
         {{caption||''}}
@@ -53,7 +53,7 @@ export default {
   methods: {
     toggleCaptionEditor () {
       if (this.startEditing) {
-        this.closeEditor()
+        this.finishCaptionEditing()
       } else {
         this.openEditor()
       }
@@ -75,8 +75,8 @@ export default {
       this.$refs.caption.collapse()
     },
 
-    finishCaptionEditing (e) {
-      this.caption = e.target.textContent.trim()
+    finishCaptionEditing () {
+      this.caption = this.$refs['caption-text'].textContent.trim()
       this.closeEditor()
     },
 
