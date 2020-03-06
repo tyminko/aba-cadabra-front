@@ -14,7 +14,7 @@
 </template>
 
 <script>
-import simpleID from '../../../lib/simpleID'
+import simpleID from '../../../lib/simpleId'
 import { createPopper } from '@popperjs/core'
 
 export default {

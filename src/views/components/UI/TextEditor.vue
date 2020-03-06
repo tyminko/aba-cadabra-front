@@ -61,7 +61,7 @@
 <script>
 import { Editor, EditorContent, EditorMenuBubble } from 'tiptap'
 import { Bold, Italic, Link, History } from 'tiptap-extensions'
-import simpleID from '../../../lib/simpleID'
+import simpleID from '../../../lib/simpleId'
 import InputFlex from './inputs/InputFlex'
 import Popper from './Popper.js'
 import inputAutoWidth from 'vue-input-autowidth'

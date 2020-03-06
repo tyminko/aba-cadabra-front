@@ -100,6 +100,14 @@ export default {
         : post.thumbnail.preview.url || post.thumbnail.full.url
     },
 
+    thumbnailObjectPlacement (boxEl) {
+      const pointOfInterest = { x: 0.2, y: 0.2 }
+      const imageW = 512
+      const boxW = 215
+      const x = Math.min(Math.max(boxW / 2 - imageW * pointOfInterest.x, boxW - imageW), 0)
+      return x + 'px'
+    },
+
     async formatText (id) {
       if (this.$refs[`feed-text-${id}`]) {
         await this.$nextTick()

@@ -1,52 +1,16 @@
 import Firebase from 'firebase/app'
 import { storage } from './firebase'
+import { toSlug } from './string'
+import simpleId from './simpleId'
 import ImageLib from './image'
+// import { FileData, ImageData, KnownAttachmentSizes } from './storage'
 
-/**
- * @typedef {{w:number, h:number}} Dimensions
- *
- * @typedef {{
- *  raw?: HTMLCanvasElement
- *  blob?: Blob
- *  dimensions: Dimensions
- *  url: string
- * }} ImageData
- *
- * @typedef {Object<string, ImageData>} ImageSizeTypes
- *
- * @typedef {ImageSizeTypes & {
- *  order: number
- *  caption: string
- * }} PostImageData
- *
- *
- * @typedef {PostImageData? & {
- *  id?: string
- *  delited?: boolean
- * }} ImageAttachment
- *
- *
- * @typedef {*? & {
- *  file: Blob|File
- *  image?: HTMLImageElement
- * }} Attachment
- *
- *
- * @typedef {{
- *  sizeType: string
- *  blob: Blob
- *  name: string
- *  dimensions: Dimensions
- *  attachment: Attachment
- *  }} UploadStruct
- *
- * @typedef {{
- *  uploadData: UploadStruct
- *  url: string
- * }} UploadedFileData
- */
+const imageSizeTypes = {
+  full: 2048,
+  preview: 512
+}
 
-const imageSizeTypes = { full: 2048, preview: 512 }
+const alwaysUploadOriginalImage = false
 
 const mimeExtension = {
   'image/gif': 'gif',
@@ -63,44 +27,96 @@ const mimeExtension = {
 
 const possibleExtensions = ['gif', 'jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'mp3', 'm4a', 'mp4', 'mov']
 
-const stringIsExtension = string => {
-  return string === 'gif' || string === 'jpg' || string === 'png'
+/**
+ * @param {File} file
+ * @return {boolean}
+ */
+export function isSupportedImage (file) {
+  return file.type.startsWith('image') && isSupportedFormat(file)
 }
 
 /**
- * @return {string}
+ * @param {File} file
+ * @return {boolean}
  */
-export function uniqueId () {
-  return Date.now().toString().substr(-7) + Math.random().toString(36).substr(2, 9) + Math.random().toString(36).substr(2, 9)
+export function isSupportedFormat (file) {
+  return mimeExtension.hasOwnProperty(file.type)
+}
+
+export function fileToRawAttachment (file) {
+  return {
+    id: simpleId(),
+    file,
+    type: file.type,
+    image: null,
+    srcSet: null,
+    order: null,
+    caption: null,
+    pointOfInterest: null,
+    progress: 0,
+    err: null
+  }
 }
 
 /**
- * @param {Blob} blob
- * @param {string} name
- * @param {string} sizeType
- * @param {Dimensions} dimensions
- * @param {Object} attachment
- * @return {UploadStruct}
+ * @param {string} userId
+ * @param {RawAttachment[]} attachments
+ * @param {function(string, number): void} progressFn
+ * @return {Promise<PostAttachment[] | never>}
  */
-export function uploadStruct (blob, name, sizeType, dimensions, attachment) {
-  return { blob, name, sizeType, dimensions, attachment }
+export function upload (userId, attachments, progressFn) {
+  return Promise.all(attachments.map(attachment => {
+    const baseName = attachment.file ? `${attachment.id}-${toSlug(attachment.file.name)}` : ''
+    return thingsToUploadForAttachment(attachment)
+      .then(thingsToUpload => {
+        const attachmentProgress = {
+          max: thingsToUpload.length * 100,
+          total: 0,
+          parts: {}
+        }
+        return Promise.all(thingsToUpload.map(/** @type DataToUpload */ dataToUpload => {
+          const sizeType = dataToUpload.sizeType
+          const path = filePath(userId, baseName, sizeType, dataToUpload.blob.type)
+          return put(path, dataToUpload, (id, progress) => {
+            attachmentProgress.parts[sizeType] = progress
+            const sum = Object.values(attachmentProgress.parts).reduce((r, p) => r + p)
+            progressFn(id, sum / attachmentProgress.max * 100)
+          })
+        }))
+      })
+  }))
+    .then(/** @type UploadedData[][] */ uploadedAttachments => {
+      const attachments = uploadedAttachments.reduce((attachments, uploadedDataBySize) => {
+        uploadedDataBySize.forEach(uploadedData => {
+          const id = uploadedData.rawAttachment.id
+          if (!attachments.hasOwnProperty(id)) {
+            const { type, order, caption, pointOfInterest } = uploadedData.rawAttachment
+            attachments[id] = { id, type, order, caption, pointOfInterest, srcSet: {} }
+          }
+          const { url, sizeType, dimensions, blob } = uploadedData
+          attachments[id].srcSet[sizeType] = { dimensions, url, size: blob.size }
+        })
+        return attachments
+      }, {})
+      return Object.values(attachments).sort((a, b) => a.order - b.order)
+    })
 }
 
 /**
  * @param {string} path
- * @param {UploadStruct} uploadStruct
+ * @param {DataToUpload} dataToUpload
  * @param {function(string, number): void} progressFn
- * @return {Promise<UploadedFileData>}
+ * @return {Promise<UploadedData|never>}
  */
-function put (path, uploadStruct, progressFn) {
-  const uploadTask = storage.ref(path).put(uploadStruct.blob, { contentType: uploadStruct.blob.type })
+function put (path, dataToUpload, progressFn) {
+  const uploadTask = storage.ref(path).put(dataToUpload.blob, { contentType: dataToUpload.blob.type })
   return new Promise((resolve, reject) => {
     uploadTask.on(Firebase.storage.TaskEvent.STATE_CHANGED,
       snapshot => {
         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
         // console.log('Upload is ' + progress + '% done')
         if (progressFn) {
-          progressFn(uploadStruct.attachment.id, progress)
+          progressFn(dataToUpload.rawAttachment.id, progress)
         }
         switch (snapshot.state) {
           case Firebase.storage.TaskState.PAUSED:
@@ -113,98 +129,152 @@ function put (path, uploadStruct, progressFn) {
       },
       error => reject(error),
       () => resolve(uploadTask.snapshot))
-  }).then(snapshot => {
-    // console.log('New pic uploaded. Size:', snapshot.totalBytes, 'bytes.')
-    return snapshot.ref.getDownloadURL().then(url => {
-      // console.log('File available at', url)
-      return { uploadData: uploadStruct, url }
-    })
   })
-}
-
-/**
- * @param {string} userId
- * @param {PostImageData[]} attachments
- * @param {function(string, number): void} progressFn
- * @return {Promise<Object<string, PostImageData> | never>}
- */
-export function upload (userId, attachments, progressFn) {
-  return Promise.all(attachments.map(attachment => {
-    return thingsToUploadForAttachment(attachment)
-      .then(thingsToUpload => {
-        const totalProgress = {
-          max: thingsToUpload.length * 100,
-          total: 0,
-          parts: {}
-        }
-        return Promise.all(thingsToUpload.map(uploadStruct => {
-          const name = uploadStruct.name
-          const type = uploadStruct.sizeType
-          const path = filePath(userId, name, type, uploadStruct.blob.type)
-          return put(path, uploadStruct, (id, progress) => {
-            totalProgress.parts[type] = progress
-            const sum = Object.values(totalProgress.parts).reduce((r, p) => r + p)
-            progressFn(id, sum / totalProgress.max * 100)
-          })
-        }))
-      })
-  }))
-    .then(uploadedAttachments => {
-      return uploadedAttachments.reduce((res, uploadedSizeTypes) => {
-        uploadedSizeTypes.forEach(sizeData => {
-          const { name, sizeType, dimensions } = sizeData.uploadData
-          if (!res.hasOwnProperty(name)) {
-            // const { caption = '', order = 0, } = sizeData.uploadData.attachment
-            res[name] = { attachment: sizeData.uploadData.attachment }
-          }
-          if (sizeType) {
-            res[name][sizeType] = { dimensions, url: sizeData.url }
-          } else {
-            res[name].file = { url: sizeData.url }
-          }
-        })
-        return res
-      }, {})
+    .then(snapshot => {
+      return snapshot.ref.getDownloadURL()
+    })
+    .then(url => {
+      return { ...dataToUpload, url }
     })
 }
 
 /**
  * @param {string} userId
- * @param {string} attachmentId
- * @param {string} size
+ * @param {string} baseName
+ * @param {string} sizeStr
  * @param {string} mimeType
  * @return {string}
  */
-function filePath (userId, attachmentId, size, mimeType) {
-  let extension = ''
-  if (!possibleExtensions.includes(attachmentId.split('.').pop())) {
-    extension = stringIsExtension(mimeType) ? mimeType : mimeExtension[mimeType] || ''
-  } else {
-    const parts = attachmentId.split('.')
-    extension = parts.pop()
-    attachmentId = parts.join('.')
+function filePath (userId, baseName, sizeStr, mimeType) {
+  const parts = baseName.split('.')
+  const suffix = parts.pop()
+  let extension
+  if (parts.length && possibleExtensions.includes(suffix)) {
+    extension = suffix
+    baseName = parts.join('.')
   }
-  return `${userId}/${attachmentId}` + (size && size !== 'original' ? `-${size}` : '') + (extension ? `.${extension}` : '')
+  if (!extension) {
+    extension = possibleExtensions.includes(mimeType) ? mimeType : mimeExtension[mimeType] || ''
+  }
+  extension = extension ? `.${extension}` : ''
+  const sizeSuffix = sizeStr && sizeStr !== 'original' ? `-${sizeStr}` : ''
+  return userId + '/' + baseName + sizeSuffix + extension
 }
 
 /**
- * @param {Object<string, PostImageData>} attachmentsToDelete
- * @return {Promise<any | never>}
+ * @param {RawAttachment} attachment
+ * @return {Promise<DataToUpload[]>|[]}
+ */
+async function thingsToUploadForAttachment (attachment) {
+  if (!attachment.file) return []
+  if (!attachment.image) {
+    attachment.image = await ImageLib.imageFromFile(attachment.file)
+  }
+  const mimeType = attachment.file.type
+
+  if (mimeType.startsWith('image/') && mimeType !== 'image/gif') { // not supporting gif resizing yet
+    const sizeKeys = Object.keys(imageSizeTypes)
+    const resizeKeys = sizeKeys.filter(sizeStr => {
+      const s = imageSizeTypes[sizeStr]
+      return attachment.image.width >= s || attachment.image.height >= s
+    })
+    if (resizeKeys.length !== sizeKeys.length || alwaysUploadOriginalImage) {
+      resizeKeys.push('original')
+    }
+    return Promise.all(resizeKeys.map(sizeKey => {
+      return dataToUploadForImgSize(sizeKey, attachment, mimeType)
+    }))
+  } else {
+    const origData = { sizeType: 'original', blob: attachment.file }
+    if (mimeType === 'image/gif') {
+      origData.dimensions = { w: attachment.image.width, h: attachment.image.height }
+    }
+    return Promise.resolve(origData)
+  }
+}
+
+/**
+ * @param {RawAttachment} rawAttachment
+ * @param {string} sizeType
+ * @param {string} mimeType
+ * @return {Promise<DataToUpload|null>}
+ */
+async function dataToUploadForImgSize (sizeType, rawAttachment, mimeType) {
+  if (rawAttachment.srcSet &&
+      rawAttachment.srcSet.hasOwnProperty(sizeType) &&
+      rawAttachment.srcSet[sizeType].blob &&
+      rawAttachment.srcSet[sizeType].dimensions) {
+    return {
+      sizeType,
+      blob: rawAttachment.srcSet[sizeType].blob,
+      dimensions: rawAttachment.srcSet[sizeType].dimensions,
+      rawAttachment
+    }
+  } else {
+    const { blob, dimensions } = await resizeForUpload(rawAttachment, sizeType, mimeType)
+    return {
+      sizeType,
+      blob,
+      dimensions,
+      rawAttachment
+    }
+  }
+}
+
+/**
+ * @param {RawAttachment} attachment
+ * @param {string} sizeType
+ * @param {string} mime
+ * @return {Promise<{blob: Blob, dimensions: Dimensions}>|never}
+ */
+async function resizeForUpload (attachment, sizeType, mime) {
+  /** @type Dimensions */
+  let dimensions
+  let image = attachment.image
+
+  if (sizeType === 'original') {
+    return { blob: attachment.file, dimensions: { w: image.width, h: image.height } }
+  }
+  return ImageLib.resize(image, imageSizeTypes[sizeType])
+    .then(resizedData => {
+      dimensions = resizedData.dimensions
+      return ImageLib.canvasToBlob(resizedData.raw, mime)
+    })
+    .then(blob => {
+      return { blob, dimensions }
+    })
+    .catch(e => {
+      const errString = `Error on Resize Image (${attachment.id}) for size type (${sizeType}): ${e.message}`
+      console.warn(errString)
+      throw new Error(errString)
+    })
+}
+
+/**
+ * @param {string} userId
+ * @param {PostAttachment[]} attachmentsToDelete
+ * @return {Promise<* | never>}
  */
 export function deleteAttachments (userId, attachmentsToDelete) {
-  const promises = []
-  Object.entries(attachmentsToDelete).forEach(([id, attachment]) => {
-    Object.keys(imageSizeTypes).forEach(sizeType => {
-      if (attachment.hasOwnProperty(sizeType)) {
-        const extension = attachment[sizeType].url.split('.').pop()
-        const path = filePath(userId, id, sizeType, extension)
-        promises.push(storage.ref(path).delete().catch(e => {
-          throw new Error(`${e.message}\nFor path: ${path}`)
-        }))
-      }
-    })
-  })
-  return Promise.all(promises)
+  return Promise.all(attachmentsToDelete.map(attachment => {
+    if (attachment.hasOwnProperty('srcSet')) {
+      Object.entries(attachment.srcSet).forEach(([sizeType, sizeData]) => {
+        let path
+        if (attachment.name) {
+          path = filePath(userId, attachment.name, sizeType, attachment.type)
+        } else {
+          const match = sizeData.url.match(/\/([^/]+)%2F([^?]+)/)
+          if (match) {
+            path = match[1] + '/' + match[2]
+          }
+        }
+        // !!! DEBUG !!!
+        console.log(`%c deleteAttachments %c path: `, 'background:#ffbb00;color:#000', 'color:#00aaff', path)
+        return storage.ref(path).delete()
+          .catch(e => { throw new Error(`${e.message}\nFor path: ${path}`) })
+      })
+    }
+  }))
 }
 /**
  * @param {string} userId
@@ -216,99 +286,4 @@ export function remove (userId, fileId, extension) {
   return Promise.all(Object.keys(imageSizeTypes).map(sizeType => {
     return storage.ref(filePath(userId, fileId, sizeType, extension)).delete()
   }))
-}
-
-/**
- * @param {Blob|File} file
- */
-export function uploadStructForFile (file) {
-  // @ts-ignore
-  return thingsToUploadForAttachment({ file })
-}
-
-/**
- * @param {PostImageData} attachment
- * @return {Promise<UploadStruct[]>}
- */
-function thingsToUploadForAttachment (attachment) {
-  const mimeType = attachment.file.type
-  const storageName = attachment.storageName || uniqueId()
-  if (mimeType.startsWith('image/') && mimeType !== 'image/gif') { // not supporting gif resizing yet
-    return Promise.all(Object.keys(imageSizeTypes).map(sizeType => {
-      return uploadStructForImgSizeType(attachment, sizeType, mimeType, storageName)
-    }))
-  } else {
-    return Promise.resolve([uploadStruct(attachment.file, storageName, 'original', null, attachment)])
-  }
-}
-
-/**
- * @param {Attachment} attachment
- * @param {string} sizeType
- * @param {string} mimeType
- * @param {string} storageName
- * @return {Promise<UploadStruct>}
- */
-function uploadStructForImgSizeType (attachment, sizeType, mimeType, storageName) {
-  if (notResized(attachment, sizeType)) {
-    return resizeForUpload(attachment, sizeType, mimeType, storageName)
-  } else if (noResizedFileFor(attachment, sizeType)) {
-    const raw = attachment[sizeType].raw
-    return ImageLib.canvasToBlob(raw, mimeType)
-      .then(blob => uploadStruct(blob, storageName, sizeType, ImageLib.picDimensions(raw), attachment))
-  } else {
-    const blob = attachment[sizeType].blob
-    const dimensions = attachment[sizeType].dimensions
-    return Promise.resolve(uploadStruct(blob, storageName, sizeType, dimensions, attachment))
-  }
-}
-
-/**
- * @param {Attachment} attachment
- * @param {string} sizeType
- * @param {string} mime
- * @param {string} storageName
- * @return {Promise<UploadStruct>}
- */
-function resizeForUpload (attachment, sizeType, mime, storageName) {
-  let dimensions
-  let action
-  if (!attachment.image) {
-    // @ts-ignore
-    action = ImageLib.imageFromFile(attachment.file)
-      .then(image => {
-        attachment.image = image
-      })
-  } else {
-    action = Promise.resolve()
-  }
-  return action.then(() => ImageLib.resize(attachment.image, imageSizeTypes[sizeType])
-    .then(resizedData => {
-      dimensions = resizedData.dimensions
-      return ImageLib.canvasToBlob(resizedData.raw, mime)
-    })
-    .then(blob => uploadStruct(blob, storageName, sizeType, dimensions, attachment))
-    .catch(e => {
-      const errString = `Error on Resize Image (${attachment.id}): ${e.message}`
-      console.warn(errString)
-      throw new Error(errString)
-    })
-  )
-}
-
-/**
- * @param {Attachment} attachment
- * @param {string} sizeType
- * @return {boolean}
- */
-function notResized (attachment, sizeType) {
-  return !attachment.sizeType || !attachment[sizeType].hasOwnProperty('raw')
-}
-
-/**
- * @param {Attachment} attachment
- * @param {string} sizeType
- */
-function noResizedFileFor (attachment, sizeType) {
-  return !attachment[sizeType].hasOwnProperty('blob')
 }

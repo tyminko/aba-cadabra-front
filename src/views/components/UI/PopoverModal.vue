@@ -31,7 +31,6 @@ export default {
   }),
 
   created () {
-    bodyScrollGuard.init()
     window.addEventListener('keydown', e => {
       if (e.key === 'Escape' || e.keyCode === 27) {
         this.$emit('esc', e)
@@ -58,16 +57,16 @@ export default {
       }
     },
 
-    setBodyScroll (on) {
-      if (on) {
-        bodyScrollGuard.releaseBodyScroll()
-      } else {
+    setBodyScroll (freeze) {
+      if (freeze) {
         bodyScrollGuard.freezeBodyScroll()
+      } else {
+        bodyScrollGuard.releaseBodyScroll()
       }
     },
 
     releaseBgScroll () {
-      this.setBodyScroll(true)
+      this.setBodyScroll(false)
     },
 
     setAllowClickOutside () {
@@ -77,6 +76,10 @@ export default {
         this.allowClickOutside = false
       }
     }
+  },
+
+  beforeDestroy () {
+    bodyScrollGuard.releaseBodyScroll()
   }
 }
 </script>

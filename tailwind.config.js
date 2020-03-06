@@ -1,5 +1,7 @@
 const baseSize = 3 // rem
+const textBlockWidth = 38 // rem
 module.exports = {
+  important: '#app',
   theme: {
     extend: {
       screens: {
@@ -24,6 +26,8 @@ module.exports = {
       },
       spacing: {
         'base': `${baseSize}rem`,
+        '1/12base': `${baseSize / 12}rem`,
+        '1/8base': `${baseSize / 8}rem`,
         '1/6base': `${baseSize / 6}rem`,
         '1/3base': `${baseSize / 3}rem`,
         '1/2base': `${baseSize / 2}rem`,
@@ -31,6 +35,7 @@ module.exports = {
         '3/4base': `${baseSize * 0.75}rem`,
         '5/6base': `${baseSize / 6 * 5}rem`,
         '3/8base': `${baseSize * 0.375}rem`,
+        'text': `${textBlockWidth}em`,
         'x2': `${baseSize * 2}rem`,
         'x3': `${baseSize * 3}rem`
       },
@@ -49,7 +54,13 @@ module.exports = {
         '-xl': `-${baseSize / 3 * 2}rem`
       },
       maxWidth: {
-        'text': '35em',
+        'text': `${textBlockWidth}em`,
+        '1/8base': `${baseSize / 8}rem`,
+        '5/6base': `${baseSize / 6 * 5}rem`
+      },
+      minWidth: {
+        'text': `${textBlockWidth}em`,
+        '1/8base': `${baseSize / 8}rem`,
         '5/6base': `${baseSize / 6 * 5}rem`
       },
       minHeight: {
@@ -57,6 +68,7 @@ module.exports = {
         'x2': `${baseSize * 2}rem`
       },
       borderWidth: {
+        '1/2base': `${baseSize / 2}rem`,
         'xl': `${baseSize / 12}rem`
       },
       borderRadius: {
@@ -66,6 +78,9 @@ module.exports = {
       },
       boxShadow: {
         soft: '0 2px 60px rgba(0, 0, 0, 0.05)'
+      },
+      inset: {
+        '1/12base': `${baseSize / 12}rem`
       }
     }
   },

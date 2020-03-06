@@ -12,6 +12,7 @@ export default {
   },
 
   imageQuality: 0.8,
+  dontScaleUp: true,
 
   /**
    * @param {File} file
@@ -62,7 +63,9 @@ export default {
   imageFromUrl (url) {
     return new Promise((resolve, reject) => {
       const image = new Image()
-      image.onload = () => resolve(image)
+      image.onload = () => {
+        resolve(image)
+      }
       image.onerror = e => reject(e)
       image.src = url
     })
@@ -100,7 +103,6 @@ export default {
    */
   canvasToBlob (canvas, mimeType, quality) {
     if (typeof quality === 'undefined') quality = this.imageQuality
-    // @ts-ignore
     return pica.toBlob(canvas, mimeType, quality)
   },
 
@@ -109,7 +111,7 @@ export default {
    * @param {number} size
    * @param {Object=} settings
    *
-   * @return {Promise<{ raw: HTMLCanvasElement, dimensions: {w:number, h:number} }>}
+   * @return {Promise<{ raw: HTMLCanvasElement, dimensions: Dimensions }>}
    */
   resize (image, size, settings) {
     settings = { ...this.defaultResizeSettings, ...settings }
@@ -143,7 +145,6 @@ export default {
   picaResize (image, size, settings) {
     if (!settings) settings = this.defaultResizeSettings
     const canvas = this.createCanvas(image, size)
-    // @ts-ignore
     return pica.resize(image, canvas, settings)
       .catch(e => {
         if (e.message !== 'The ImageBitmap could not be allocated.') {
@@ -152,7 +153,6 @@ export default {
       })
       .then(() => {
         return this.basicResize(image, Math.max(image.width, image.height))
-          // @ts-ignore
           .then(res => pica.resize(res, canvas, settings))
           .catch(e => {
             // console.warn('%c resize ON Err %c e.message: ', 'background:#ffbb00;color:#000', 'color:#00aaff', e.message)

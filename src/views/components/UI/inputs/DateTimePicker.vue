@@ -36,7 +36,7 @@
 </template>
 
 <script>
-import simpleID from '../../../../lib/simpleID'
+import simpleID from '../../../../lib/simpleId'
 import * as date from '../../../../lib/date'
 import { DateTime } from 'luxon'
 import Popper from '../Popper.js'
@@ -147,10 +147,10 @@ export default {
 
   methods: {
     updateValues () {
-      if (!this.value && this.required) this.value = DateTime.local().toMillis()
+      const val = (!this.value && this.required) ? DateTime.local().toMillis() : this.value
       this.error = ''
-      this.tempDateString = this.value ? date.format(this.value) : this.value
-      this.tempTimeString = this.value ? date.formatTime(this.value) : this.value
+      this.tempDateString = val ? date.format(val) : ''
+      this.tempTimeString = val ? date.formatTime(val) : ''
     },
 
     onEsc () {
