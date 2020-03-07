@@ -258,7 +258,7 @@ async function resizeForUpload (attachment, sizeType, mime) {
 export function deleteAttachments (userId, attachmentsToDelete) {
   return Promise.all(attachmentsToDelete.map(attachment => {
     if (attachment.hasOwnProperty('srcSet')) {
-      Object.entries(attachment.srcSet).forEach(([sizeType, sizeData]) => {
+      return Promise.all(Object.entries(attachment.srcSet).map(([sizeType, sizeData]) => {
         let path
         if (attachment.name) {
           path = filePath(userId, attachment.name, sizeType, attachment.type)
@@ -271,8 +271,13 @@ export function deleteAttachments (userId, attachmentsToDelete) {
         // !!! DEBUG !!!
         console.log(`%c deleteAttachments %c path: `, 'background:#ffbb00;color:#000', 'color:#00aaff', path)
         return storage.ref(path).delete()
-          .catch(e => { throw new Error(`${e.message}\nFor path: ${path}`) })
-      })
+          .catch(e => {
+            if (e.code === 'storage/object-not-found') {
+              return null
+            }
+            throw new Error({ ...e, message: `${e.message} | Path: [${path}]` })
+          })
+      }))
     }
   }))
 }

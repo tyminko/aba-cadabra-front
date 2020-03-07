@@ -73,6 +73,7 @@ module.exports = {
       },
       borderRadius: {
         '1/2base': `${baseSize * 0.5}rem`,
+        '1/3base': `${baseSize / 3}rem`,
         '3/8base': `${baseSize * 0.375}rem`,
         '1/2': '50%'
       },

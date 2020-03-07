@@ -72,7 +72,9 @@ export default {
     async closeEditor () {
       this.startEditing = false
       await this.$nextTick()
-      this.$refs.caption.collapse()
+      if (this.$refs.caption) {
+        this.$refs.caption.collapse()
+      }
     },
 
     finishCaptionEditing () {
@@ -116,7 +118,7 @@ export default {
       left: 0;
       background-color: rgba(255,255,255,0.6);
       z-index: -1;
-      @apply border-2 border-aba-blue;
+      @apply border-b border-aba-blue;
     }
 
     .caption-text[contenteditable="true"] {

@@ -28,9 +28,12 @@
             class="w-1/2 flex-1"/>
         </div>
         <attachments-editor
-          ref="attachments"
+          ref="attachments-editor"
           v-model="attachments"
-          :author-id="authorId"/>
+          :author-id="authorId"
+          :poster="posterId"
+          @remove="onRemoveAttachment"
+          @set-poster="posterId = $event"/>
         <label class="px-label mb-0" :class="{focus:textEditorFocused}">
           <span>Content</span>
         </label>
@@ -40,8 +43,16 @@
           @focus="textEditorFocused=true"
           @blur="textEditorFocused=false"/>
       </div>
-      <footer class="flex h-base items-center justify-end px-sm">
-        <button>Cancel</button>
+      <footer class="flex h-base items-center px-sm">
+        <button class="flex-col h-auto leading-none" @click.prevent="addAttachment">
+          <i class="material-icons">attachment</i>
+          <span class="text-xs text-gray-600 text-center mt-1">Attach File</span>
+        </button>
+        <button class="flex-col h-auto leading-none" @click.prevent="embedUrl">
+          <i class="material-icons">link</i>
+          <span class="text-xs text-gray-600 text-center mt-1">Embed Url</span>
+        </button>
+        <button class="ml-auto" @click.prevent="close">Cancel</button>
         <button type="submit">Save</button>
       </footer>
 <!--
@@ -52,7 +63,7 @@ type: DROPDOWN
 status: dropdown
 ### content: EDITABLE / TEXT EDITOR
 excerpt: TEXTAREA
-gallery: UPLOADER
+attachments: UPLOADER
 countNumber: auto-counter
 participants: AUTOCOMPLETE (profiles)
 supportedBy: autocomplete (institutions)
@@ -96,6 +107,7 @@ export default {
       tags: ''
     },
     postData: {},
+    posterTempId: '',
     textEditorFocused: false,
     unsubscribe: null
   }),
@@ -139,7 +151,14 @@ export default {
       }
       return null
     },
-    authorId () { return (this.author || {}).uid }
+    authorId () { return (this.author || {}).uid },
+
+    posterId: {
+      get () { return this.posterTempId || (this.postData.thumbnail || {}).id || '' },
+      set (newValue) {
+        this.posterTempId = newValue
+      }
+    }
   },
 
   watch: {
@@ -156,8 +175,6 @@ export default {
 
   methods: {
     preventEnter (e) {
-      // !!! DEBUG !!!
-      console.log(`%c preventEnter() %c e: `, 'background:#ffbb00;color:#000', 'color:#00aaff', e)
       return false
     },
 
@@ -173,6 +190,22 @@ export default {
         if (escaped) return
       }
       this.close()
+    },
+
+    addAttachment () {
+      if (this.$refs['attachments-editor']) {
+        this.$refs['attachments-editor'].openFileDialog()
+      }
+    },
+
+    embedUrl () {
+
+    },
+
+    onRemoveAttachment (id) {
+      if (id === this.posterId) {
+        this.posterId = ''
+      }
     },
 
     close () {
@@ -197,12 +230,24 @@ export default {
     },
 
     async savePost (e) {
-      const attachments = this.$refs.attachments
-      if (!attachments) return
-      await attachments.uploadNewAttachments()
-      await attachments.deleteMarkedAttachments()
-      // !!! DEBUG !!!
-      console.log(`%c savePost() %c e: `, 'background:#ff0000;color:#000', 'color:#00aaff', e)
+      const attachmentsEditor = this.$refs['attachments-editor']
+      if (!attachmentsEditor) return
+      try {
+        const attachmentsData = await attachmentsEditor.processAttachments()
+        this.$set(this.postData, 'attachments', attachmentsData)
+        if (this.posterTempId) {
+          const attachment = this.postData.attachments.find(a => a.id === this.posterTempId)
+          if (attachment) {
+            this.$set(this.postData, 'thumbnail', attachment)
+          }
+        }
+        // !!! DEBUG !!!
+        console.log(`%c savePost() %c attachmentsData: `, 'background:#ffbb00;color:#000', 'color:#00aaff', attachmentsData)
+        // !!! DEBUG !!!
+        console.log(`%c savePost() %c this.postData: `, 'background:#ff0000;color:#000', 'color:#00aaff', this.postData)
+      } catch (e) {
+        console.error(`%c savePost() %c e: `, 'background:#ff00AA;color:#000', 'color:#00aaff', e)
+      }
     }
   }
 }

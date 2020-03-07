@@ -7,33 +7,35 @@
       multiple
       accept="image/*"
       @change="addFilesFromOpenDialog">
-      <draggable
-        ref="previews"
-        v-model="attachments"
-        v-bind="dragOptions"
-        @start="dragging = true"
-        @end="onEndDragging">
-        <transition-group
-          type="transition"
-          :name="!dragging ? 'flip-list' : null"
-          class="draggable attachments-grid">
-          <template v-for="(item, i) in attachments">
-            <attachment-editor-cell
-              v-if="!item.removed"
-              :key="item.id"
-              v-model="attachments[i]"
-              @remove="removeAttachment"/>
-          </template>
-        </transition-group>
-      </draggable>
-      <div ref="add-files-cell" class="add-files-cell">
-      <div>
-        <slot name="add-files-message">
-          Drop your images here!
-          <button @click.prevent="openFileDialog">Select Files</button>
-        </slot>
-      </div>
-    </div>
+    <draggable
+      ref="previews"
+      v-model="attachments"
+      v-bind="dragOptions"
+      @start="dragging = true"
+      @end="onEndDragging">
+      <transition-group
+        type="transition"
+        :name="!dragging ? 'flip-list' : null"
+        class="draggable attachments-grid">
+        <template v-for="(item, i) in attachments">
+          <attachment-editor-cell
+            v-if="!item.removed"
+            :key="item.id"
+            v-model="attachments[i]"
+            :is-poster="item.id === posterId"
+            @set-poster="setPoster"
+            @remove="removeAttachment"/>
+        </template>
+      </transition-group>
+    </draggable>
+<!--    <div ref="add-files-cell" class="add-files-cell">-->
+<!--      <div>-->
+<!--        <slot name="add-files-message">-->
+<!--          Drop your images here!-->
+<!--          <button @click.prevent="openFileDialog">Select Files</button>-->
+<!--        </slot>-->
+<!--      </div>-->
+<!--    </div>-->
     <progress v-if="uploadPercentage" max="100" :value.prop="uploadPercentage"/>
   </div>
 </template>
@@ -52,6 +54,7 @@ export default {
   components: { Draggable, /* Dropzone, */ AttachmentEditorCell },
   props: {
     value: { type: Array, default: () => ([]) },
+    poster: { type: String, default: '' },
     authorId: { type: String, default: '' },
     sizes: { type: Object, default: () => ({ large: 2048, small: 512 }) },
     allowDuplicates: Boolean,
@@ -68,6 +71,7 @@ export default {
   data: () => ({
     /** @type (PostAttachment|RawAttachment)[] */
     attachments: [],
+    removedAttachments: [],
     showDragOverlay: false,
     withObjectFitContain: [],
     uploadPercentage: 0,
@@ -85,27 +89,8 @@ export default {
 
   computed: {
     ...mapState(['user']),
-    previews () {
-      return this.attachments
-        .map(item => {
-          let data = {}
-          if (!item.preview || item.preview.err) {
-            data = { status: 'err', url: item.image ? item.image.src : 'x' }
-          } else {
-            data = { status: 'ok', url: item.preview.url }
-          }
-          data.id = item.id || item.fileName
-          data.size = item.file ? item.file.size : null
-          data.caption = item.caption ? item.caption : null
-          data.dimensions = item.image
-            ? { w: item.image.width, h: item.image.height }
-            : null
-          data.order = item.order
-          if (item.preview && item.preview.colors) data.colors = item.preview.colors
-          return data
-        })
-        .filter(item => !item.hasOwnProperty('deleted'))
-        .sort((a, b) => a.order - b.order)
+    posterId () {
+      return this.poster || this.attachments[0].id
     }
   },
 
@@ -132,23 +117,25 @@ export default {
     },
 
     addDroppedFiles (e) {
+      // !!! DEBUG !!!
+      console.log(`%c addDroppedFiles() %c e: `, 'background:#ffccaa;color:#000', 'color:#00aaff', e)
       this.addFiles(e.dataTransfer.files)
     },
 
     addFilesFromOpenDialog (e) {
       this.addFiles(e.target.files)
+      e.target.value = ''
     },
 
     addFiles (files) {
-      // const promises = []
-
       let addedFiles = Array.from(files)
         .filter(file => isSupportedFormat(file))
       if (!this.allowDuplicates) {
         addedFiles = addedFiles.filter(file => !this.attachments.find(data => {
-          return data.name === file.name &&
-              data.lastModified === file.lastModified &&
-              data.size === file.size
+          if (!data.file) return false
+          return data.file.name === file.name &&
+              data.file.lastModified === file.lastModified &&
+              data.file.size === file.size
         }))
       }
       addedFiles
@@ -158,8 +145,6 @@ export default {
         })
 
       this.updateAttachmentsOrder()
-      // return Promise.all(promises)
-      // .then(() => this.setPreviews())
     },
 
     updateAttachmentsOrder () {
@@ -184,30 +169,40 @@ export default {
         this.attachments = [...this.attachments.filter(a => !a.file), ...uploadedAttachments]
           .sort((a, b) => a.order - b.order)
       } catch (e) {
-        // !!! DEBUG !!!
-        console.log(`%c uploadNewAttachments() %c e: `, 'background:#ff0000;color:#000', 'color:#00aaff', e)
+        throw new Error({ ...e })
       }
     },
 
     async deleteMarkedAttachments () {
-      const toDelete = this.attachments.filter(a => a.removed)
+      const toDelete = this.removedAttachments // attachments.filter(a => a.removed)
       if (!toDelete.length) return
       const authorId = this.authorId || this.user.id
       await deleteAttachments(authorId, toDelete)
-      // !!! DEBUG !!!
-      console.log(`%c deleteMarkedAttachments() %c this.attachments: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.attachments)
+      this.attachments = this.attachments.filter(a => !a.removed)
+    },
+
+    async processAttachments () {
+      await this.uploadNewAttachments()
+      await this.deleteMarkedAttachments()
+      return this.attachments
     },
 
     removeAttachment (id) {
       const index = this.attachments.findIndex(a => a.id === id)
-      if (!index) return
-      const dataToRemove = this.attachments[index]
-      if (dataToRemove.hasOwnProperty('file') && (dataToRemove.file instanceof File || dataToRemove.file instanceof Blob)) {
+      if (index < 0) return
+      const attachmentToRemove = this.attachments[index]
+      if (attachmentToRemove.hasOwnProperty('file') && (attachmentToRemove.file instanceof File || attachmentToRemove.file instanceof Blob)) {
         this.attachments.splice(index, 1)
       } else {
-        this.$set(this.attachments[index], 'removed', true)
-        this.$emit('remove', dataToRemove)
+        // this.$set(this.attachments[index], 'removed', true)
+        const removed = this.attachments.splice(index, 1)
+        this.removedAttachments.push(removed)
       }
+      this.$emit('remove', id)
+    },
+
+    setPoster (id) {
+      this.$emit('set-poster', id)
     },
 
     /** @param {Object<string,*>[]} oldAttachments */

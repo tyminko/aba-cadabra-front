@@ -10,11 +10,19 @@
       object-position="center"
       class="w-full h-full border-transparent border"
       @load="onImageLoad">
-      <button
-        class="crop-toggle absolute w-2/3base h-2/3base top-1/12base left-1/12base rounded-1/2"
-        @click.prevent="cropPreview = !cropPreview">
-        <i class="material-icons text-sm">{{cropPreview ? 'crop_free' : 'crop'}}</i>
-      </button>
+      <div class="left-buttons absolute flex items-center h-2/3base top-0 left-0">
+        <button
+          class="crop-toggle w-2/3base h-2/3base"
+          @click.prevent="setPoster">
+          <i class="material-icons" :class="isPoster ? 'text-xxl text-aba-blue' : 'text-base'">{{isPoster ? 'bookmark' : 'bookmark_border'}}</i>
+        </button>
+        <span v-if="isPoster" class="text-xs italic">Poster</span>
+        <button
+          class="crop-toggle w-2/3base h-2/3base"
+          @click.prevent="cropPreview = !cropPreview">
+          <i class="material-icons text-sm">{{cropPreview ? 'crop_free' : 'crop'}}</i>
+        </button>
+      </div>
       <div class="status-bar absolute absolute top-0 right-0 flex items-center">
         <div
           v-if="item.progress && item.progress < 100"
@@ -46,7 +54,8 @@ export default {
   name: 'AttachmentEditorCell',
   components: { ImgWithOverlay, CaptionEditor },
   props: {
-    value: { type: Object, required: true }
+    value: { type: Object, required: true },
+    isPoster: Boolean
   },
 
   data: () => ({
@@ -60,7 +69,7 @@ export default {
       if (attachment.srcSet) {
         if (attachment.srcSet.preview) return attachment.srcSet.preview.url
         if (attachment.srcSet.full) return attachment.srcSet.full.url
-        if (attachment.srcSet.original && this.attachmentIsVisual(attachment)) {
+        if (attachment.srcSet.original && this.isVisual) {
           return attachment.srcSet.original.url
         } else {
           return ''
@@ -95,13 +104,18 @@ export default {
         this.setRawAttachmentImage(event)
       }
     },
-    setRawAttachmentImage (event) {
+    async setRawAttachmentImage (event) {
       if (this.isVisual && event.target instanceof HTMLImageElement) {
-        this.item.image = event.target.cloneNode()
+        this.item.image = await event.target.cloneNode()
+        // !!! DEBUG !!!
+        console.log(`%c setRawAttachmentImage() %c this.item.image: `, 'background:#ffccaa;color:#000', 'color:#00aaff', this.item.image)
       }
     },
     addCaption () {
       this.item.caption = ' '
+    },
+    setPoster () {
+      this.$emit('set-poster', this.item.id)
     }
   }
 }
