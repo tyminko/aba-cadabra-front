@@ -1,6 +1,11 @@
 <template>
-  <div class="attachment-editor-cell"
-       :class="{err:item.err}">
+  <div class="attachment-editor-cell" :class="{err:item.err}">
+    <vimeo-player
+      v-if="item.type==='embed/vimeo'"
+      v-show="playVideo"
+      class="video-player absolute inset-0"
+      :options="{background:true, autoplay:true, loop:true, byline:false, portrait:false, title:false, fullscreen:false}"
+      :video-id="item.name"/>
     <img-with-overlay
       ref="attachments"
       :src="attachmentPreviewUrl"
@@ -10,7 +15,7 @@
       object-position="center"
       class="w-full h-full border-transparent border"
       @load="onImageLoad">
-      <div class="left-buttons absolute flex items-center h-2/3base top-0 left-0">
+      <div class="left-buttons absolute flex items-center h-3/4base top-0 left-0">
         <button
           class="crop-toggle w-2/3base h-2/3base"
           @click.prevent="setPoster">
@@ -21,6 +26,12 @@
           class="crop-toggle w-2/3base h-2/3base"
           @click.prevent="cropPreview = !cropPreview">
           <i class="material-icons text-sm">{{cropPreview ? 'crop_free' : 'crop'}}</i>
+        </button>
+        <button
+          v-if="item.type==='embed/vimeo'"
+          class="crop-toggle w-2/3base h-2/3base"
+          @click.prevent="toggleVideoPlay">
+          <i class="material-icons">{{playVideo ? 'pause' : 'play_arrow'}}</i>
         </button>
       </div>
       <div class="status-bar absolute absolute top-0 right-0 flex items-center">
@@ -47,24 +58,27 @@
 </template>
 
 <script>
-import ImgWithOverlay from '../ImgTransOverlay'
+import ImgWithOverlay from '../../components/UI/ImgTransOverlay'
 import CaptionEditor from './CaptionEditor'
+import { vueVimeoPlayer as VimeoPlayer } from 'vue-vimeo-player'
 
 export default {
   name: 'AttachmentEditorCell',
-  components: { ImgWithOverlay, CaptionEditor },
+  components: { ImgWithOverlay, CaptionEditor, VimeoPlayer },
   props: {
     value: { type: Object, required: true },
     isPoster: Boolean
   },
 
   data: () => ({
-    cropPreview: true
+    cropPreview: true,
+    playVideo: false
   }),
 
   computed: {
     item () { return this.value },
     attachmentPreviewUrl () {
+      if (this.playVideo) return ''
       const attachment = this.item
       if (attachment.srcSet) {
         if (attachment.srcSet.preview) return attachment.srcSet.preview.url
@@ -116,6 +130,9 @@ export default {
     },
     setPoster () {
       this.$emit('set-poster', this.item.id)
+    },
+    toggleVideoPlay () {
+      this.playVideo = !this.playVideo
     }
   }
 }
@@ -125,5 +142,10 @@ export default {
 <style lang="scss">
   .attachment-editor-cell {
     position: relative;
+    .video-player iframe {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
   }
 </style>

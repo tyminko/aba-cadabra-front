@@ -21,8 +21,7 @@ const mimeExtension = {
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
   'audio/mpeg': 'mp3',
   'audio/mp4': 'm4a',
-  'video/mp4': 'mp4',
-  'video/quicktime': 'mov'
+  'video/mp4': 'mp4'
 }
 
 const possibleExtensions = ['gif', 'jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'mp3', 'm4a', 'mp4', 'mov']

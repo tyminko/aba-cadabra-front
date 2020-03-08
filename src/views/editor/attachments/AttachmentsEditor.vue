@@ -1,5 +1,5 @@
 <template>
-  <div @drop="addFiles">
+  <div>
     <input
       ref="input"
       type="file"
@@ -11,31 +11,63 @@
       ref="previews"
       v-model="attachments"
       v-bind="dragOptions"
+      :move="onDragging"
+      filter=".new-attachment-cell"
       @start="dragging = true"
       @end="onEndDragging">
       <transition-group
+        ref="attachments-grid"
         type="transition"
         :name="!dragging ? 'flip-list' : null"
         class="draggable attachments-grid">
-        <template v-for="(item, i) in attachments">
-          <attachment-editor-cell
-            v-if="!item.removed"
-            :key="item.id"
-            v-model="attachments[i]"
-            :is-poster="item.id === posterId"
-            @set-poster="setPoster"
-            @remove="removeAttachment"/>
-        </template>
+        <attachment-editor-cell
+          v-for="(item, i) in attachments"
+          :key="item.id"
+          v-model="attachments[i]"
+          :is-poster="item.id === posterId"
+          class="draggable-box"
+          @set-poster="setPoster"
+          @remove="removeAttachment"/>
+        <dropzone
+          :key="'n-a'"
+          ref="new-attachment-cell"
+          draggable="false"
+          class="no-move flex flex-col items-center justify-center border border-aba-blue border-dashed"
+          @drop="addDroppedFiles">
+          <p class="italic capitalize font-light text-gray-400">Drop your files here</p>
+          <div class="flex items-center">
+            <button class="flex-col h-auto leading-none" @click.prevent="openFileDialog">
+              <i class="material-icons">attachment</i>
+              <span class="text-sm text-center mt-1">Attach File</span>
+            </button>
+            <button class="flex-col h-auto leading-none" @click.prevent="showUrlInput = true">
+              <i class="material-icons">link</i>
+              <span class="text-sm text-center mt-1">Attach Url</span>
+            </button>
+          </div>
+          <transition>
+            <div
+              v-if="showUrlInput"
+              class="url-input absolute inset-0 flex items-center justify-center bg-white">
+              <div class="flex items-center justify-center w-full max-w-full">
+                <px-input v-model="urlToInsert" placeholder="Url" class="max-w-full">
+                  <template v-slot:add-on>
+                    <div class="flex">
+                      <button class="w-3/4base" @click.prevent="addAttachmentFromUrl">
+                        <i class="material-icons text-base">done</i>
+                      </button>
+                      <button class="w-3/4base" @click.prevent="addAttachmentFromUrl">
+                        <i class="material-icons text-base" @click.prevent="showUrlInput = false">close</i>
+                      </button>
+                    </div>
+                  </template>
+                </px-input>
+              </div>
+            </div>
+          </transition>
+        </dropzone>
       </transition-group>
     </draggable>
-<!--    <div ref="add-files-cell" class="add-files-cell">-->
-<!--      <div>-->
-<!--        <slot name="add-files-message">-->
-<!--          Drop your images here!-->
-<!--          <button @click.prevent="openFileDialog">Select Files</button>-->
-<!--        </slot>-->
-<!--      </div>-->
-<!--    </div>-->
     <progress v-if="uploadPercentage" max="100" :value.prop="uploadPercentage"/>
   </div>
 </template>
@@ -43,15 +75,16 @@
 <script>
 import { mapState } from 'vuex'
 import Draggable from 'vuedraggable'
-// import ExpandableText from 'vue-expandable-text-line'
-// import Dropzone from './Dropzone'
-import { fileToRawAttachment, isSupportedFormat, upload, deleteAttachments } from '../../../../lib/storage'
+import { fileToRawAttachment, isSupportedFormat, upload, deleteAttachments } from '../../../lib/storage'
 import AttachmentEditorCell from './AttachmentEditorCell'
-// import ImgWithOverlay from '../ImgTransOverlay'
+import Dropzone from '../../components/UI/Dropzone'
+import PxInput from '../../components/UI/inputs/PxInput'
+import vimeo from '../../../lib/vimeo'
+import simpleId from '../../../lib/simpleId'
 
 export default {
   name: 'AttachmentsEditor',
-  components: { Draggable, /* Dropzone, */ AttachmentEditorCell },
+  components: { Draggable, Dropzone, AttachmentEditorCell, PxInput },
   props: {
     value: { type: Array, default: () => ([]) },
     poster: { type: String, default: '' },
@@ -72,6 +105,8 @@ export default {
     /** @type (PostAttachment|RawAttachment)[] */
     attachments: [],
     removedAttachments: [],
+    showUrlInput: false,
+    urlToInsert: '',
     showDragOverlay: false,
     withObjectFitContain: [],
     uploadPercentage: 0,
@@ -116,6 +151,10 @@ export default {
       }
     },
 
+    openEmbedDialog () {
+      this.showEmbedDialog = true
+    },
+
     addDroppedFiles (e) {
       // !!! DEBUG !!!
       console.log(`%c addDroppedFiles() %c e: `, 'background:#ffccaa;color:#000', 'color:#00aaff', e)
@@ -125,6 +164,17 @@ export default {
     addFilesFromOpenDialog (e) {
       this.addFiles(e.target.files)
       e.target.value = ''
+    },
+
+    async addAttachmentFromUrl () {
+      const attachment = await this.makeAttachmentFromUrl(this.urlToInsert)
+      // !!! DEBUG !!!
+      console.log(`%c addAttachmentFromUrl() %c attachment: `, 'background:#ff00AA;color:#000', 'color:#00aaff', attachment)
+      if (attachment) {
+        this.showUrlInput = false
+        this.attachments.push(attachment)
+        this.updateAttachmentsOrder()
+      }
     },
 
     addFiles (files) {
@@ -149,6 +199,7 @@ export default {
 
     updateAttachmentsOrder () {
       this.attachments.forEach((a, i) => { a.order = i })
+      this.setSpanOnLastGridCell()
     },
 
     async uploadNewAttachments () {
@@ -178,7 +229,7 @@ export default {
       if (!toDelete.length) return
       const authorId = this.authorId || this.user.id
       await deleteAttachments(authorId, toDelete)
-      this.attachments = this.attachments.filter(a => !a.removed)
+      // this.attachments = this.attachments.filter(a => !a.removed)
     },
 
     async processAttachments () {
@@ -199,6 +250,7 @@ export default {
         this.removedAttachments.push(removed)
       }
       this.$emit('remove', id)
+      this.updateAttachmentsOrder()
     },
 
     setPoster (id) {
@@ -222,9 +274,54 @@ export default {
       })
     },
 
+    onDragging (event) {
+      // return event.related.className.indexOf('new-attachment-cell') === -1
+    },
+
     onEndDragging () {
       this.dragging = false
       this.updateAttachmentsOrder()
+    },
+
+    setSpanOnLastGridCell () {
+      if (!this.$refs['attachments-grid'] || !this.$refs['new-attachment-cell']) return
+      const { gridTemplateColumns } = window.getComputedStyle(this.$refs['attachments-grid'].$el)
+      const numColumns = gridTemplateColumns.split(' ').length
+      const span = numColumns - this.attachments.length % numColumns
+      this.$refs['new-attachment-cell'].$el.style.gridColumn = `span ${span}`
+    },
+
+    /**
+     * @param url
+     * @return {Promise<PostVideoAttachment|never>}
+     */
+    async makeAttachmentFromUrl (url) {
+      if (!url) {
+        return Promise.reject(new Error('Empty url'))
+      }
+      if (vimeo.isVimeoVideoUrl(url)) {
+        const vimeoEmbed = await vimeo.getVimeoVideoInfo(url)
+        return {
+          id: simpleId(),
+          name: vimeoEmbed.video_id,
+          type: 'embed/vimeo',
+          duration: vimeoEmbed.duration,
+          srcSet: {
+            preview: {
+              url: vimeoEmbed.thumbnail_url,
+              dimensions: { w: vimeoEmbed.thumbnail_width, h: vimeoEmbed.thumbnail_height }
+            },
+            original: {
+              url: url,
+              dimensions: { w: vimeoEmbed.width, h: vimeoEmbed.height }
+            }
+          },
+          order: null,
+          caption: vimeoEmbed.description,
+          pointOfInterest: null,
+          err: null
+        }
+      }
     }
   }
 }
@@ -246,7 +343,9 @@ export default {
       .preview {}
     }
   }
-
+  .new-attachment-cell{
+    transition: 0s !important;
+  }
   .drag-overlay {
     display: flex;
     align-items: center;
@@ -302,7 +401,7 @@ export default {
   }
 
   .no-move {
-    transition: transform 0s;
+    transition: transform 0s !important;
   }
 
   .ghost {

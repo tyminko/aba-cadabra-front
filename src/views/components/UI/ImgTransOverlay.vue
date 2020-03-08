@@ -62,7 +62,7 @@ export default {
   }),
 
   watch: {
-    // src (value) { this.update() },
+    src () { this.$nextTick(this.update) },
     oBlur () { this.updateFillters(true) },
     oTextColor () { this.updateTextColor() },
     oFillColor () { this.updateFillColor() },
@@ -130,6 +130,7 @@ export default {
       const { target } = event
       this.$emit('load', { target })
     },
+
     update () {
       this.forEachOverlayElement((/** @type HTMLElement */ el, i) => {
         if (!el.dataset.ioElKey) {
@@ -161,6 +162,9 @@ export default {
       }
 
       bgImg.addEventListener('load', updateBgImageStyleAndPlacement)
+      // !!! DEBUG !!!
+      console.log(`%c updateOverlayEl() %c bgImg.src: `, 'background:#ffbbaa;color:#000', 'color:#00aaff', bgImg.src)
+      console.log(`%c updateOverlayEl() %c this.img.src: `, 'background:#ffbbaa;color:#000', 'color:#00aaff', this.img.src)
       if (bgImg.src !== this.img.src) {
         bgImg.src = this.img.src
       } else {

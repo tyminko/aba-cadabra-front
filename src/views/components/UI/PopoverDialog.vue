@@ -49,7 +49,4 @@ export default {
 </script>
 
 <style lang='scss'>
-  .popover-dialog{
-  position: relative;
-  }
 </style>

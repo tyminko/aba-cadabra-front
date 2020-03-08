@@ -28,6 +28,10 @@ declare interface PostAttachment {
   pointOfInterest?: { x:number, y:number },
 }
 
+declare interface PostVideoAttachment extends PostAttachment {
+  duration: number
+}
+
 declare interface RawAttachment extends PostAttachment {
   file: Blob|File,
   image?: HTMLImageElement,
@@ -45,6 +49,23 @@ declare interface DataToUpload {
 
 declare interface UploadedData extends DataToUpload {
   url: string
+}
+
+declare interface VimeoEmbedData {
+  account_type: string,
+  author_name: string,
+  author_url: string,
+  description: string,
+  duration: number,
+  height: number,
+  html: string,
+  is_plus: string,
+  thumbnail_height: number,
+  thumbnail_url: string,
+  thumbnail_url_with_play_button: string,
+  thumbnail_width: number,
+  video_id: number,
+  width: number,
 }
 
 declare function upload(

@@ -80,7 +80,7 @@ import PopoverModal from '../components/UI/PopoverModal'
 import PxInput from '../components/UI/inputs/PxInput'
 import DateTimePicker from '../components/UI/inputs/DateTimePicker'
 import TextEditor from '../components/UI/TextEditor'
-import AttachmentsEditor from '../components/UI/attachments/AttachmentsEditor'
+import AttachmentsEditor from './attachments/AttachmentsEditor'
 
 export default {
   name: 'PostEditor',
@@ -199,7 +199,9 @@ export default {
     },
 
     embedUrl () {
-
+      if (this.$refs['attachments-editor']) {
+        this.$refs['attachments-editor'].openEmbedDialog()
+      }
     },
 
     onRemoveAttachment (id) {

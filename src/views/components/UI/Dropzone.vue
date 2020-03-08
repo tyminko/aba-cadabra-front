@@ -60,6 +60,7 @@ export default {
         }, false)
       })
       dropzone.addEventListener('dragover', e => {
+        if (!e.dataTransfer.files.length) return
         this.showOverlay = true
         this.message = this.messages.over
         this.actionClass = 'hover'
