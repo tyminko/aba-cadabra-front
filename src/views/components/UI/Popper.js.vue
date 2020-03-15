@@ -127,7 +127,7 @@ export default {
       }
 
       let modifiers = [
-        { name: 'offset', options: { offset: [0, this.arrowSize] } },
+        { name: 'offset', options: { offset: [0, this.noArrow ? 0 : this.arrowSize] } },
         { name: 'arrow', options: { padding: this.arrowSize } },
         { name: 'onFirstUpdate', fn: state => this.$emit('created', state) }
       ]

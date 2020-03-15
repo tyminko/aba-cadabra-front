@@ -49,6 +49,7 @@ module.exports = {
         'base': `${baseSize / 3}rem`,
         '-base': `-${baseSize / 3}rem`,
         'sm': `${baseSize / 6}rem`,
+        'xs': `${baseSize / 12}rem`,
         '-sm': `-${baseSize / 6}rem`,
         'xl': `${baseSize / 3 * 2}rem`,
         '-xl': `-${baseSize / 3 * 2}rem`

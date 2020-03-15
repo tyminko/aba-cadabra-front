@@ -115,7 +115,7 @@ export default {
 <style lang="css">
   .px-label { @apply block mb-6; }
   .px-label  span.label {
-    @apply block relative -mb-1 pl-sm text-xs text-gray-600 capitalize transition-opacity duration-100 z-10;
+    @apply block relative -mb-1 pl-sm text-xs text-gray-600 capitalize transition-opacity duration-100;
   }
   .px-label.focus > .label { @apply text-aba-blue; }
   .px-label.error > .label { @apply text-red-500; }

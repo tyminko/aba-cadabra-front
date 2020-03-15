@@ -28,16 +28,13 @@ export function getShortFormatForLocale (locale) {
 export function format (timestamp, format = 'numeric', locale) {
   if (!timestamp) return ''
   const dt = timestamp instanceof DateTime ? timestamp : DateTime.fromMillis(timestamp)
-  if (locale) {
-    dt.setLocale(locale)
-  }
   switch (format) {
     case 'long':
-      return dt.toLocaleString(DateTime.DATE_FULL)
+      return dt.setLocale(locale).toLocaleString(DateTime.DATE_FULL)
     case 'full':
-      return dt.toLocaleString({ ...DateTime.DATETIME_MED, ...{ month: 'long' } })
+      return dt.setLocale(locale).toLocaleString({ ...DateTime.DATETIME_MED, ...{ month: 'long' } })
     default:
-      return dt.toLocaleString(DateTime.DATE_SHORT)
+      return dt.setLocale(locale).toLocaleString(DateTime.DATE_SHORT)
   }
 }
 

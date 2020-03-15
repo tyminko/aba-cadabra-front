@@ -49,17 +49,12 @@
                 <span v-else>{{attach.mime.split('/').pop()}}</span>
               </div>
             </div>
-            <div>
-              {{Math.ceil(item.progress.total)}}%
-            </div>
+            <progress-bar :value="item.progress.total" show-percentage/>
           </div>
         </div>
       </section>
     </div>
-
-    <div>
-      <strong>{{ Math.ceil(totalProgress) }}%</strong>
-    </div>
+    <progress-bar :value="totalProgress" show-percentage/>
   </div>
 </template>
 
@@ -71,10 +66,11 @@ import { db, storage } from '../../lib/firebase'
 import imgLib from '../../lib/image'
 import * as string from '../../lib/string'
 import { upload } from '../../lib/storage'
+import ProgressBar from '../components/UI/ProgressBar'
 
 export default {
   name: 'TransferWPPosts',
-  components: {},
+  components: { ProgressBar },
 
   data: () => ({
     transfered: [],
@@ -142,7 +138,7 @@ export default {
       return Object.entries(this.postsByType).reduce((res, [type, posts]) => {
         res[type] = posts.reduce((postsOfType, postRawData) => {
           const post = {
-            status: 'published',
+            status: 'public',
             wpID: parseInt(postRawData.post.ID),
             author: this.postAuthor(postRawData.post.post_author),
             content: postRawData.post.post_content,
@@ -301,25 +297,24 @@ export default {
   },
 
   async created () {
-    this.unsubscribe = db.collection('profiles')
-      .onSnapshot(snapshot => {
-        this.profiles = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }))
-      })
+    // this.unsubscribe = db.collection('profiles')
+    //   .onSnapshot(snapshot => {
+    //     this.profiles = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }))
+    //   })
     this.unsubscribePosts = []
-    this.postTypesList.forEach(type => {
-      this.unsubscribePosts.push(db.collection(string.toCamel(type))
-        .onSnapshot(snapshot => {
-          this.savedPosts[type] = snapshot.docs.reduce((res, doc) => {
-            res[doc.id] = { ...doc.data() }
-            return res
-          }, {})
-          this.updateProgressOnSavedPosts()
-        })
-      )
-    })
-
-    this.uploadedAttachments = await this.getUploadedAttachments()
-    this.uploadedAttachmentNames = await this.getUploadedAttachmentNames()
+    this.unsubscribePosts.push(db.collection('posts')
+      .onSnapshot(snapshot => {
+        this.savedPosts = snapshot.docs.reduce((res, doc) => {
+          res[doc.id] = { ...doc.data() }
+          return res
+        }, {})
+        // this.upgradePosts()
+        this.updateProgressOnSavedPosts()
+      })
+    )
+    //
+    // this.uploadedAttachments = await this.getUploadedAttachments()
+    // this.uploadedAttachmentNames = await this.getUploadedAttachmentNames()
   },
 
   destroyed () {
@@ -332,6 +327,102 @@ export default {
   },
 
   methods: {
+    createProgrammes () {
+      const programmes = {
+        'salons': { title: 'Salons', singlePostLabel: 'Salon' },
+        'won': { title: 'WON', singlePostLabel: 'World Of Noon' },
+        'lab': { title: 'Lab', singlePostLabel: 'Lab' },
+        'fieldSchool': { title: 'Field School', singlePostLabel: 'Field School' }
+      }
+      return Promise.all(Object.entries(programmes).map(([id, pr]) => {
+        const { title, singlePostLabel } = pr
+        /** @type Programme */
+        const programmeData = { title, singlePostLabel, events: [], status: 'public' }
+        // !!! DEBUG !!!
+        console.log(`%c () %c programmeData: `, 'background:#ffbb00;color:#000', 'color:#00aaff', programmeData)
+        return db.collection('programmes').doc(id).set(programmeData)
+      }))
+    },
+
+    async upgradePosts () {
+      const snapshot = await db.collection('programmes').get()
+      const programmes = snapshot.docs.reduce((res, doc) => {
+        res[doc.id] = doc.data()
+        return res
+      }, {})
+      Object.entries(this.savedPosts).forEach(([id, post]) => {
+        const toUpdate = {}
+        switch (post.type) {
+          case 'salons':
+          case 'lab':
+            toUpdate.type = 'event'
+            toUpdate.partOfProgramme = {
+              programmeId: post.type,
+              singlePostLabel: programmes[post.type].singlePostLabel
+            }
+            break
+          case 'programme':
+            toUpdate.type = 'event'
+            const match = post.title.match(/(.*)#\s?(\d+)/)
+            if (match) {
+              let programmeId = ''
+              switch (match[1].trim()) {
+                case 'World of Noon':
+                  programmeId = 'won'
+                  break
+                case 'Field School':
+                  programmeId = 'fieldSchool'
+              }
+              if (programmeId) {
+                toUpdate.partOfProgramme = {
+                  programmeId,
+                  singlePostLabel: programmes[programmeId].singlePostLabel
+                }
+              }
+              toUpdate.countNumber = match[2]
+            }
+            break
+          case 'diaryPost':
+            toUpdate.type = 'post'
+        }
+        if (!post.date) {
+          toUpdate.date = post.created
+        }
+        if (post.status === 'published') {
+          toUpdate.status = 'public'
+        }
+        // !!! DEBUG !!!
+        console.log(`%c (${id} - ${post.type}) %c toUpdate: `, 'background:#ff00aa;color:#000', 'color:#00aaff', toUpdate)
+        if (Object.keys(toUpdate).length) {
+          db.collection('posts').doc(id).update(toUpdate)
+        }
+        // Update Programme
+        if (toUpdate.partOfProgramme) {
+          const { date, endDate, excerpt, thumbnail, countNumber } = post
+
+          /** @type ProgrammePostRef */
+          const programmePostRef = { postId: id, title: post.title || '' }
+          if (date) programmePostRef.date = date
+          if (endDate) programmePostRef.endDate = endDate
+          if (excerpt) programmePostRef.excerpt = excerpt
+          if (countNumber) programmePostRef.countNumber = countNumber
+          if (post.attachments) {
+            const attachment = post.attachments[thumbnail || 0]
+            if (attachment) {
+              programmePostRef.thumbnail = attachment.srcSet
+            }
+          }
+          programmes[toUpdate.partOfProgramme.programmeId].events.push(programmePostRef)
+        }
+      })
+      Object.entries(programmes).forEach(([id, prData]) => {
+        // !!! DEBUG !!!
+        console.log(`%c () %c prData: `, 'background:#00ffaa;color:#000', 'color:#00aaff', prData)
+        const { events } = prData
+        db.collection('programmes').doc(id).update({ events })
+      })
+    },
+
     getUploadedAttachments () {
       return this.readStorage().then(folders => {
         return folders
@@ -343,11 +434,12 @@ export default {
             if (!res[item.name]) {
               res[item.name] = {}
             }
+            res[item.name].srcSet = {}
             const size = item.path.match(/-(full|preview)\.[a-z]{3,4}$/)
             if (size) {
-              res[item.name][size[1]] = { url: item.url }
+              res[item.name].srcSet[size[1]] = { url: item.url }
             } else {
-              res[item.name].original = { url: item.url }
+              res[item.name].srcSet.original = { url: item.url }
             }
             return res
           }, {})
@@ -394,8 +486,8 @@ export default {
     updateProgressOnSavedPosts () {
       Object.entries(this.convertedPosts).forEach(([type, posts]) => {
         Object.keys(posts).forEach(id => {
-          const unsaved = (this.postsToTransfer[type] || {})[id]
-          if (this.savedPosts[type] && this.savedPosts[type][`wp${id}`] && !unsaved) {
+          // const unsaved = (this.postsToTransfer[type] || {})[id]
+          if (this.savedPosts[`wp${id}`]) {
             this.$set(this.convertedPosts[type][id].progress, 'total', 100)
           }
         })
@@ -426,10 +518,11 @@ export default {
 
     async prepareAttachmentsForUpload (post) {
       const attachments = [
-        ...post.attachments.map(a => ({ ...a, placedIn: 'attachments' })),
-        ...post.gallery.map(a => ({ ...a, placedIn: 'gallery' }))
+        ...post.attachments.map(a => ({ ...a, placedIn: 'attachments', type: a.mime })),
+        ...post.gallery.map(a => ({ ...a, placedIn: 'gallery', type: a.mime }))
       ].map(a => {
         a.storageName = this.urlToStorageName(a.url)
+        a.name = a.storageName
         if (this.uploadedAttachmentNames.includes(a.storageName)) {
           a.uploaded = true
           this.uploadedFiles.push({ postId: post.wpID, attachment: a })
@@ -456,10 +549,14 @@ export default {
       const attachments = [...(convertedPost.attachments || []), ...(convertedPost.gallery || [])]
       return attachments.reduce((attachmentsMap, attachment) => {
         const storageName = attachment.storageName
-        if (uploaded.hasOwnProperty(storageName)) {
-          attachmentsMap[storageName] = uploaded[storageName]
+        const uploadedAttachment = uploaded.find(a => a.id === attachment.wpID)
+        if (uploadedAttachment) {
+          attachmentsMap[storageName] = { uploadedAttachment, attachment }
         } else if (this.uploadedAttachments.hasOwnProperty(storageName)) {
-          attachmentsMap[storageName] = { ...this.uploadedAttachments[storageName], attachment }
+          attachmentsMap[storageName] = {
+            uploadedAttachment: { ...attachment, ...this.uploadedAttachments[storageName] },
+            attachment
+          }
         }
         return attachmentsMap
       }, {})
@@ -476,19 +573,19 @@ export default {
         this.processing = true
         const readyToUpload = await this.prepareAttachmentsForUpload(post)
         this.$set(this.convertedPosts[postType][postId].progress, 'max', readyToUpload.length * 100)
-
+        // !!! DEBUG !!!
+        console.log(`%c transferPost() %c readyToUpload: `, 'background:#ff00ff;color:#000', 'color:#00aaff', readyToUpload)
         const uploaded = await upload(post.author.uid, readyToUpload, (id, progress) => {
           this.$set(this.convertedPosts[postType][postId].progress.parts, id, progress)
           const sum = Object.values(post.progress.parts).reduce((r, p) => r + p)
           this.$set(this.convertedPosts[postType][postId].progress, 'total', sum / post.progress.max * 100)
           this.updateTotalProgress()
         })
-
         const allUploaded = this.allUploadedForPost(post, uploaded)
-        // !!! DEBUG !!!
-        console.log(`%c transferPost() %c allUploaded: `, 'background:#ffbb00;color:#000', 'color:#00aaff', allUploaded)
 
         const replacements = Object.entries(allUploaded).reduce((replacements, [name, item]) => {
+          // !!! DEBUG !!!
+          console.log(`%c () %c item: `, 'background:#ffFF00;color:#000', 'color:#00aaff', item)
           if (item.attachment.toReplace) {
             const imgTag = `<img src="${(item.full || item.original || {}).url}">`
             replacements.push({
@@ -502,7 +599,7 @@ export default {
         }, [])
         let content = post.content
         replacements.forEach(r => {
-          content = content.replace(r.toReplace, r.replacement)
+          content = content.replace(r.toReplace, '')
         })
         const {
           status,
@@ -535,58 +632,50 @@ export default {
 
         const allUploadedKeys = Object.keys(allUploaded)
 
-        if (allUploadedKeys.length) {
-          const { full, preview, original, attachment } = allUploaded[allUploadedKeys[0]]
-          const thumbnail = {}
-          if (full) thumbnail.full = full
-          if (preview) thumbnail.preview = preview
-          if (original) thumbnail.original = original
-          if (attachment) {
-            if (attachment.mime) thumbnail.mime = attachment.mime
-            if (attachment.caption) thumbnail.caption = attachment.caption
-          }
-          postData.thumbnail = thumbnail
-        }
-
         const attachTypes = ['attachments', 'gallery']
+        postData.attachments = {}
         attachTypes.forEach(attachType => {
+          // !!! DEBUG !!!
+          console.log(`%c() %c post: `, 'background:#ffbb00;color:#000', 'color:#00aaff', post)
           if (post[attachType].length) {
-            postData[attachType] = post[attachType].reduce((res, attachment) => {
+            const attachmentsOfType = post[attachType].reduce((res, attachment) => {
               let uploadedAttachment = {}
-              let storageKey = allUploadedKeys.find(key => allUploaded[key].attachment.wpID === attachment.wpID)
+              let storageKey = allUploadedKeys.find(key => key === attachment.storageName)
+              // !!! DEBUG !!!
+              console.log(`%c () %c storageKey: `, 'background:#00FF00;color:#000', 'color:#00aaff', storageKey)
+              const { mime: type, wpID, url, thumbnail, caption } = attachment
               if (storageKey) {
-                uploadedAttachment = allUploaded[storageKey]
-              }
-              const { mime, wpID, url, thumbnail, caption } = attachment
-              if (storageKey) {
-                res[storageKey] = { mime, wpID, wpUrl: url, wpThumbnail: thumbnail }
+                uploadedAttachment = allUploaded[storageKey].uploadedAttachment
+                // !!! DEBUG !!!
+                console.log(`%c () %c attachment: `, 'background:#00FF00;color:#000', 'color:#00aaff', attachment)
+                console.log(`%c () %c uploadedAttachment: `, 'background:#00FF00;color:#000', 'color:#00aaff', uploadedAttachment)
+                res[storageKey] = { type, wpID, wpUrl: url, wpThumbnail: thumbnail, srcSet: {} }
                 if (caption) res[storageKey].caption = caption
-                const { full, preview, original } = uploadedAttachment
-                if (full) res[storageKey].full = full
-                if (preview) res[storageKey].preview = preview
-                if (original) res[storageKey].original = original
+                const { srcSet } = uploadedAttachment
+                if (srcSet) res[storageKey].srcSet = srcSet
               } else {
-                res[wpID] = { mime, wpID, wpUrl: url, wpThumbnail: thumbnail }
+                res[wpID] = { type, wpID, wpUrl: url, wpThumbnail: thumbnail }
                 if (caption) res[wpID].caption = caption
                 this.errorPosts.push(postData)
               }
               return res
             }, {})
+            postData.attachments = { ...postData.attachments, ...attachmentsOfType }
           }
         })
 
-        const type = string.toCamel(postType)
+        postData.type = string.toCamel(postType)
         const pId = `wp${wpID}`
         // !!! DEBUG !!!
         console.log(`%c transferPost() %c postData: `, 'background:#ffbb00;color:#000', 'color:#00aaff', postData)
-        await db.collection(type).doc(pId).update(postData)
+        await db.collection('posts').doc(pId).set(postData)
 
         this.$set(this.convertedPosts[postType][postId].progress, 'total', 100)
 
         this.processing = false
       } catch (err) {
         /* DEBUG */
-        console.log(`%c transferPost %c, ${postType} ${postId} err: `, 'background:#ffbb00;color:#000', 'color:#00aaff', err)
+        console.error(`%c transferPost %c, ${postType} ${postId} err: `, 'background:#ff0000;color:#000', 'color:#00aaff', err)
       }
     },
 

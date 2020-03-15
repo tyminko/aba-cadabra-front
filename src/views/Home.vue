@@ -1,52 +1,37 @@
 <template>
   <div class="home">
     <div class="feed-grid">
-      <div v-for="(post, id) in feed"
-           :key="post.postId"
-           ref="feed-items"
-           :class="cellSize(id)"
-           class="cell break-words flex flex-col">
-        <header class="flex-grow-0">
-          <div class="flex flex-align-center">
-            <div class="badge mr-2 bg-gray-200">{{postType(post.postType)}}</div>
-            <popper v-if="adminOrEditor"
-                    placement="right"
-                    class="ml-auto">
-              <template v-slot:reference="{show}">
-                <span class="edit-button badge w-8 text-gray-600 hover:text-aba-blue"
-                      :class="{active:show}">
-                  <i class="material-icons text-base cursor-pointer">edit</i>
-                </span>
-              </template>
-              <template v-slot:default="{hide}">
-                <post-editor-palette
-                  :current="cellSize(id)"
-                  @close="hide"
-                  @set-size="setCellSize(id, $event)"
-                  @open-editor="openEditor(post.postType, post.postId)"/>
-              </template>
-            </popper>
-          </div>
-          <h1 class="mt-1">{{post.title}}</h1>
-          <div class="mt-1">{{formatDate(post.date)}}</div>
-        </header>
-        <div
-          v-if="post.thumbnail && post.thumbnail.mime.startsWith('image')"
-          class="thumbnail-box flex-grow min-h-0">
-          <!--suppress HtmlUnknownTarget -->
-          <img :src="thumbnailUrl(post)" @load="formatText(id)">
-        </div>
-        <div v-else class="patch flex-grow min-h-0 bg-gray-800" />
-        <div :ref="`feed-text-${id}`" class="excerpt min-h-0 overflow-hidden mt-2 mb-4 min-h-line">
-          <div>{{post.excerpt}}</div>
-        </div>
-      </div>
+      <post-cell
+        v-for="post in feed"
+        :key="post.id"
+        :post="post">
+        <template v-slot:quick-edit-button="{cellSize}">
+          <popper
+            v-if="adminOrEditor"
+            placement="right"
+            class="ml-auto">
+            <template v-slot:reference="{show}">
+              <span
+                class="edit-button badge w-2/3base h-2/3base text-gray-600 hover:text-aba-blue"
+                :class="{active:show}">
+                <i class="material-icons text-base cursor-pointer">edit</i>
+              </span>
+            </template>
+            <template v-slot:default="{hide}">
+              <post-editor-palette
+                :current="cellSize"
+                @close="hide"
+                @set-size="setCellSize(post.id, $event)"
+                @open-editor="openEditor(post)"/>
+            </template>
+          </popper>
+        </template>
+      </post-cell>
     </div>
     <post-editor
-      v-if="adminOrEditor && shouldOpenEditor"
-      :open="shouldOpenEditor"
-      :post-id="editorPostId"
-      :type="editorPostType"
+      v-if="adminOrEditor && !!postToEdit"
+      :open="!!postToEdit"
+      :post="postToEdit"
       @close="closeEditor"/>
   </div>
 </template>
@@ -59,10 +44,11 @@ import Ftellipsis from 'ftellipsis'
 import Popper from './components/UI/Popper.js'
 import PostEditorPalette from './editor/PostEditorPalette'
 import PostEditor from './editor/PostEditor'
+import PostCell from './components/PostCell'
 
 export default {
   name: 'Home',
-  components: { Popper, PostEditorPalette, PostEditor },
+  components: { PostCell, Popper, PostEditorPalette, PostEditor },
   props: {},
 
   data: () => ({
@@ -70,7 +56,8 @@ export default {
     unsubscribe: null,
     shouldOpenEditor: false,
     editorPostId: null,
-    editorPostType: null
+    editorPostType: null,
+    postToEdit: null
   }),
 
   computed: {
@@ -88,16 +75,44 @@ export default {
   },
 
   methods: {
+    openEditor (post) {
+      this.postToEdit = post
+      this.shouldOpenEditor = true
+    },
+
     closeEditor () {
-      this.shouldOpenEditor = false
-      this.editorPostId = null
-      this.editorPostType = null
+      this.postToEdit = null
+    },
+
+    hasThumbnail (post) {
+      if (post.thumbnail) {
+        const { full, preview, original } = post.thumbnail.srcSet || post.thumbnail
+        return !!full || !!preview || !!original
+      }
+      return false
     },
 
     thumbnailUrl (post) {
+      let src = null
+      if (post.attachments) {
+        if (post.thumbnail && post.attachments.hasOwnProperty(post.thumbnail)) {
+          src = post.attachments[post.thumbnail].srcSet
+        } else {
+          const firstVisualAttachment = Object.values(post.attachments).find(attachment => {
+            return (attachment.type || '').startsWith('image/') ||
+              attachment.srcSet.hasOwnProperty('full') ||
+              attachment.srcSet.hasOwnProperty('preview')
+          })
+          if (firstVisualAttachment) {
+            src = firstVisualAttachment.srcSet
+          }
+        }
+      }
+      if (!src) return ''
+      const { full, preview, original } = src
       return post.cardSize
-        ? post.thumbnail.full.url || post.thumbnail.preview.url
-        : post.thumbnail.preview.url || post.thumbnail.full.url
+        ? (full || original || preview || {}).url
+        : (preview || full || original || {}).url
     },
 
     thumbnailObjectPlacement (boxEl) {
@@ -126,12 +141,6 @@ export default {
       return ''
     },
 
-    openEditor (postType, postId) {
-      this.editorPostId = postId
-      this.editorPostType = postType
-      this.shouldOpenEditor = true
-    },
-
     formatDate (timestamp) {
       return date.format(timestamp)
     },
@@ -141,19 +150,19 @@ export default {
     },
 
     setCellSize (id, size) {
-      db.collection('feed').doc(id).update({
+      db.collection('posts').doc(id).update({
         cardSize: size
       })
     },
 
     getFeed () {
-      this.unsubscribe = db.collection('feed')
-        .where('status', '==', 'published').orderBy('date', 'desc')
+      this.unsubscribe = db.collection('posts')
+        .where('status', '==', 'public').orderBy('date', 'desc')
         .onSnapshot(
           querySnapshot => {
             querySnapshot.forEach(async doc => {
               const feedItem = doc.data()
-              this.$set(this.feed, doc.id, feedItem)
+              this.$set(this.feed, doc.id, { ...feedItem, id: doc.id })
               // setTimeout(() => {
               //   if (this.$refs[`feed-text-${doc.id}`]) {
               //     const el = this.$refs[`feed-text-${doc.id}`][0]
@@ -182,81 +191,10 @@ export default {
 
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      grid-auto-rows: 300px;
+      grid-auto-rows: 320px;
       grid-gap: 24px;
       grid-auto-flow: dense;
       padding: 24px;
-
-      .cell {
-        position: relative;
-        border-bottom: 2px solid transparentize($color-dimmed, 0.5);
-        hyphens: auto;
-
-        h1 {
-          font-size: $h3;
-        }
-
-        .type-badge {
-          text-transform: capitalize;
-        }
-        .badge {
-          @apply flex items-center justify-center px-3 h-8 text-xs capitalize;
-        }
-
-        .edit-button:not(.active) {
-          opacity: 0;
-          transform: opacity $transition-time;
-        }
-        .edit-button.active {
-          background: transparentize($color-dimmed, 0.8);
-          border-radius: 50%;
-          color: $color-aba-blue;
-        }
-
-        &:hover {
-          .edit-button {
-            opacity: 1;
-          }
-        }
-
-        &.horizontal {
-          @include wider-then(472px) {
-            grid-column: auto / span 2;
-            h1 {
-              font-size: $h2;
-            }
-          }
-        }
-
-        &.vertical {
-          grid-row: span 2;
-        }
-
-        &.big {
-          grid-row: span 2;
-          @include wider-then(472px) {
-            grid-column: span 2;
-            h1 {
-              font-size: $h1;
-            }
-          }
-        }
-
-      }
-
-      .thumbnail-box {
-        /*margin: 5px -5px;*/
-        /*width: 100%;*/
-        /*height: 150px;*/
-
-        img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          object-position: center;
-          filter: saturate(0);
-        }
-      }
     }
   }
 </style>

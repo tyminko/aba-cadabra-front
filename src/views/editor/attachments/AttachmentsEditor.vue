@@ -32,8 +32,8 @@
           :key="'n-a'"
           ref="new-attachment-cell"
           draggable="false"
-          class="no-move flex flex-col items-center justify-center border border-aba-blue border-dashed"
-          @drop="addDroppedFiles">
+          class="new-attachment-cell no-move flex flex-col items-center justify-center border border-aba-blue border-dashed"
+          @drop="addFiles">
           <p class="italic capitalize font-light text-gray-400">Drop your files here</p>
           <div class="flex items-center">
             <button class="flex-col h-auto leading-none" @click.prevent="openFileDialog">
@@ -155,11 +155,11 @@ export default {
       this.showEmbedDialog = true
     },
 
-    addDroppedFiles (e) {
-      // !!! DEBUG !!!
-      console.log(`%c addDroppedFiles() %c e: `, 'background:#ffccaa;color:#000', 'color:#00aaff', e)
-      this.addFiles(e.dataTransfer.files)
-    },
+    // addDroppedFiles (files) {
+    //   // !!! DEBUG !!!
+    //   console.log(`%c addDroppedFiles() %c e: `, 'background:#ffccaa;color:#000', 'color:#00aaff', e)
+    //   this.addFiles(files)
+    // },
 
     addFilesFromOpenDialog (e) {
       this.addFiles(e.target.files)
@@ -259,7 +259,8 @@ export default {
 
     /** @param {Object<string,*>[]} oldAttachments */
     convertToAttachments (oldAttachments) {
-      this.attachments = oldAttachments.map((item, i) => {
+      this.attachments = oldAttachments
+      /* .map((item, i) => {
         let srcSet = {}
         if (!item.hasOwnProperty('srcSet')) {
           const { preview, full, original } = item
@@ -269,9 +270,10 @@ export default {
         } else {
           srcSet = item.srcSet
         }
-        const { id, type, mime, order, caption } = item
-        return { id, type: type || mime, order, srcSet, caption }
-      })
+        const { id, type, mime, order, caption, name } = item
+        return { id, name, type: type || mime, order, srcSet, caption: caption || '' }
+      }) */
+      this.updateAttachmentsOrder()
     },
 
     onDragging (event) {
@@ -307,7 +309,7 @@ export default {
           type: 'embed/vimeo',
           duration: vimeoEmbed.duration,
           srcSet: {
-            preview: {
+            full: {
               url: vimeoEmbed.thumbnail_url,
               dimensions: { w: vimeoEmbed.thumbnail_width, h: vimeoEmbed.thumbnail_height }
             },
@@ -328,6 +330,7 @@ export default {
 </script>
 
 <style lang="scss">
+  @import "../../../styles/mixins";
   $h: 200px;
   .attachments-grid {
     display: grid;
@@ -345,6 +348,9 @@ export default {
   }
   .new-attachment-cell{
     transition: 0s !important;
+    @media (max-width: 548px) {
+      grid-column: span 1 / auto !important;
+    }
   }
   .drag-overlay {
     display: flex;

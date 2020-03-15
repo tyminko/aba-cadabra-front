@@ -6,6 +6,7 @@ declare interface Dimensions {
   h: number
 }
 
+
 declare interface FileData {
   url: string,
   name?: string,
@@ -18,12 +19,14 @@ declare interface ImageData extends FileData{
   dimensions: Dimensions,
 }
 
+type SourceSet = {[key in KnownAttachmentSizes]: FileData|ImageData}
+
 declare interface PostAttachment {
   id: string,
   name: string,
   type: string,
   order: number,
-  srcSet: { [key in KnownAttachmentSizes]: FileData|ImageData },
+  srcSet: SourceSet,
   caption?: string,
   pointOfInterest?: { x:number, y:number },
 }

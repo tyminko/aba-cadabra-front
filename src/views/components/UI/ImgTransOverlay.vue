@@ -162,9 +162,7 @@ export default {
       }
 
       bgImg.addEventListener('load', updateBgImageStyleAndPlacement)
-      // !!! DEBUG !!!
-      console.log(`%c updateOverlayEl() %c bgImg.src: `, 'background:#ffbbaa;color:#000', 'color:#00aaff', bgImg.src)
-      console.log(`%c updateOverlayEl() %c this.img.src: `, 'background:#ffbbaa;color:#000', 'color:#00aaff', this.img.src)
+
       if (bgImg.src !== this.img.src) {
         bgImg.src = this.img.src
       } else {

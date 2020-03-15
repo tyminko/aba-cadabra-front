@@ -65,9 +65,11 @@ export function fileToRawAttachment (file) {
  */
 export function upload (userId, attachments, progressFn) {
   return Promise.all(attachments.map(attachment => {
-    const baseName = attachment.file ? `${attachment.id}-${toSlug(attachment.file.name)}` : ''
+    const baseName = attachment.storageName || (attachment.file ? `${attachment.id}-${toSlug(attachment.file.name)}` : '')
     return thingsToUploadForAttachment(attachment)
       .then(thingsToUpload => {
+        // !!! DEBUG !!!
+        console.log(`%c () %c thingsToUpload: `, 'background:#ffbb00;color:#000', 'color:#00aaff', thingsToUpload)
         const attachmentProgress = {
           max: thingsToUpload.length * 100,
           total: 0,
@@ -89,11 +91,12 @@ export function upload (userId, attachments, progressFn) {
         uploadedDataBySize.forEach(uploadedData => {
           const id = uploadedData.rawAttachment.id
           if (!attachments.hasOwnProperty(id)) {
-            const { type, order, caption, pointOfInterest } = uploadedData.rawAttachment
-            attachments[id] = { id, type, order, caption, pointOfInterest, srcSet: {} }
+            const { type, name, order, caption, pointOfInterest } = uploadedData.rawAttachment
+            attachments[id] = { id, type, name, order, caption, pointOfInterest, srcSet: {} }
           }
           const { url, sizeType, dimensions, blob } = uploadedData
-          attachments[id].srcSet[sizeType] = { dimensions, url, size: blob.size }
+          attachments[id].srcSet[sizeType] = { url, size: blob.size }
+          if (dimensions) attachments[id].srcSet[sizeType].dimensions = dimensions
         })
         return attachments
       }, {})
@@ -166,7 +169,7 @@ function filePath (userId, baseName, sizeStr, mimeType) {
  */
 async function thingsToUploadForAttachment (attachment) {
   if (!attachment.file) return []
-  if (!attachment.image) {
+  if (!attachment.image && attachment.type.startsWith('image/')) {
     attachment.image = await ImageLib.imageFromFile(attachment.file)
   }
   const mimeType = attachment.file.type
@@ -188,7 +191,8 @@ async function thingsToUploadForAttachment (attachment) {
     if (mimeType === 'image/gif') {
       origData.dimensions = { w: attachment.image.width, h: attachment.image.height }
     }
-    return Promise.resolve(origData)
+    origData.rawAttachment = attachment
+    return Promise.resolve([origData])
   }
 }
 

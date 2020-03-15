@@ -1,31 +1,26 @@
 <template>
   <div class="create-users-from-wp">
     <div>
-      <v-btn :ripple="false" :loading="processing" @click="updateUsers">
+      <button @click="updateUsers">
         Create From WP
-      </v-btn>
-      <v-btn :ripple="false" color="red" :disabled="true" :loading="processing" @click="deleteUsers">
+      </button>
+      <button :disabled="false" :loading="processing" @click="deleteUsers">
         Delete All
-      </v-btn>
+      </button>
     </div>
     <div class="list">
       <ol class="user-info">
         <li v-for="userData in wpUsers"
             :key="userData.user.ID"
+            class="flex items-center"
             :class="{'user-exists': userExists(userData.user.email), 'updated': userUpdated(userData.user.email)}">
-          {{userData.user.display_name}}
+         <span> {{userData.user.display_name}}</span>
+          <button v-if="userExists(userData.user.email)" @click="removeUser(userData.user.email)">[-]</button>
+          <button v-else @click="addUser(userData.user.email)">[+]</button>
         </li>
       </ol>
     </div>
-    <v-progress-linear
-      v-model="done"
-      color="blue-grey"
-      height="25"
-      reactive >
-      <template v-slot="{ value }">
-        <strong>{{ Math.ceil(value) }}%</strong>
-      </template>
-    </v-progress-linear>
+    <progress-bar :value="done" class="h-1/2base" show-percentage/>
   </div>
 </template>
 
@@ -34,10 +29,12 @@ import { mapState } from 'vuex'
 import * as users from '../../lib/users'
 import { db } from '../../lib/firebase'
 import ABADb from '../../ABA-Data.json'
+import ProgressBar from '../components/UI/ProgressBar'
 
 export default {
   name: 'CreateUsersFromWP',
   components: {
+    ProgressBar
   },
 
   props: {
@@ -126,40 +123,70 @@ export default {
       return this.fbUsers.find(u => u.email === email.toLowerCase())
     },
 
+    async addUser (email) {
+      const wpUserData = this.wpUsers.find(ud => ud.user.email === email)
+      const wpUser = wpUserData.user
+      let fbUser = this.userExists(wpUser.email)
+      if (!fbUser) {
+        fbUser = await this.createUser(wpUser)
+        if (fbUser) {
+          this.fbUsers.push(fbUser)
+        } else {
+          /* DEBUG */
+          console.error(`%c createUser %c: `, 'background:#ff0000;color:#000', 'color:#00aaff', wpUser)
+        }
+      }
+    },
+
+    removeUser (email) {
+      const u = this.fbUsers.find(u => u.email === email.toLowerCase())
+      if (!u) return
+      if (u.email === 'tyminko@gmail.com') return
+      setTimeout(async () => {
+        const res = await users.remove(u.uid)
+        if (res) {
+          const index = this.fbUsers.findIndex(us => us.uid === u.uid)
+          if (index > -1) this.fbUsers.splice(index, 1)
+        }
+      }, 1000)
+    },
+
     deleteUsers () {
+      this.processing = true
       this.fbUsers.forEach((u, i) => {
         if (u.email === 'tyminko@gmail.com') return
         setTimeout(async () => {
-          this.processing = true
           const res = await users.remove(u.uid)
-          this.processing = false
           if (res) {
             const index = this.fbUsers.findIndex(us => us.uid === u.uid)
             if (index > -1) this.fbUsers.splice(index, 1)
           }
-        }, i * 4000)
+        }, 1000)
       })
+      this.processing = false
     },
 
     userUpdated (email) {
-      const user = this.fbUsers.find(u => u.email === email)
+      const user = this.fbUsers.find(u => u.email === email.toLowerCase())
       if (!user) return false
       return this.updatedUsers.find(u => u.uid === user.uid)
     },
 
     updateUsers () {
-      this.wpUsers.forEach(async wpUserData => {
-        const wpUser = wpUserData.user
-        let fbUser = this.userExists(wpUser.email)
-        if (!fbUser) {
-          fbUser = await this.createUser(wpUser)
-          if (fbUser) {
-            this.fbUsers.push(fbUser)
-          } else {
-            /* DEBUG */
-            console.error(`%c createUser %c: `, 'background:#ff0000;color:#000', 'color:#00aaff', wpUser)
+      this.wpUsers.forEach((wpUserData, i) => {
+        setTimeout(async () => {
+          const wpUser = wpUserData.user
+          let fbUser = this.userExists(wpUser.email)
+          if (!fbUser) {
+            fbUser = await this.createUser(wpUser)
+            if (fbUser) {
+              this.fbUsers.push(fbUser)
+            } else {
+              /* DEBUG */
+              console.error(`%c createUser %c: `, 'background:#ff0000;color:#000', 'color:#00aaff', wpUser)
+            }
           }
-        }
+        }, i * 2000)
       })
     },
 

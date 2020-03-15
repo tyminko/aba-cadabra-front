@@ -2,17 +2,19 @@
   <popover-modal
     ref="popover"
     :open="open"
-    class="editor"
+    class="editor max-w-text w-full"
     @esc="onEsc"
     @close="close">
     <form
       class="post-editor pb-base"
       @submit.prevent="savePost"
       @keyup.enter.prevent="preventEnter">
-      <div ref="" class="form-body w-text px-base pb-base overflow-auto">
+      <div ref="" class="form-body px-base pb-base overflow-auto">
+        <dropdown-select v-model="postData.type" label="Type" :options="postTypes"/>
+        <search-input :query="participantsQuery"/>
         <px-input
           v-model="postData.title"
-          :placeholder="`${type} title`"
+          :placeholder="`${postData.type ||type} title`"
           class="xl"/>
         <div class="dates-row">
           <date-time-picker
@@ -20,12 +22,12 @@
             v-model="postData.date"
             required
             label="Date"
-            class="mr-base w-1/2 flex-1"/>
+            class="mr-base flex-1"/>
           <date-time-picker
             ref="endDate"
             v-model="postData.endDate"
             label="End Date"
-            class="w-1/2 flex-1"/>
+            class="flex-1"/>
         </div>
         <attachments-editor
           ref="attachments-editor"
@@ -81,13 +83,15 @@ import PxInput from '../components/UI/inputs/PxInput'
 import DateTimePicker from '../components/UI/inputs/DateTimePicker'
 import TextEditor from '../components/UI/TextEditor'
 import AttachmentsEditor from './attachments/AttachmentsEditor'
+import DropdownSelect from '../components/UI/DropdownSelect'
+import SearchInput from '../components/UI/SearchInput'
 
 export default {
   name: 'PostEditor',
-  components: { PopoverModal, PxInput, TextEditor, DateTimePicker, AttachmentsEditor },
+  components: { SearchInput, DropdownSelect, PopoverModal, PxInput, TextEditor, DateTimePicker, AttachmentsEditor },
   props: {
     open: { type: Boolean, required: true },
-    postId: { type: String, default: '' },
+    post: { type: Object, default: null },
     type: { type: String, default: 'post', validator: v => !v || ['post', 'salon', 'salons', 'event', 'programme'].includes(v) }
   },
 
@@ -107,9 +111,16 @@ export default {
       tags: ''
     },
     postData: {},
+    postTypes: {
+      salons: 'Salon',
+      post: 'Blog Post',
+      event: 'Event',
+      programme: 'Programme'
+    },
     posterTempId: '',
     textEditorFocused: false,
-    unsubscribe: null
+    unsubscribe: null,
+    participantsQuery: () => {}
   }),
 
   computed: {
@@ -162,10 +173,10 @@ export default {
   },
 
   watch: {
-    postId () {
-      if (this.unsubscribe) this.unsubscribe()
-      this.postData = { ...this.emptyPostData }
-      this.getPost()
+    post (value) {
+      // if (this.unsubscribe) this.unsubscribe()
+      this.postData = value ? { ...value } : { ...this.emptyPostData }
+      // this.getPost()
     }
   },
 
@@ -221,14 +232,19 @@ export default {
     },
 
     getPost () {
-      if (!this.postId || !this.type) return
-      const type = this.type === 'salon' ? 'salons' : this.type
-      console.log(`%c getPost() %c this.postId, type: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.postId, type)
-      this.unsubscribe = db.collection(type).doc(this.postId)
-        .onSnapshot(doc => {
-          const data = doc.data()
-          this.postData = { ...this.postData, ...data }
-        })
+      if (this.post) {
+        this.postData = { ...this.post }
+      } else {
+        this.postData = { ...this.emptyPostData }
+      }
+      // if (!this.postId || !this.type) return
+      // const type = this.type === 'salon' ? 'salons' : this.type
+      // console.log(`%c getPost() %c this.postId, type: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.postId, type)
+      // this.unsubscribe = db.collection(type).doc(this.postId)
+      //   .onSnapshot(doc => {
+      //     const data = doc.data()
+      //     this.postData = { ...this.postData, ...data, type }
+      //   })
     },
 
     async savePost (e) {
@@ -238,15 +254,15 @@ export default {
         const attachmentsData = await attachmentsEditor.processAttachments()
         this.$set(this.postData, 'attachments', attachmentsData)
         if (this.posterTempId) {
-          const attachment = this.postData.attachments.find(a => a.id === this.posterTempId)
-          if (attachment) {
-            this.$set(this.postData, 'thumbnail', attachment)
-          }
+          // const attachment = this.postData.attachments.find(a => a.id === this.posterTempId)
+          // if (attachment) {
+          // }
+          this.$set(this.postData, 'thumbnail', this.posterTempId)
         }
+        // const type = this.type === 'salon' ? 'salons' : this.type
         // !!! DEBUG !!!
-        console.log(`%c savePost() %c attachmentsData: `, 'background:#ffbb00;color:#000', 'color:#00aaff', attachmentsData)
-        // !!! DEBUG !!!
-        console.log(`%c savePost() %c this.postData: `, 'background:#ff0000;color:#000', 'color:#00aaff', this.postData)
+        console.log(`%c savePost() %c this.postData: `, 'background:#ffbbaa;color:#000', 'color:#00aaff', this.postData)
+        db.collection('posts').doc(this.post.id).update(this.postData)
       } catch (e) {
         console.error(`%c savePost() %c e: `, 'background:#ff00AA;color:#000', 'color:#00aaff', e)
       }
@@ -270,9 +286,9 @@ export default {
   @import "../../styles/mixins";
   .form-body {
     .dates-row {
-      @apply flex flex-col;
+      @apply flex flex-row flex-wrap;
       @include wider-then($max-width-phone * 0.8) {
-        flex-flow: row nowrap;
+        /*flex-flow: row nowrap;*/
       }
     }
   }
