@@ -1,34 +1,31 @@
 <template>
   <div class="search-input-root">
+    <div :id="inputId" class="popper-ref input-wrapper">
+      <!--suppress HtmlFormInputWithoutLabel -->
+<!--          @blur="onBlur"-->
+      <input
+        ref="input"
+        v-model="inputValue"
+        :placeholder="placeholder"
+        :title="placeholder"
+        type="text"
+        @keydown.tab.prevent="onTab"
+        @focus="onFocus"
+        @input="onInput"
+        @keydown.8="onBackspace"
+        @keydown.down="nextSuggestion"
+        @keydown.up="prevSuggestion"
+        @keydown.enter.prevent="completeTyping"
+        @keyup.exact="getSuggestions"
+        @keyup.esc="onEsc">
+    </div>
     <popper
       ref="popper"
       placement="bottom-start"
       no-arrow
-      :options="{
-        modifiers: { offset: { offset: '0,0' } }
-      }"
-      trigger="click"
-      class="popper-wrap">
-      <div slot="reference" class="popper-ref input-wrapper">
-        <!--suppress HtmlFormInputWithoutLabel -->
-        <input
-          ref="input"
-          v-model="inputValue"
-          :placeholder="placeholder"
-          :title="placeholder"
-          type="text"
-          @blur="onBlur"
-          @keydown.tab.prevent="onTab"
-          @focus="onFocus"
-          @input="onInput"
-          @keydown.8="onBackspace"
-          @keydown.down="nextSuggestion"
-          @keydown.up="prevSuggestion"
-          @keydown.enter.prevent="completeTyping"
-          @keyup.exact="getSuggestions"
-          @keyup.esc="onEsc">
-      </div>
-      <ul v-show="inputValue && suggestions.length" class="popper dropdown suggestions secondary">
+      :reference-selector="`#${inputId}`"
+      class="suggestions">
+      <ul v-show="inputValue && suggestions.length" class="">
         <li v-for="(suggestion, index) in suggestions"
             :key="index"
             :class="{highlighted: index === selectedIndex}"
@@ -42,7 +39,8 @@
 </template>
 
 <script>
-import Popper from './Popper.js'
+import Popper from '../Popper.js.vue'
+import simpleId from '../../../../lib/simpleId'
 
 export default {
   name: 'SearchInput',
@@ -83,6 +81,10 @@ export default {
 
     output () {
       return this.inputValue ? { search: this.inputValue, result: this.searchResult } : null
+    },
+
+    inputId () {
+      return simpleId()
     }
   },
 
@@ -101,11 +103,14 @@ export default {
 
   mounted () {
     if (this.focusOnLoad) this.$refs.input.focus()
+    // this.$refs.popper.showPopper = true
   },
 
   methods: {
     getSuggestions () {
-      if (this.oldInputValue !== this.inputValue || (!this.suggestions.length && this.suggestionActivationThreshold === 0)) {
+      if (this.oldInputValue !== this.inputValue ||
+        (!this.suggestions.length && this.suggestionActivationThreshold === 0)
+      ) {
         this.suggestions = []
         this.selectedIndex = -1
         let inputValue = this.inputValue.trim()
@@ -113,6 +118,8 @@ export default {
           const task = this.query(inputValue)
           if (task && task.then) {
             task.then(records => {
+              // !!! DEBUG !!!
+              console.log(`%c () %c records: `, 'background:#00bbFF;color:#000', 'color:#00aaff', records)
               this.suggestions = records.sort(this.sortFunc)
               // Shorten Search results to desired length
               if (this.maxSuggestionsNumber > 0) {
@@ -227,40 +234,45 @@ export default {
     position: relative;
     width: 100%;
     //z-index: $z-high;
-    overflow: visible !important;
+    /*overflow: visible !important;*/
 
     .input-wrapper {
       position: relative;
       margin: 0;
 
-      input {
-        border: none;
-        box-shadow: none;
-        display: block;
-        width: 100%;
-        margin: 0;
+      /*input {*/
+      /*  border: none;*/
+      /*  box-shadow: none;*/
+      /*  display: block;*/
+      /*  width: 100%;*/
+      /*  margin: 0;*/
 
-        &:focus {
-          border: none;
-          box-shadow: none;
-          display: block;
-        }
-      }
+      /*  &:focus {*/
+      /*    border: none;*/
+      /*    box-shadow: none;*/
+      /*    display: block;*/
+      /*  }*/
+      /*}*/
     }
+    /*.popper.dropdown {*/
+    /*  @apply block py-sm px-0 text-left m-0;*/
 
-    .popper.dropdown {
-      @apply block py-sm px-0 text-left m-0;
-
+    /*  .popper__arrow {*/
+    /*    display: none;*/
+    /*  }*/
+    /*}*/
+  }
+  .suggestions {
+    @apply relative block h-auto;
+    .popper {
+      max-height: 20rem;
+      overflow: auto;
+      @apply p-0 border-0;
       li {
-        @apply p-sm whitespace-no-wrap;
-
+        @apply px-base py-sm text-sm whitespace-no-wrap;
         &.highlighted {
-          @apply bg-gray-400;
+          @apply text-aba-blue;
         }
-      }
-
-      .popper__arrow {
-        display: none;
       }
     }
   }

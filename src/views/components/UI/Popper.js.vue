@@ -204,11 +204,7 @@ export default {
   },
 
   mounted () {
-    if (this.referenceSelector) {
-      this.referenceEl = document.querySelector(this.referenceSelector)
-    } else {
-      this.referenceEl = this.reference || this.$refs.reference
-    }
+    this.setReferenceEl()
     this.popper = this.$refs.popper
     this.setArrowSize()
     this.setupListenersForTrigger(this.triggerAction)
@@ -246,6 +242,14 @@ export default {
     hide () {
       this.showPopper = false
       this.appendedArrow = false
+    },
+
+    setReferenceEl () {
+      if (this.referenceSelector) {
+        this.referenceEl = document.querySelector(this.referenceSelector)
+      } else {
+        this.referenceEl = this.reference || this.$refs.reference
+      }
     },
 
     setupListenersForTrigger (trigger) {
@@ -346,6 +350,11 @@ export default {
           el.addEventListener('scroll', this.updateVirtualReferenceElOnEvent)
         })
       } else {
+        if (!this.referenceEl) this.setReferenceEl()
+        // !!! DEBUG !!!
+        console.log(`%c createPopper() %c this.referenceEl: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.referenceEl)
+        console.log(`%c createPopper() %c this.popper: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.popper)
+        console.log(`%c createPopper() %c this.popperOptions: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.popperOptions)
         this.popperInstance = createPopper(this.referenceEl, this.popper, this.popperOptions)
       }
     },

@@ -27,6 +27,7 @@ declare interface InstitutionRef {
 
 declare interface Profile {
   displayName: string,
+  email: string,
   registered: number,
   photoURL?: string,
   photo?: SourceSet,
@@ -49,7 +50,7 @@ declare interface StaffProfile extends Profile {
 }
 
 declare interface ProfileRef {
-  uid: string,
+  id: string,
   displayName: string,
   photoURL?: string,
   photo?: SourceSet

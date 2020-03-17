@@ -1,17 +1,18 @@
 <template>
   <div class="tags-input-root">
-    <draggable v-model="tags"
-               :move="onMove"
-               :group="{ name: 'people', pull: 'clone', put: false }"
-               :sortable="true"
-               class="tags-input"
-               handle=".tag-handle">
+    <draggable
+      v-model="tags"
+      :move="onMove"
+      :group="{ name: 'people', pull: 'clone', put: false }"
+      :sortable="true"
+      class="tags-input"
+      handle=".tag-handle">
       <slot :tags="tags" />
       <div class="popper-ref input-wrapper">
         <search-input
           ref="tagInput"
           :query="query"
-          :placeholder="placeholder || $t('tag.Add a tag')"
+          :placeholder="placeholder || 'Add a person'"
           @typing="setText"
           @blur="onBlur"
           @tab="onInput"
@@ -29,8 +30,8 @@
 
 <script>
 import draggable from 'vuedraggable/src/vuedraggable'
-import Tags from '../../../lib/tags'
-import SearchInput from '../UI/SearchInput'
+import Tags from '../../../../lib/tags'
+import SearchInput from './SearchInput'
 
 export default {
   name: 'TagsInput',
@@ -230,39 +231,23 @@ export default {
 </script>
 
 <style lang="scss">
-  @import "../../../assets/styles/vars";
-  @import "../../../assets/styles/mixins";
-
   .input-wrapper {
     position: relative;
-    margin: 0 0 $tag-padding;
 
-    .auto-complete-placeholder {
-      position: absolute;
-      height: $tag-inline-height;
-      display: flex;
-      align-items: center;
-      padding: $tag-padding;
-      top: 1px; // offset to compensate input border width
-      left: 1px; // offset to compensate input border width
-      opacity: 0.3;
-      @include noselect;
-    }
-
-    button.add {
-      position: absolute;
-      right: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      height: $tag-inline-height;
-      width: $tag-inline-height;
-      border-radius: 0 $tag-corner-radius $tag-corner-radius 0;
-    }
+  }
+  .auto-complete-placeholder {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    top: 1px; // offset to compensate input border width
+    left: 1px; // offset to compensate input border width
+    opacity: 0.3;
   }
 
-  .profile-wrapper {
-    .auto-complete-placeholder {
-      height: $basic-size;
-    }
+  button.add {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
   }
 </style>

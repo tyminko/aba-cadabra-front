@@ -11,7 +11,7 @@
       @keyup.enter.prevent="preventEnter">
       <div ref="" class="form-body px-base pb-base overflow-auto">
         <dropdown-select v-model="postData.type" label="Type" :options="postTypes"/>
-        <search-input :query="participantsQuery"/>
+        <credits-input/>
         <px-input
           v-model="postData.title"
           :placeholder="`${postData.type ||type} title`"
@@ -62,10 +62,10 @@ type: DROPDOWN
 ### title: INPUT
 ### date: DATE PICKER
 ### dateEnd: date picker
-status: dropdown
+### status: dropdown
 ### content: EDITABLE / TEXT EDITOR
 excerpt: TEXTAREA
-attachments: UPLOADER
+#### attachments: UPLOADER
 countNumber: auto-counter
 participants: AUTOCOMPLETE (profiles)
 supportedBy: autocomplete (institutions)
@@ -84,11 +84,11 @@ import DateTimePicker from '../components/UI/inputs/DateTimePicker'
 import TextEditor from '../components/UI/TextEditor'
 import AttachmentsEditor from './attachments/AttachmentsEditor'
 import DropdownSelect from '../components/UI/DropdownSelect'
-import SearchInput from '../components/UI/SearchInput'
+import CreditsInput from '../components/UI/inputs/CreditsInput'
 
 export default {
   name: 'PostEditor',
-  components: { SearchInput, DropdownSelect, PopoverModal, PxInput, TextEditor, DateTimePicker, AttachmentsEditor },
+  components: { CreditsInput, DropdownSelect, PopoverModal, PxInput, TextEditor, DateTimePicker, AttachmentsEditor },
   props: {
     open: { type: Boolean, required: true },
     post: { type: Object, default: null },
@@ -119,8 +119,7 @@ export default {
     },
     posterTempId: '',
     textEditorFocused: false,
-    unsubscribe: null,
-    participantsQuery: () => {}
+    unsubscribe: null
   }),
 
   computed: {
@@ -237,14 +236,6 @@ export default {
       } else {
         this.postData = { ...this.emptyPostData }
       }
-      // if (!this.postId || !this.type) return
-      // const type = this.type === 'salon' ? 'salons' : this.type
-      // console.log(`%c getPost() %c this.postId, type: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.postId, type)
-      // this.unsubscribe = db.collection(type).doc(this.postId)
-      //   .onSnapshot(doc => {
-      //     const data = doc.data()
-      //     this.postData = { ...this.postData, ...data, type }
-      //   })
     },
 
     async savePost (e) {
@@ -254,14 +245,8 @@ export default {
         const attachmentsData = await attachmentsEditor.processAttachments()
         this.$set(this.postData, 'attachments', attachmentsData)
         if (this.posterTempId) {
-          // const attachment = this.postData.attachments.find(a => a.id === this.posterTempId)
-          // if (attachment) {
-          // }
           this.$set(this.postData, 'thumbnail', this.posterTempId)
         }
-        // const type = this.type === 'salon' ? 'salons' : this.type
-        // !!! DEBUG !!!
-        console.log(`%c savePost() %c this.postData: `, 'background:#ffbbaa;color:#000', 'color:#00aaff', this.postData)
         db.collection('posts').doc(this.post.id).update(this.postData)
       } catch (e) {
         console.error(`%c savePost() %c e: `, 'background:#ff00AA;color:#000', 'color:#00aaff', e)
