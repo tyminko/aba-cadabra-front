@@ -1,10 +1,18 @@
 <template>
-  <input :type="type"
-         v-model="model"
-         v-input-auto-width="autoWidthOptions"
-         :placeholder="placeholder"
-         @focus="$emit('focus')"
-         @blur="$emit('blur')">
+  <!--suppress HtmlFormInputWithoutLabel -->
+  <input
+    :type="type"
+    v-model="model"
+    v-input-auto-width="autoWidthOptions"
+    :placeholder="placeholder"
+    @click="focus"
+    @focus="$emit('focus')"
+    @blur="$emit('blur')"
+    @keydown.down="$emit('arrow-down')"
+    @keydown.up="$emit('arrow-up')"
+    @keydown.enter.prevent="$emit('enter')"
+    @keyup.exact="$emit('keyup')"
+    @keydown.esc="onEsc">
 </template>
 
 <script>
@@ -61,6 +69,15 @@ export default {
   methods: {
     focus () {
       this.$el.focus()
+    },
+
+    blur () {
+      this.$el.blur()
+    },
+
+    onEsc (e) {
+      e.stopImmediatePropagation()
+      this.$emit('esc')
     },
 
     async placeholderWidth () {

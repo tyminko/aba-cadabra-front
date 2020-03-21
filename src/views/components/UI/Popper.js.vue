@@ -1,6 +1,6 @@
 <template>
   <span ref="popper-root">
-    <transition :name="transitionName" @after-leave="doDestroy">
+    <transition :name="transitionName" @after-leave="destroyAfterTransition">
       <span v-if="!disabled && showPopper" ref="popper" :id="id" class="popper">
         <span class="popper-content">
           <slot :hide="hide"/>
@@ -23,7 +23,7 @@ export default {
     trigger: {
       type: [String, Boolean],
       default: 'click',
-      validator: value => (typeof value === 'boolean' || ['click', 'hover'].indexOf(value) > -1)
+      validator: value => (typeof value === 'boolean' || ['click', 'hover', 'none'].indexOf(value) > -1)
     },
     modifiers: { type: Array, default: () => ([]) },
     strategy: { type: String, default: '' },
@@ -76,6 +76,7 @@ export default {
     forceShow: Boolean,
     appendToBody: Boolean,
     touchable: Boolean,
+    enableQuickReset: Boolean,
     transition: { type: String, default: '' }
   },
 
@@ -92,7 +93,7 @@ export default {
 
   computed: {
     triggerAction () {
-      return typeof this.trigger === 'boolean'
+      return typeof this.trigger === 'boolean' || this.trigger === 'none'
         ? null
         : this.touchable ? 'click' : this.trigger
     },
@@ -127,9 +128,9 @@ export default {
       }
 
       let modifiers = [
-        { name: 'offset', options: { offset: [0, this.noArrow ? 0 : this.arrowSize] } },
+        { name: 'offset', enabled: true, options: { offset: [0, this.noArrow ? 0 : this.arrowSize] } },
         { name: 'arrow', options: { padding: this.arrowSize } },
-        { name: 'onFirstUpdate', fn: state => this.$emit('created', state) }
+        { name: 'onFirstUpdate', phase: 'beforeRead', fn: state => { this.$emit('created', state) } }
       ]
       if (this.boundariesSelector) {
         const boundariesElement = document.querySelector(this.boundariesSelector)
@@ -137,7 +138,14 @@ export default {
           modifiers = [
             ...modifiers,
             { name: 'flip', options: { boundary: boundariesElement, padding: this.boundariesPadding } },
-            { name: 'preventOverflow', options: { boundary: boundariesElement, padding: this.boundariesPadding } }
+            { name: 'preventOverflow', options: { boundary: boundariesElement, padding: this.boundariesPadding } },
+            { name: 'size',
+              phase: 'write',
+              fn: args => {
+                // !!! DEBUG !!!
+                console.log(`%c fn() %c args: `, 'background:#00ffaa;color:#000', 'color:#00aaff', args)
+              }
+            }
           ]
         }
       }
@@ -179,6 +187,9 @@ export default {
         this.$emit('toggle', true)
         this.$emit('show', this)
       } else {
+        if (this.enableQuickReset) {
+          this.destroyPopper()
+        }
         this.$emit('toggle', false)
         this.$emit('hide', this)
       }
@@ -257,7 +268,8 @@ export default {
       if (!el) return
       switch (trigger) {
         case 'click':
-          el.addEventListener('click', this.toggle)
+        case 'none':
+          if (trigger === 'click') el.addEventListener('click', this.toggle)
           document.addEventListener('click', this.hideOnClickOutside)
           break
         case 'hover':
@@ -325,8 +337,8 @@ export default {
     },
 
     async createPopper () {
-      if (!this.noArrow) {
-        this.appendArrow(this.popper)
+      if (!this.noArrow && this.$refs.popper) {
+        this.appendArrow(this.$refs.popper)
       }
 
       if (this.appendToBody && !this.appendedToBody) {
@@ -344,19 +356,20 @@ export default {
             getBoundingClientRect: this.generateGetBoundingClientRect()
           }
         }
-        this.popperInstance = createPopper(this.virtualReferenceEl, this.popper, this.popperOptions)
+        this.popperInstance = createPopper(this.virtualReferenceEl, this.$refs.popper, this.popperOptions)
         window.addEventListener('resize', this.updateVirtualReferenceElOnEvent)
         this.getScrollableParents(this.$refs['popper-root'], []).forEach(el => {
           el.addEventListener('scroll', this.updateVirtualReferenceElOnEvent)
         })
       } else {
         if (!this.referenceEl) this.setReferenceEl()
-        // !!! DEBUG !!!
-        console.log(`%c createPopper() %c this.referenceEl: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.referenceEl)
-        console.log(`%c createPopper() %c this.popper: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.popper)
-        console.log(`%c createPopper() %c this.popperOptions: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.popperOptions)
-        this.popperInstance = createPopper(this.referenceEl, this.popper, this.popperOptions)
+        this.popperInstance = createPopper(this.referenceEl, this.$refs.popper, this.popperOptions)
       }
+    },
+
+    destroyAfterTransition () {
+      if (this.enableQuickReset) return
+      this.destroyPopper()
     },
 
     destroyPopper () {
@@ -571,7 +584,7 @@ export default {
   }
 
   .popper {
-    max-width: calc(100% - #{$base-padding * 2});
+    max-width: calc(100vw - #{$base-padding * 2});
     max-height: 100%;
     @apply p-base;
 
@@ -651,6 +664,14 @@ export default {
     transition: opacity 0.2s
   }
   .popper-click-enter, .popper-click-leave-to {
+    opacity: 0;
+  }
+
+  .popper-instant-enter-active, .popper-instant-leave-active {
+    opacity: 1;
+    transition: none;
+  }
+  .popper-instant-enter, .popper-instant-leave-to {
     opacity: 0;
   }
 </style>

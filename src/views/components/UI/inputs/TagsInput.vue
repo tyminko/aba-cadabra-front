@@ -1,41 +1,43 @@
 <template>
-  <div class="tags-input-root">
-    <draggable
-      v-model="tags"
-      :move="onMove"
-      :group="{ name: 'people', pull: 'clone', put: false }"
-      :sortable="true"
-      class="tags-input"
-      handle=".tag-handle">
-      <slot :tags="tags" />
-      <div class="popper-ref input-wrapper">
-        <search-input
-          ref="tagInput"
-          :query="query"
-          :placeholder="placeholder || 'Add a person'"
-          @typing="setText"
-          @blur="onBlur"
-          @tab="onInput"
-          @input="onInput" />
-        <button
-          class="add micro"
-          :disabled="noValue"
-          @click="onInput">
-          <i class="ti-plus" />
-        </button>
-      </div>
-    </draggable>
+  <div class="tags-input mb-base">
+    <label class="px-label mb-sm">
+      <span v-if="labelText" class="label">{{labelText}}</span>
+    </label>
+    <div class="tags flex flex-wrap items-center">
+      <draggable-content
+        v-model="tags"
+        @move="onMove"
+        filter=".search-input"
+        :draggable="draggableSelector"
+        class="tags-input credits flex flex-wrap items-center">
+        <slot :tags="tags"/>
+        <div :key="`search-input`"
+             draggable="false"
+             class="search-input flex items-center">
+          <search-input
+            ref="tagInput"
+            :query="query"
+            :placeholder="placeholder || 'Add a person'"
+            @blur="onBlur"
+            @tab="onInput"
+            @input="onInput"/>
+          <button v-if="allowCreation" class="add compact" :disabled="noValue" @click="onInput">
+            <i class="material-icons text-base">add</i>
+          </button>
+        </div>
+      </draggable-content>
+    </div>
   </div>
 </template>
 
 <script>
-import draggable from 'vuedraggable/src/vuedraggable'
 import Tags from '../../../../lib/tags'
 import SearchInput from './SearchInput'
+import DraggableContent from '../DraggableContent'
 
 export default {
   name: 'TagsInput',
-  components: { draggable, SearchInput },
+  components: { DraggableContent, SearchInput },
   props: {
     query: {
       type: Function,
@@ -57,7 +59,9 @@ export default {
         return slug(a) === slug(b)
       }
     },
-    placeholder: { type: String, default: '' }
+    placeholder: { type: String, default: '' },
+    label: { type: String, default: '' },
+    draggableSelector: String
   },
 
   data: () => ({
@@ -74,6 +78,18 @@ export default {
   computed: {
     noValue () {
       return !this.text
+    },
+
+    labelText () {
+      return this.label || this.placeholder || ''
+    },
+
+    placeholderText () {
+      return this.placeholder || this.label || ''
+    },
+
+    labelVisible () {
+      return !!this.model
     }
   },
 
@@ -117,18 +133,18 @@ export default {
       this.$refs.tagInput.clear()
     },
 
-    setText (value) {
-      this.text = value
-    },
+    // setText (value) {
+    //   this.text = value
+    // },
 
     onBlur (searchObj) {
-      this.tagFromInput(searchObj)
-      this.setText('')
+      this.tagFromInput(searchObj || {})
+      // this.setText('')
     },
 
     onInput (searchObj) {
-      this.tagFromInput(searchObj)
-      this.setText('')
+      this.tagFromInput(searchObj || {})
+      // this.setText('')
       this.$refs.tagInput.focus()
     },
 
@@ -231,23 +247,8 @@ export default {
 </script>
 
 <style lang="scss">
-  .input-wrapper {
-    position: relative;
-
-  }
-  .auto-complete-placeholder {
-    position: absolute;
-    display: flex;
-    align-items: center;
-    top: 1px; // offset to compensate input border width
-    left: 1px; // offset to compensate input border width
-    opacity: 0.3;
-  }
-
-  button.add {
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
+  .tags-input {
+    .search-input {
+    }
   }
 </style>

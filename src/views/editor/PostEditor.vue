@@ -11,7 +11,7 @@
       @keyup.enter.prevent="preventEnter">
       <div ref="" class="form-body px-base pb-base overflow-auto">
         <dropdown-select v-model="postData.type" label="Type" :options="postTypes"/>
-        <credits-input/>
+        <credits-input v-model="participants"/>
         <px-input
           v-model="postData.title"
           :placeholder="`${postData.type ||type} title`"
@@ -41,7 +41,7 @@
         </label>
         <text-editor
           ref="text-editor"
-          v-model="postData.content"
+          v-model="content"
           @focus="textEditorFocused=true"
           @blur="textEditorFocused=false"/>
       </div>
@@ -96,6 +96,7 @@ export default {
   },
 
   data: () => ({
+    postData: {},
     emptyPostData: {
       type: '',
       title: '',
@@ -110,7 +111,6 @@ export default {
       supportedBy: '',
       tags: ''
     },
-    postData: {},
     postTypes: {
       salons: 'Salon',
       post: 'Blog Post',
@@ -128,6 +128,21 @@ export default {
     title: {
       get () { return '' }
     },
+
+    content: {
+      get () { return this.postData.content },
+      set (newValue) {
+        this.postData.content = newValue
+      }
+    },
+
+    participants: {
+      get () { return this.postData.participants || [] },
+      set (newValue) {
+        this.$set(this.postData, 'participants', newValue)
+      }
+    },
+
     date: {
       get () {
         if (!this.postData.date) return ''
@@ -173,14 +188,12 @@ export default {
 
   watch: {
     post (value) {
-      // if (this.unsubscribe) this.unsubscribe()
-      this.postData = value ? { ...value } : { ...this.emptyPostData }
-      // this.getPost()
+      this.setPostData()
     }
   },
 
   created () {
-    this.getPost()
+    this.setPostData()
   },
 
   methods: {
@@ -230,12 +243,10 @@ export default {
       }
     },
 
-    getPost () {
-      if (this.post) {
-        this.postData = { ...this.post }
-      } else {
-        this.postData = { ...this.emptyPostData }
-      }
+    setPostData () {
+      this.postData = this.post
+        ? JSON.parse(JSON.stringify(this.post))
+        : { ...this.emptyPostData }
     },
 
     async savePost (e) {

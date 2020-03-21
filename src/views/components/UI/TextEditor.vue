@@ -8,10 +8,11 @@
       <popper
         ref="menu"
         :trigger="menu.isActive"
+        :position="convertMenuToPopperPosition(menu)"
         :arrow-size="8"
+        enable-quick-reset
         placement="cursor-top"
         boundaries-selector="body"
-        :position="convertMenuToPopperPosition(menu)"
         class="menu-bubble">
         <div ref="menu-content" :id="menuId" class="menu flex items-center">
           <button :class="{ active: isActive.bold() }" @click="commands.bold">

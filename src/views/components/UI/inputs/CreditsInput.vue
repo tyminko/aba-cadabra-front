@@ -1,19 +1,25 @@
 <template>
   <div class="credits-input">
-    <tags-input :query="profileQuery">
+    <tags-input
+      v-model="model"
+      label="Participants"
+      draggable-selector=".credit-item"
+      :query="profileQuery"
+      :allow-creation="false">
       <template v-slot:default="{tags}">
-        <div class="credits">
-          <div
-            v-for="(profile, i) in tags"
-            :key="i"
-            class="credit-item flex items-center">
-            <span>{{profile.displayName}}</span>
-            <button class="compact" @click="toggleStar(profile.id)">
-              <i class="material-icons">
-                {{stars.includes(profile.id) ? 'star' : 'star_border' }}
-              </i>
-            </button>
-          </div>
+        <div v-for="profile in tags"
+             :key="profile.id"
+             class="credit-item flex items-center h-2/3base mr-sm mb-sm bg-gray-200">
+          <span class="px-sm">{{profile.displayName}}</span>
+          <button class="h-2/3base w-2/3base" @click="toggleStar(profile.id)">
+            <i class="material-icons text-base"
+               :class="stars.includes(profile.id) ? `text-gray-900` : `text-gray-500`">
+              {{stars.includes(profile.id) ? 'star' : 'star_border' }}
+            </i>
+          </button>
+          <button class="h-2/3base w-2/3base" @click="removeProfile(profile.id)">
+            <i class="material-icons text-base text-gray-500">close</i>
+          </button>
         </div>
       </template>
     </tags-input>
@@ -28,7 +34,7 @@ export default {
   name: 'CreditsInput',
   components: { TagsInput },
   props: {
-    value: Array
+    value: { type: Array, default: () => ([]) }
   },
 
   data: () => ({
@@ -37,15 +43,27 @@ export default {
         .where('searchIndices', 'array-contains', str.toLowerCase())
         .get()
         .then(snapshot => snapshot.docs.reduce((result, doc) => {
-          return [...result, { id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) }]
+          const profileRef = { id: doc.id, displayName: doc.data().displayName || '' }
+          return [...result, profileRef]
         }, []))
     },
     stars: []
   }),
 
-  computed: {},
+  computed: {
+    model: {
+      get () { return this.value },
+      set (newValue) {
+        this.$emit('input', newValue)
+      }
+    }
+  },
 
   methods: {
+    removeProfile (id) {
+      this.$emit('input', this.model.filter(p => p.id !== id))
+    },
+
     toggleStar (profileId) {
       const index = this.stars.indexOf(profileId)
       if (index < 0) {
@@ -58,7 +76,11 @@ export default {
 }
 </script>
 
+<!--suppress CssInvalidAtRule -->
 <style lang="scss">
   .credits-input {
+    .search-input {
+      @apply mb-sm;
+    }
   }
 </style>

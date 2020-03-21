@@ -12,7 +12,6 @@
       v-model="attachments"
       v-bind="dragOptions"
       :move="onDragging"
-      filter=".new-attachment-cell"
       @start="dragging = true"
       @end="onEndDragging">
       <transition-group
