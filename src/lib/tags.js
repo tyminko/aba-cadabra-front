@@ -1,4 +1,4 @@
-import { store } from './firebase'
+import { db, store } from './firebase'
 import base64 from './base64'
 
 /**
@@ -22,49 +22,33 @@ export default {
 
   /**
    * @param {string} title
-   * @param {string} type
    * @return {Tag}
    */
-  createTag (title, type) {
+  createTag (title) {
     title = title.toLowerCase().trim()
-    return { id: base64(title), title, types: [type] }
+    return { id: base64(title), title, new: true }
   },
 
   /**
    * @param {string} value
-   * @param {string?} type
    * @return {Promise<Tag[] | never>}
    */
-  query (value, type) {
-    value = value.toLowerCase()
-    const ref = store.ref('tag').startAt(value).endAt(`${value}\uf8ff`).orderByChild('title')
-    return ref.once('value').then(snapshot => {
-      const data = []
-      snapshot.forEach(childSnapshot => {
-        data.push({
-          ...childSnapshot.val(),
-          id: childSnapshot.key,
-          type: 'tag'
-        })
-      })
-      if (type) {
-        return data.filter(item => Array.isArray(item.types) && item.types.includes(type))
-      }
-      return data
-    })
+  query (value) {
+    return db.collection('tags')
+      .where('searchIndices', 'array-contains', value.toLowerCase())
+      .get()
+      .then(snapshot => snapshot.docs.reduce((result, doc) => {
+        const tag = { id: doc.id, title: (doc.data() || {}).title || '' }
+        return [...result, tag]
+      }, []))
   },
 
   /**
    * @param {Tag} tag
-   * @return {Promise<Tag | never>}
+   * @return {Promise}
    */
-  saveTag ({ id, title, types }) {
-    return store.ref(`tag/${id}`).transaction(data => ({
-      id,
-      title,
-      types: Object.keys([...((data || {}).types || []), ...(types || [])]
-        .reduce((result, type) => ({ ...result, [type]: true }), {}))
-    })).then(({ snapshot }) => snapshot.val())
+  saveTag ({ id, title }) {
+    return db.collection('tags').doc(id).set({ title })
   },
 
   /**

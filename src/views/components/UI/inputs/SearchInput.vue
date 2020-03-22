@@ -30,6 +30,7 @@
         <li v-for="(suggestion, index) in suggestions"
             :key="index"
             :class="{highlighted: index === selectedIndex}"
+            class="capitalize"
             @click.prevent="selectSuggestion(suggestion)"
             @mouseover="selectedIndex = index">
           {{ suggestion.title||suggestion.displayName }}
@@ -174,9 +175,9 @@ export default {
     },
 
     onBlur () {
-      // this.$emit('blur', { ...this.output })
-      // this.inputValue = ''
-      // this.hideSuggestions()
+      this.$emit('blur', { ...this.output })
+      this.inputValue = ''
+      this.hideSuggestions()
     },
 
     onInput (value) {

@@ -8,16 +8,25 @@
         v-model="tags"
         @move="onMove"
         filter=".search-input"
-        :draggable="draggableSelector"
+        :draggable="draggableSelector || '.tag-item'"
         class="tags-input credits flex flex-wrap items-center">
-        <slot :tags="tags"/>
+        <slot :tags="tags">
+          <div v-for="tag in tags"
+               :key="tag.id"
+               class="tag-item flex items-center h-2/3base mr-sm mb-sm bg-aba-blue text-white text-sm font-thin capitalize">
+            <span class="pl-sm" :class="{italic:tag.new}">{{tag.title}}</span>
+            <button class="h-2/3base w-2/3base" @click="removeTag(tag.id)">
+              <i class="material-icons text-base text-white opacity-50">close</i>
+            </button>
+          </div>
+        </slot>
         <div :key="`search-input`"
              draggable="false"
-             class="search-input flex items-center">
+             class="search-input flex items-center mb-sm">
           <search-input
             ref="tagInput"
             :query="query"
-            :placeholder="placeholder || 'Add a person'"
+            :placeholder="placeholder || 'Add tag'"
             @blur="onBlur"
             @tab="onInput"
             @input="onInput"/>
@@ -55,7 +64,7 @@ export default {
     isEqual: {
       type: Function,
       default: (a, b) => {
-        const slug = tag => tag.title.toLowerCase().replace(/\s/g, '-')
+        const slug = tag => (tag.title || tag.displayName).toLowerCase().replace(/\s+/g, '-')
         return slug(a) === slug(b)
       }
     },
@@ -118,14 +127,19 @@ export default {
     tagFromInput ({ search, result }) {
       this.searchResults = result
       let tag = null
-      if (!result || Array.isArray(result)) {
-        // if no result or the result is array, it means we have no suggestion picked
-        if (search && this.allowCreation) {
-          tag = this.createTag(search)
+      if (result && result.id && (result.title || result.displayName)) {
+        // we have a selected suggestion
+        tag = { ...result }
+      } else if (Array.isArray(result)) {
+        // there are suggestions, but non is selected
+        search = search.toLocaleLowerCase()
+        const index = result.findIndex(suggestion => (suggestion.title || suggestion.displayName) === search)
+        if (index > -1) {
+          tag = { ...result[index] }
         }
-      } else {
-        // a suggestion is picked
-        tag = this.suggestionToTag(result)
+      }
+      if (!tag && search && this.allowCreation) {
+        tag = this.createTag(search)
       }
       if (tag) {
         this.appendTag(tag)
@@ -133,18 +147,12 @@ export default {
       this.$refs.tagInput.clear()
     },
 
-    // setText (value) {
-    //   this.text = value
-    // },
-
     onBlur (searchObj) {
       this.tagFromInput(searchObj || {})
-      // this.setText('')
     },
 
     onInput (searchObj) {
       this.tagFromInput(searchObj || {})
-      // this.setText('')
       this.$refs.tagInput.focus()
     },
 
@@ -157,7 +165,9 @@ export default {
     fromValue () {
       console.log('tagsFromValue()', this.value)
       if (this.value) {
-        const tags = Array.isArray(this.value) ? this.value : Object.keys(this.value).map(key => this.value[key])
+        const tags = Array.isArray(this.value)
+          ? this.value
+          : Object.keys(this.value).map(key => this.value[key])
         if (this.haveDuplicateTags(tags)) {
           return
         }
@@ -175,7 +185,7 @@ export default {
     },
 
     /**
-     * @param {InputTag} tag
+     * @param {Tag} tag
      */
     appendTag (tag) {
       console.log('appendTag()', tag)
@@ -199,7 +209,7 @@ export default {
     },
 
     /**
-     * @param {InputTag} tag
+     * @param {Tag} tag
      * @return {boolean}
      */
     addTag (tag) {
@@ -215,8 +225,15 @@ export default {
       return true
     },
 
+    removeTag (id) {
+      const index = this.tags.findIndex(t => t.id === id)
+      if (index < 0) return
+      this.tags.splice(index, 1)
+      this.$emit('input', this.tags)
+    },
+
     /**
-     * @param {InputTag[]} tags
+     * @param {Tag[]} tags
      * @return {boolean}
      */
     haveDuplicateTags (tags) {
@@ -230,7 +247,7 @@ export default {
     },
 
     /**
-     * @param {InputTag} tag
+     * @param {Tag} tag
      * @return {boolean}
      */
     isDuplicateTag (tag) {
@@ -248,7 +265,5 @@ export default {
 
 <style lang="scss">
   .tags-input {
-    .search-input {
-    }
   }
 </style>

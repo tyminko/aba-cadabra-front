@@ -56,6 +56,11 @@ declare interface ProfileRef {
   photo?: SourceSet
 }
 
+declare interface Tag {
+  id: string,
+  title: string
+}
+
 declare interface Post {
   author?: ProfileRef,
   title: string,
@@ -68,6 +73,8 @@ declare interface Post {
   attachments?: {[k: string]: PostAttachment},
   date?: number,
   cardSize: string,
+  tagIds: string[],
+  tags: Tag[],
 }
 
 declare interface EventPost extends Post{

@@ -10,8 +10,9 @@
       @submit.prevent="savePost"
       @keyup.enter.prevent="preventEnter">
       <div ref="" class="form-body px-base pb-base overflow-auto">
-        <dropdown-select v-model="postData.type" label="Type" :options="postTypes"/>
-        <credits-input v-model="participants"/>
+        <dropdown-select v-model="postData.type" label="Type" :options="postTypes" />
+        <credits-input v-model="participants" />
+        <tags-input v-model="tags" label="Tags" />
         <px-input
           v-model="postData.title"
           :placeholder="`${postData.type ||type} title`"
@@ -67,7 +68,7 @@ type: DROPDOWN
 excerpt: TEXTAREA
 #### attachments: UPLOADER
 countNumber: auto-counter
-participants: AUTOCOMPLETE (profiles)
+### participants: AUTOCOMPLETE (profiles)
 supportedBy: autocomplete (institutions)
 tags: autocomplete (tags)
 -->
@@ -78,6 +79,7 @@ tags: autocomplete (tags)
 <script>
 import { mapState } from 'vuex'
 import { db } from '../../lib/firebase'
+import tagsLib from '../../lib/tags'
 import PopoverModal from '../components/UI/PopoverModal'
 import PxInput from '../components/UI/inputs/PxInput'
 import DateTimePicker from '../components/UI/inputs/DateTimePicker'
@@ -85,10 +87,11 @@ import TextEditor from '../components/UI/TextEditor'
 import AttachmentsEditor from './attachments/AttachmentsEditor'
 import DropdownSelect from '../components/UI/DropdownSelect'
 import CreditsInput from '../components/UI/inputs/CreditsInput'
+import TagsInput from '../components/UI/inputs/TagsInput'
 
 export default {
   name: 'PostEditor',
-  components: { CreditsInput, DropdownSelect, PopoverModal, PxInput, TextEditor, DateTimePicker, AttachmentsEditor },
+  components: { TagsInput, CreditsInput, DropdownSelect, PopoverModal, PxInput, TextEditor, DateTimePicker, AttachmentsEditor },
   props: {
     open: { type: Boolean, required: true },
     post: { type: Object, default: null },
@@ -140,6 +143,14 @@ export default {
       get () { return this.postData.participants || [] },
       set (newValue) {
         this.$set(this.postData, 'participants', newValue)
+      }
+    },
+
+    tags: {
+      get () { return this.postData.tags || [] },
+      set (newValue) {
+        this.$set(this.postData, 'tags', newValue)
+        this.postData.tagIds = this.postData.tags.map(t => t.id)
       }
     },
 
@@ -257,6 +268,13 @@ export default {
         this.$set(this.postData, 'attachments', attachmentsData)
         if (this.posterTempId) {
           this.$set(this.postData, 'thumbnail', this.posterTempId)
+        }
+
+        if ((this.postData.tags || []).length) {
+          await Promise.all(this.postData.tags.filter(tag => tag.new).map(tag => {
+            return tagsLib.saveTag(tag)
+          }))
+          this.postData.tags = this.postData.tags.map(tag => ({ id: tag.id, title: tag.title }))
         }
         db.collection('posts').doc(this.post.id).update(this.postData)
       } catch (e) {
