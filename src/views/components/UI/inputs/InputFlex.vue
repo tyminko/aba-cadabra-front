@@ -8,6 +8,7 @@
     @click="focus"
     @focus="$emit('focus')"
     @blur="$emit('blur')"
+    @change="$emit('change')"
     @keydown.down="$emit('arrow-down')"
     @keydown.up="$emit('arrow-up')"
     @keydown.enter.prevent="$emit('enter')"

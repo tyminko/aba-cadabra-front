@@ -29,7 +29,7 @@
         min-width="50"
         @blur="onBlur"/>
     </div>
-    <div :class="{error}" class="dec px-sm -mt-10 mb-base text-xs text-gray-500 whitespace-no-wrap truncate">
+    <div :class="{error}" class="dec px-sm -mt-5 mb-base text-xs text-gray-500 whitespace-no-wrap truncate">
       {{error || dateFull}}
     </div>
   </div>

@@ -1,0 +1,95 @@
+/* The location pointed to by the popup tip. */
+
+$label-size: 2.25em;
+$marker-tip-h: 0.75em;
+$marker-tip-w: $marker-tip-h * 0.667;
+
+$marker-border-w: 2px;
+$marker-border-radius: $label-size * 0.5;
+
+$marker-bg-color: #fff;
+$marker-border-color: #a8a8a8;
+$marker-border-active-color: #2424ff;
+$label-text-color: #2424ff;
+$label-border-color: lighten($marker-border-color, 30%);
+
+.popup-tip-anchor {
+  font-size: 16px;
+  height: 0;
+  position: absolute;
+  /* The max width of the info window. */
+  width: $label-size * 3;
+}
+/* The bubble is anchored above the tip. */
+.popup-bubble-anchor {
+  position: absolute;
+  width: 100%;
+  bottom: $marker-tip-h;
+  left: 0;
+
+  /* the tip */
+  &::before, &::after{
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: translate(-50%, 0);
+    width: 0;
+    height: 0;
+  }
+  &::after {
+    top: -1px;
+    border-left: calc(#{$marker-tip-w/2} - #{$marker-border-w}) solid transparent;
+    border-right: calc(#{$marker-tip-w/2} - #{$marker-border-w}) solid transparent;
+    border-top: $marker-tip-h * 0.75 solid #fff;
+  }
+  &::before {
+    border-left: $marker-tip-w/2 solid transparent;
+    border-right: $marker-tip-w/2 solid transparent;
+    border-top: $marker-tip-h solid $marker-border-color;
+  }
+  &.active{
+    z-index: 1;
+    &::before {
+      border-top-color: $marker-border-active-color;
+    }
+  }
+  &:hover{
+    z-index: 2;
+  }
+}
+/* The marker bubble */
+.popup-bubble-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -100%);
+  min-width: 20px;
+  min-height: 20px;
+  /* Style the info window. */
+  background-color: #fff;
+  padding: 0;
+  border-radius: $marker-border-radius;
+  font-family: sans-serif;
+  overflow-y: auto;
+  box-shadow: 0 0 0 $marker-border-w $marker-border-color;
+  &.active{
+    box-shadow: 0 0 0 $marker-border-w $marker-border-active-color;
+  }
+  .label{
+    box-sizing: border-box;
+    display: inline-block;
+    width: $label-size;
+    height: $label-size;
+    line-height: $label-size;
+    color: $label-text-color;
+    text-align: center;
+    //padding: 0.1em 0.3em;
+    box-shadow: 0 0 0 1px $label-border-color;
+    background: $marker-bg-color;
+
+    &.active{
+      color: #000;
+    }
+  }
+}

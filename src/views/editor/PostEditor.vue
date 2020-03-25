@@ -30,6 +30,7 @@
             label="End Date"
             class="flex-1"/>
         </div>
+        <location v-model="location" />
         <attachments-editor
           ref="attachments-editor"
           v-model="attachments"
@@ -88,10 +89,11 @@ import AttachmentsEditor from './attachments/AttachmentsEditor'
 import DropdownSelect from '../components/UI/DropdownSelect'
 import CreditsInput from '../components/UI/inputs/CreditsInput'
 import TagsInput from '../components/UI/inputs/TagsInput'
+import Location from '../components/UI/inputs/Location'
 
 export default {
   name: 'PostEditor',
-  components: { TagsInput, CreditsInput, DropdownSelect, PopoverModal, PxInput, TextEditor, DateTimePicker, AttachmentsEditor },
+  components: { Location, TagsInput, CreditsInput, DropdownSelect, PopoverModal, PxInput, TextEditor, DateTimePicker, AttachmentsEditor },
   props: {
     open: { type: Boolean, required: true },
     post: { type: Object, default: null },
@@ -134,16 +136,12 @@ export default {
 
     content: {
       get () { return this.postData.content },
-      set (newValue) {
-        this.postData.content = newValue
-      }
+      set (newValue) { this.postData.content = newValue }
     },
 
     participants: {
       get () { return this.postData.participants || [] },
-      set (newValue) {
-        this.$set(this.postData, 'participants', newValue)
-      }
+      set (newValue) { this.$set(this.postData, 'participants', newValue) }
     },
 
     tags: {
@@ -154,15 +152,16 @@ export default {
       }
     },
 
-    date: {
-      get () {
-        if (!this.postData.date) return ''
-        return this.postData.date
-      },
-      set (newValue) {
-        this.postData.date = new Date(newValue).getTime()
-      }
+    location: {
+      get () { return this.postData.location || {} },
+      set (newValue) { this.$set(this.postData, 'location', newValue) }
     },
+
+    date: {
+      get () { return this.postData.date || '' },
+      set (newValue) { this.postData.date = new Date(newValue).getTime() }
+    },
+
     attachments: {
       get () {
         return Object.entries({

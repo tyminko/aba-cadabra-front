@@ -14,12 +14,16 @@
           :class="{error}"
           class="px-input"
           @focus="onFocus"
-          @blur="onBlur"/>
+          @blur="onBlur"
+          @enter="onChange"
+          @change="onChange"/>
       </slot>
       <slot name="add-on" />
     </span>
     <span v-if="errorText" class="px-sm text-xs text-red-700">{{errorText}}</span>
-    <span v-else class="desc px-sm text-xs text-gray-500"><slot name="desc"/></span>
+    <div v-else-if="haveDescription" ref="desc" class="desc px-sm text-xs text-gray-500">
+      <slot name="desc"/>
+    </div>
   </label>
 </template>
 
@@ -41,7 +45,7 @@ export default {
 
   data: () => ({
     lazyValue: '',
-    lazyDelay: 1000,
+    lazyDelay: 10000,
     lazyTimeout: null
   }),
 
@@ -51,9 +55,9 @@ export default {
         return this.value
       },
       set (val) {
+        this.lazyValue = val
         if (this.lazy) {
           clearTimeout(this.lazyTimeout)
-          this.lazyValue = val
           this.lazyTimeout = setTimeout(() => {
             this.$emit('input', val)
             this.lazyValue = ''
@@ -78,6 +82,10 @@ export default {
 
     errorText () {
       return this.error && typeof this.error === 'string' ? this.error : ''
+    },
+
+    haveDescription () {
+      return !!this.$slots.desc
     }
   },
 
@@ -86,10 +94,6 @@ export default {
   watch: {},
 
   methods: {
-    onChange (val) {
-      this.$el.classList.remove('change', val)
-    },
-
     focus () {
       this.$refs.input.focus()
     },
@@ -100,12 +104,23 @@ export default {
 
     onBlur () {
       this.$el.classList.remove('focus')
+      // if (this.lazy) {
+      //   clearTimeout(this.lazyTimeout)
+      //   this.$emit('input', this.lazyValue)
+      //   this.lazyValue = ''
+      // }
+      this.$emit('blur')
+    },
+
+    onChange () {
       if (this.lazy) {
+        // !!! DEBUG !!!
+        console.log(`%c PxInput lazy onChange %c this.lazyValue: `, 'background:#00bbff;color:#000', 'color:#00aaff', this.lazyValue)
         clearTimeout(this.lazyTimeout)
         this.$emit('input', this.lazyValue)
         this.lazyValue = ''
       }
-      this.$emit('blur')
+      this.$emit('change', this.lazyValue)
     }
   }
 }
