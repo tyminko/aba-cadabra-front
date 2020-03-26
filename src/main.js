@@ -8,6 +8,9 @@ import * as VueGoogleMaps from 'vue2-google-maps'
 Vue.config.productionTip = false
 
 Vue.use(VueGoogleMaps, {
+  load: {
+    key: process.env.VUE_APP_MAP_KEY
+  }
 })
 
 firebase.syncAuth(store)
