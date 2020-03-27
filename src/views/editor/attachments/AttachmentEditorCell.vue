@@ -1,7 +1,7 @@
 <template>
   <div ref="box"
        class="attachment-editor-cell border-white border"
-       :class="{err:item.err, framed:!cropPreview}">
+       :class="{err:item.err, framed:!doCrop}">
     <vimeo-player
       v-if="item.type==='embed/vimeo'"
       v-show="playVideo"
@@ -21,18 +21,20 @@
       :src="attachmentPreviewUrl"
       :key="`i${item.id}`"
       :o-blur="12"
-      :object-fit="cropPreview ? 'cover' : 'contain'"
+      :object-fit="doCrop ? 'scale-down' : 'contain'"
       object-position="center"
       class="w-full h-full"
       @load="onImageLoad">
       <div class="left-buttons absolute flex items-center h-3/4base top-0 left-0">
         <button
+          v-if="!noPoster"
           class="crop-toggle w-2/3base h-2/3base"
           @click.prevent="setPoster">
           <i class="material-icons" :class="isPoster ? 'text-xxl text-aba-blue' : 'text-base'">{{isPoster ? 'bookmark' : 'bookmark_border'}}</i>
         </button>
-        <span v-if="isPoster" class="text-xs italic">Poster</span>
+        <span v-if="!noPoster && isPoster" class="text-xs italic">Poster</span>
         <button
+          v-if="!noCrop"
           class="crop-toggle w-2/3base h-2/3base"
           @click.prevent="cropPreview = !cropPreview">
           <i class="material-icons text-sm">{{cropPreview ? 'crop_free' : 'crop'}}</i>
@@ -60,6 +62,7 @@
         </button>
       </div>
         <caption-editor
+          v-if="!noCaption"
           v-model="item.caption"
           class="absolute bottom-0 right-0"
           @add-caption="addCaption"/>
@@ -77,7 +80,10 @@ export default {
   components: { ImgWithOverlay, CaptionEditor, VimeoPlayer },
   props: {
     value: { type: Object, required: true },
-    isPoster: Boolean
+    isPoster: Boolean,
+    noCaption: Boolean,
+    noPoster: Boolean,
+    noCrop: Boolean
   },
 
   data: () => ({
@@ -87,6 +93,7 @@ export default {
 
   computed: {
     item () { return this.value },
+    doCrop () { return this.noCrop ? false : this.cropPreview },
     attachmentPreviewUrl () {
       if (this.playVideo) return ''
       const attachment = this.item

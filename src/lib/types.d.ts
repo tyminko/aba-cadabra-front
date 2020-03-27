@@ -4,6 +4,11 @@ import { PostAttachment, SourceSet } from './storage'
 
 type PostStatus = 'public' | 'private' | 'draft'
 
+declare interface Link {
+  url: string,
+  title?: string
+}
+
 declare interface Location {
   address: string,
   city: string,
@@ -16,11 +21,14 @@ declare interface Location {
 declare interface Institution {
   title: string,
   country: string,
-  logo: SourceSet,
+  url: string,
+  logo: PostAttachment,
   text?: string,
+  order: number,
 }
 
 declare interface InstitutionRef {
+  id: string,
   title: string,
   logo: SourceSet,
 }
@@ -32,6 +40,7 @@ declare interface Profile {
   photoURL?: string,
   photo?: SourceSet,
   searchIndices?: string[],
+  links: Link[],
   text?: string,
   attachments?: PostAttachment[],
   participatedIn?: ProgrammePostRef[]

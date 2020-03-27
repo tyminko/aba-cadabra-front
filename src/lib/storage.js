@@ -92,7 +92,8 @@ export function upload (userId, attachments, progressFn) {
           const id = uploadedData.rawAttachment.id
           if (!attachments.hasOwnProperty(id)) {
             const { type, name, order, caption, pointOfInterest } = uploadedData.rawAttachment
-            attachments[id] = { id, type, name, order, caption, pointOfInterest, srcSet: {} }
+            attachments[id] = { id, type, order, caption, pointOfInterest, srcSet: {} }
+            if (name) attachments[id].name = name
           }
           const { url, sizeType, dimensions, blob } = uploadedData
           attachments[id].srcSet[sizeType] = { url, size: blob.size }

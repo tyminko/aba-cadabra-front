@@ -9,7 +9,7 @@
     @end="onEnd">
     <transition-group
       type="transition"
-      class="flex items-center flex-wrap"
+      :class="containerClass"
       :name="!dragging ? 'flip-list' : null">
       <slot />
     </transition-group>
@@ -25,6 +25,7 @@ export default {
     value: { type: Array, required: true },
     filter: String,
     draggable: String,
+    containerClass: String,
     dragOptions: {
       type: Object,
       default: () => ({

@@ -22,6 +22,12 @@ const router = new Router({
         import(/* webpackChunkName: "about" */ './views/About.vue')
     },
     {
+      path: '/partners',
+      name: 'partners',
+      component: () =>
+        import(/* webpackChunkName: "institutions" */ './views/Institutions')
+    },
+    {
       path: '/admin',
       component: () => import(/* webpackChunkName: "admin" */ './views/admin/AdminArea.vue'),
       meta: { restricted: true },

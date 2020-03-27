@@ -21,25 +21,29 @@
         class="draggable attachments-grid">
         <attachment-editor-cell
           v-for="(item, i) in attachments"
-          :key="item.id"
           v-model="attachments[i]"
+          :key="item.id || i"
+          :no-poster="maxNumber === 1"
+          :no-caption="noCaption"
+          :no-crop="noCrop"
           :is-poster="item.id === posterId"
-          class="draggable-box"
+          class="draggable-box bg-gray-200"
           @set-poster="setPoster"
           @remove="removeAttachment"/>
         <dropzone
+          v-if="!maxNumber || attachments.length < maxNumber"
           :key="'n-a'"
           ref="new-attachment-cell"
           draggable="false"
-          class="new-attachment-cell no-move flex flex-col items-center justify-center border border-aba-blue border-dashed"
+          class="new-attachment-cell no-move flex flex-col items-center justify-center bg-gray-100 border border-aba-blue border-dashed"
           @drop="addFiles">
-          <p class="italic capitalize font-light text-gray-400">Drop your files here</p>
+          <p class="italic capitalize font-light text-gray-400">{{dropzoneMessage}}</p>
           <div class="flex items-center">
             <button class="flex-col h-auto leading-none" @click.prevent="openFileDialog">
               <i class="material-icons">attachment</i>
               <span class="text-sm text-center mt-1">Attach File</span>
             </button>
-            <button class="flex-col h-auto leading-none" @click.prevent="showUrlInput = true">
+            <button v-if="allowUrl" class="flex-col h-auto leading-none" @click.prevent="showUrlInput = true">
               <i class="material-icons">link</i>
               <span class="text-sm text-center mt-1">Attach Url</span>
             </button>
@@ -89,15 +93,13 @@ export default {
     poster: { type: String, default: '' },
     authorId: { type: String, default: '' },
     sizes: { type: Object, default: () => ({ large: 2048, small: 512 }) },
+    maxNumber: { type: Number, default: 0 },
+    noCaption: Boolean,
+    noUrl: Boolean,
+    noCrop: Boolean,
     allowDuplicates: Boolean,
     dropzoneSelector: { type: String, default: '' },
-    dropzoneMessages: {
-      type: Object,
-      default: () => ({
-        over: 'Drop Images Here',
-        leave: 'Drug Images Here'
-      })
-    }
+    dropzoneMessage: { type: String, default: 'Drop Files Here' }
   },
 
   data: () => ({
@@ -109,7 +111,6 @@ export default {
     showDragOverlay: false,
     withObjectFitContain: [],
     uploadPercentage: 0,
-    dropzoneMessage: '',
     dropzoneClass: '',
     dragging: false,
     dragOptions: {
@@ -125,7 +126,8 @@ export default {
     ...mapState(['user']),
     posterId () {
       return this.poster || this.attachments[0].id
-    }
+    },
+    allowUrl () { return !this.noUrl }
   },
 
   watch: {
@@ -153,12 +155,6 @@ export default {
     openEmbedDialog () {
       this.showEmbedDialog = true
     },
-
-    // addDroppedFiles (files) {
-    //   // !!! DEBUG !!!
-    //   console.log(`%c addDroppedFiles() %c e: `, 'background:#ffccaa;color:#000', 'color:#00aaff', e)
-    //   this.addFiles(files)
-    // },
 
     addFilesFromOpenDialog (e) {
       this.addFiles(e.target.files)
@@ -228,7 +224,6 @@ export default {
       if (!toDelete.length) return
       const authorId = this.authorId || this.user.id
       await deleteAttachments(authorId, toDelete)
-      // this.attachments = this.attachments.filter(a => !a.removed)
     },
 
     async processAttachments () {
@@ -336,6 +331,7 @@ export default {
     grid-template-columns: repeat(auto-fill, minmax(256px, 1fr));
     grid-gap: 5px;
     grid-auto-rows: 256px;
+    @apply mb-base;
 
     .preview-wrap {
       position: relative;

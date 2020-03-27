@@ -18,6 +18,9 @@
           <li>
             <router-link :to="{name:''}">Residents</router-link>
           </li>
+          <li>
+            <router-link :to="{name:'partners'}">Partners</router-link>
+          </li>
         </ul>
       </template>
       <template v-slot:content>

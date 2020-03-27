@@ -178,6 +178,11 @@ export default {
           }
         )
     }
+  },
+  beforeDestroy () {
+    if (typeof this.unsubscribe === 'function') {
+      this.unsubscribe()
+    }
   }
 }
 </script>
@@ -187,8 +192,6 @@ export default {
   @import "../styles/mixins";
   .home {
     .feed-grid {
-      /*--popper-border-width: 4px;*/
-
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       grid-auto-rows: 320px;

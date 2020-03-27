@@ -1,53 +1,49 @@
 <template>
-  <popover-modal
+  <editor-popover
     ref="popover"
     :open="open"
-    class="editor max-w-text w-full"
     @esc="onEsc"
-    @close="close">
-    <form
-      class="post-editor pb-base"
-      @submit.prevent="savePost"
-      @keyup.enter.prevent="preventEnter">
-      <div ref="" class="form-body px-base pb-base overflow-auto">
-        <dropdown-select v-model="postData.type" label="Type" :options="postTypes" />
-        <credits-input v-model="participants" />
-        <tags-input v-model="tags" label="Tags" />
-        <px-input
-          v-model="postData.title"
-          :placeholder="`${postData.type ||type} title`"
-          class="xl"/>
-        <div class="dates-row">
-          <date-time-picker
-            ref="date"
-            v-model="postData.date"
-            required
-            label="Date"
-            class="mr-base flex-1"/>
-          <date-time-picker
-            ref="endDate"
-            v-model="postData.endDate"
-            label="End Date"
-            class="flex-1"/>
-        </div>
-        <location v-model="location" />
-        <attachments-editor
-          ref="attachments-editor"
-          v-model="attachments"
-          :author-id="authorId"
-          :poster="posterId"
-          @remove="onRemoveAttachment"
-          @set-poster="posterId = $event"/>
-        <label class="px-label mb-0" :class="{focus:textEditorFocused}">
-          <span>Content</span>
-        </label>
-        <text-editor
-          ref="text-editor"
-          v-model="content"
-          @focus="textEditorFocused=true"
-          @blur="textEditorFocused=false"/>
+    @close="close"
+    @save="savePost">
+      <dropdown-select v-model="postData.type" label="Type" :options="postTypes"/>
+      <credits-input v-model="participants"/>
+      <tags-input v-model="tags" label="Tags"/>
+      <px-input
+        v-model="postData.title"
+        :placeholder="`${postData.type ||type} title`"
+        class="xl"/>
+      <div class="dates-row">
+        <date-time-picker
+          ref="date"
+          v-model="postData.date"
+          required
+          label="Date"
+          class="mr-base flex-1"/>
+        <date-time-picker
+          ref="endDate"
+          v-model="postData.endDate"
+          label="End Date"
+          class="flex-1"/>
       </div>
-      <footer class="flex h-base items-center px-sm">
+      <tags-input v-model="supportedBy" placeholder="Add Institution" label="Supported By"
+                  :query="institutionsQuery" :allow-creation="false"/>
+      <location v-model="location"/>
+      <attachments-editor
+        ref="attachments-editor"
+        v-model="attachments"
+        :author-id="authorId"
+        :poster="posterId"
+        @remove="onRemoveAttachment"
+        @set-poster="posterId = $event"/>
+      <label class="px-label mb-0" :class="{focus:textEditorFocused}">
+        <span>Content</span>
+      </label>
+      <text-editor
+        ref="text-editor"
+        v-model="content"
+        @focus="textEditorFocused=true"
+        @blur="textEditorFocused=false"/>
+      <template v-slot:footer>
         <button class="flex-col h-auto leading-none" @click.prevent="addAttachment">
           <i class="material-icons">attachment</i>
           <span class="text-xs text-gray-600 text-center mt-1">Attach File</span>
@@ -56,9 +52,9 @@
           <i class="material-icons">link</i>
           <span class="text-xs text-gray-600 text-center mt-1">Embed Url</span>
         </button>
-        <button class="ml-auto" @click.prevent="close">Cancel</button>
-        <button type="submit">Save</button>
-      </footer>
+      </template>
+  </editor-popover>
+</template>
 <!--
 type: DROPDOWN
 ### title: INPUT
@@ -68,20 +64,17 @@ type: DROPDOWN
 ### content: EDITABLE / TEXT EDITOR
 excerpt: TEXTAREA
 #### attachments: UPLOADER
+### location: Google map
 countNumber: auto-counter
 ### participants: AUTOCOMPLETE (profiles)
 supportedBy: autocomplete (institutions)
-tags: autocomplete (tags)
+### tags: autocomplete (tags)
 -->
-    </form>
-  </popover-modal>
-</template>
 
 <script>
 import { mapState } from 'vuex'
 import { db } from '../../lib/firebase'
 import tagsLib from '../../lib/tags'
-import PopoverModal from '../components/UI/PopoverModal'
 import PxInput from '../components/UI/inputs/PxInput'
 import DateTimePicker from '../components/UI/inputs/DateTimePicker'
 import TextEditor from '../components/UI/TextEditor'
@@ -90,10 +83,11 @@ import DropdownSelect from '../components/UI/DropdownSelect'
 import CreditsInput from '../components/UI/inputs/CreditsInput'
 import TagsInput from '../components/UI/inputs/TagsInput'
 import Location from '../components/UI/inputs/Location'
+import EditorPopover from './EditorPopover'
 
 export default {
   name: 'PostEditor',
-  components: { Location, TagsInput, CreditsInput, DropdownSelect, PopoverModal, PxInput, TextEditor, DateTimePicker, AttachmentsEditor },
+  components: { EditorPopover, Location, TagsInput, CreditsInput, DropdownSelect, PxInput, TextEditor, DateTimePicker, AttachmentsEditor },
   props: {
     open: { type: Boolean, required: true },
     post: { type: Object, default: null },
@@ -124,7 +118,8 @@ export default {
     },
     posterTempId: '',
     textEditorFocused: false,
-    unsubscribe: null
+    unsubscribe: null,
+    institutions: null
   }),
 
   computed: {
@@ -150,6 +145,11 @@ export default {
         this.$set(this.postData, 'tags', newValue)
         this.postData.tagIds = this.postData.tags.map(t => t.id)
       }
+    },
+
+    supportedBy: {
+      get () { return this.postData.supportedBy },
+      set (newValue) { this.$set(this.postData, 'supportedBy', newValue) }
     },
 
     location: {
@@ -248,7 +248,6 @@ export default {
       if (allSave) {
         if (this.unsubscribe) this.unsubscribe()
         this.postData = { ...this.emptyPostData }
-        this.$refs.popover.releaseBgScroll()
         this.$emit('close')
       }
     },
@@ -275,34 +274,27 @@ export default {
           }))
           this.postData.tags = this.postData.tags.map(tag => ({ id: tag.id, title: tag.title }))
         }
+        // !!! DEBUG !!!
+        console.log(`%c savePost() %c this.postData: `, 'background:#ffbbff;color:#000', 'color:#00aaff', this.postData)
         db.collection('posts').doc(this.post.id).update(this.postData)
       } catch (e) {
         console.error(`%c savePost() %c e: `, 'background:#ff00AA;color:#000', 'color:#00aaff', e)
       }
+    },
+
+    async institutionsQuery (str) {
+      if (!this.institutions) {
+        this.institutions = await db.collection('institutions')
+          .get()
+          .then(snapshot => {
+            return snapshot.docs.map(doc => {
+              const { title } = doc.data()
+              return { id: doc.id, title }
+            })
+          })
+      }
+      return this.institutions.filter(i => i.title.toLowerCase().includes(str.toLowerCase()))
     }
   }
 }
 </script>
-
-<!--suppress CssInvalidFunction -->
-<style lang="css">
-  .form-body {
-    max-height: calc(100vh - theme('padding.base') * 3 - theme('spacing.base') * 2);
-  }
-  .form-body .px-label.mb-0 {
-    @apply mb-0;
-  }
-</style>
-<!--suppress CssInvalidAtRule -->
-<style lang="scss">
-  @import "../../styles/vars";
-  @import "../../styles/mixins";
-  .form-body {
-    .dates-row {
-      @apply flex flex-row flex-wrap;
-      @include wider-then($max-width-phone * 0.8) {
-        /*flex-flow: row nowrap;*/
-      }
-    }
-  }
-</style>

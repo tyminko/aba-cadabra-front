@@ -9,6 +9,7 @@
         @move="onMove"
         filter=".search-input"
         :draggable="draggableSelector || '.tag-item'"
+        container-class="flex items-center flex-wrap"
         class="tags-input credits flex flex-wrap items-center">
         <slot :tags="tags">
           <div v-for="tag in tags"
