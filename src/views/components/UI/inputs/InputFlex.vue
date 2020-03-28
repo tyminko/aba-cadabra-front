@@ -24,7 +24,7 @@ export default {
   directives: { inputAutoWidth },
   props: {
     value: [String, Number],
-    placeholder: String,
+    placeholder: [String, Number],
     type: { type: String, default: 'text' },
     minWidth: { type: [String, Number], default: 0 },
     comfortZone: { type: [String, Number], default: 0 }

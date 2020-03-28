@@ -1,5 +1,10 @@
 <template>
-  <div class="text-editor transition-opacity">
+  <div class="text-editor">
+    <label class="px-label transition-opacity m-0" :class="{focus:focused}">
+      <span v-if="labelText" class="label" :class="labelVisible ? 'opacity-1' : 'opacity-0'">
+        {{labelText}}
+      </span>
+    </label>
     <editor-menu-bubble
       ref="menu-host"
       :editor="editor"
@@ -54,8 +59,9 @@
     </editor-menu-bubble>
     <editor-content
       ref="editor-content"
+      :editor="editor"
       class="text-area min-h-base py-base"
-      :editor="editor" />
+      :class="{focus:focused}"/>
   </div>
 </template>
 
@@ -73,7 +79,10 @@ export default {
   directives: { ClickOutside, inputAutoWidth },
   components: { EditorContent, EditorMenuBubble, Popper, InputFlex },
   props: {
-    value: String
+    value: String,
+    label: String,
+    placeholder: String,
+    error: { type: [String, Boolean], default: false }
   },
 
   data: () => ({
@@ -81,10 +90,21 @@ export default {
     linkMenuIsActive: false,
     editor: null,
     emitAfterOnUpdate: false,
-    menuId: simpleID()
+    menuId: simpleID(),
+    focused: false
   }),
 
   computed: {
+    labelText () {
+      return this.label || this.placeholder || ''
+    },
+
+    placeholderText () {
+      return this.placeholder || this.label || ''
+    },
+    labelVisible () {
+      return !!this.value
+    }
   },
 
   created () {
@@ -106,14 +126,16 @@ export default {
     })
 
     this.editor.on('focus', () => {
-      if (!this.$refs['editor-content']) return
-      this.$refs['editor-content'].$el.classList.add('focus')
+      this.focused = true
+      // if (!this.$refs['editor-content']) return
+      // this.$refs['editor-content'].$el.classList.add('focus')
       this.$emit('focus')
     })
 
     this.editor.on('blur', () => {
-      if (!this.$refs['editor-content']) return
-      this.$refs['editor-content'].$el.classList.remove('focus')
+      this.focused = false
+      // if (!this.$refs['editor-content']) return
+      // this.$refs['editor-content'].$el.classList.remove('focus')
       this.$emit('blur')
     })
   },
@@ -224,8 +246,9 @@ export default {
   .text-area a {
     color: theme('colors.aba-blue');
   }
+  .px-label.focus { @apply text-aba-blue; }
   .text-area.focus {
-    @apply text-aba-blue-dark
+    @apply text-aba-blue-dark;
   }
   .text-area.focus:after {
     @apply border-aba-blue;

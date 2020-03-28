@@ -5,6 +5,11 @@
     class="editor max-w-text w-full"
     @esc="$emit('esc')"
     @close="onClose">
+    <template v-slot:header>
+      <slot name="header">
+        <h1 class="capitalize px-sm text-aba-blue">{{type}}</h1>
+      </slot>
+    </template>
     <form
       class="post-editor pb-base"
       @submit.prevent="$emit('save')"
@@ -32,7 +37,8 @@ export default {
   components: { PopoverModal },
   props: {
     open: Boolean,
-    processing: Boolean
+    processing: Boolean,
+    type: { type: String }
   },
 
   data: () => ({}),
@@ -56,17 +62,5 @@ export default {
   .form-body .px-label.mb-0 {
     @apply mb-0;
   }
-</style>
-<!--suppress CssInvalidAtRule -->
-<style lang="scss">
-  @import "../../styles/vars";
-  @import "../../styles/mixins";
-  .form-body {
-    .dates-row {
-      @apply flex flex-row flex-wrap;
-      @include wider-then($max-width-phone * 0.8) {
-        /*flex-flow: row nowrap;*/
-      }
-    }
-  }
+  .form-body > :first-child { @apply mt-base }
 </style>

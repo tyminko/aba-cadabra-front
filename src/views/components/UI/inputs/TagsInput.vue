@@ -16,7 +16,7 @@
                :key="tag.id"
                class="tag-item flex items-center h-2/3base mr-sm mb-sm bg-aba-blue text-white text-sm font-thin capitalize">
             <span class="pl-sm" :class="{italic:tag.new}">{{tag.title}}</span>
-            <button class="h-2/3base w-2/3base" @click="removeTag(tag.id)">
+            <button class="h-2/3base w-2/3base" @click.prevent="removeTag(tag.id)">
               <i class="material-icons text-base text-white opacity-50">close</i>
             </button>
           </div>

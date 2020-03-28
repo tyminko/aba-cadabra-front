@@ -4,7 +4,8 @@
          class="popover-modal">
       <div class="modal-shadow" @click="requestClose"/>
       <div class="w-full h-full bg-white rounded-sm">
-        <header class="flex h-base items-center">
+        <header class="flex h-base items-center pl-base">
+          <slot name="header" />
           <button class="w-base h-base ml-auto" @click="requestClose">
             <i class="material-icons">close</i>
           </button>

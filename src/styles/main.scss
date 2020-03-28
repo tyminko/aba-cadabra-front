@@ -4,6 +4,7 @@ html * {
   box-sizing: border-box;
   h1 {
     line-height: 1em;
+    @apply text-2xl;
   }
 }
 

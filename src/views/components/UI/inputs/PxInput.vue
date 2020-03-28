@@ -34,10 +34,10 @@ export default {
   name: 'PxInput',
   components: { InputFlex },
   props: {
-    value: String,
+    value: [String, Number],
     type: { type: String, default: 'text' },
-    placeholder: String,
-    label: String,
+    placeholder: [String, Number],
+    label: [String, Number],
     minWidth: { type: [String, Number], default: 200 },
     error: [String, Boolean],
     lazy: Boolean
@@ -156,4 +156,5 @@ export default {
   .px-input.error:focus { @apply text-red-700 border-red-600; }
 
   .px-label.xl .px-input { @apply h-base text-xl; }
+  .px-label.lg .px-input { @apply h-3/4base text-xl; }
 </style>

@@ -5,9 +5,9 @@
         {{label}}
       </span>
     </label>
-    <div class="dropdown-select input"
+    <div class="dropdown-select input mb-6"
          :class="{open:isOpen, 'float-label-wrap':label}">
-      <div class="value" ref="valueEl" @click="isOpen=!isOpen">
+      <div ref="valueEl" class="value" :class="{'no-value': value === '--'}" @click="isOpen=!isOpen">
         <span class="selected">{{selectedTitle}}</span>
       </div>
       <transition-expand>
@@ -18,6 +18,7 @@
           <li
             v-for="(title, val) in remainingOptions" :key="val"
             @click="select(val)"
+            :class="{'no-value': val === '--'}"
             class="option">
             <span>{{title}}</span>
           </li>
@@ -127,6 +128,7 @@ export default {
 }
 </script>
 
+<!--suppress CssInvalidAtRule -->
 <style lang="scss">
   .dropdown-select.input {
     position: relative;
@@ -161,19 +163,24 @@ export default {
       z-index: 20;
       @apply border-aba-blue border-b;
       overflow: hidden;
-      transition: height 0.2s
+      transition: height 0.2s;
     }
-
+    .option {
+      @apply py-xs;
+    }
     .value, .option {
-      @apply p-sm;
+      @apply px-sm h-2/3base;
       box-sizing: content-box;
-      height: 100%;
       display: flex;
       align-items: center;
 
       &:active {
         background: rgba(0, 0, 0, 0.1);
       }
+    }
+
+    .value.no-value {
+      @apply text-gray-500 italic font-thin;
     }
 
     .option:hover {

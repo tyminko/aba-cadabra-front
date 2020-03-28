@@ -1,7 +1,7 @@
 <template>
   <div ref="box"
        class="attachment-editor-cell border-white border"
-       :class="{err:item.err, framed:!doCrop}">
+       :class="{err:item.err}">
     <vimeo-player
       v-if="item.type==='embed/vimeo'"
       v-show="playVideo"
@@ -21,7 +21,7 @@
       :src="attachmentPreviewUrl"
       :key="`i${item.id}`"
       :o-blur="12"
-      :object-fit="doCrop ? 'scale-down' : 'contain'"
+      :object-fit="doCrop ? 'cover' : 'scale-down'"
       object-position="center"
       class="w-full h-full"
       @load="onImageLoad">

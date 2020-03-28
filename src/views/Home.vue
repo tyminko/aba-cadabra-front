@@ -28,10 +28,10 @@
         </template>
       </post-cell>
     </div>
-    <post-editor
+    <editor
       v-if="adminOrEditor && !!postToEdit"
+      :value="postToEdit"
       :open="!!postToEdit"
-      :post="postToEdit"
       @close="closeEditor"/>
   </div>
 </template>
@@ -43,12 +43,12 @@ import * as date from '../lib/date'
 import Ftellipsis from 'ftellipsis'
 import Popper from './components/UI/Popper.js'
 import PostEditorPalette from './editor/PostEditorPalette'
-import PostEditor from './editor/PostEditor'
 import PostCell from './components/PostCell'
+import Editor from './editor/Editor'
 
 export default {
   name: 'Home',
-  components: { PostCell, Popper, PostEditorPalette, PostEditor },
+  components: { Editor, PostCell, Popper, PostEditorPalette },
   props: {},
 
   data: () => ({
