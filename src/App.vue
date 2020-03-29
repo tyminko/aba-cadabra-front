@@ -29,28 +29,38 @@
         </keep-alive>
       </template>
     </layout-with-push-sidebar>
+    <editor
+      v-if="user && showEditor"
+      :value="showEditor.value"
+      :type="showEditor.type"
+      :open="!!showEditor"
+      @close="hideEditor"/>
   </div>
 </template>
 <script>
 import { mapState, mapActions } from 'vuex'
 import LayoutWithPushSidebar from './views/components/UI/LayoutWithPushSidebar'
 import MainHeader from './views/components/MainHeader'
+import Editor from './views/editor/Editor'
 
 export default {
   name: 'App',
-  components: { LayoutWithPushSidebar, MainHeader },
+  components: { Editor, LayoutWithPushSidebar, MainHeader },
   computed: {
-    ...mapState(['requestToLogin'])
+    ...mapState(['requestToLogin', 'user', 'showEditor']),
+    adminOrEditor () {
+      return this.user && (this.user.role === 'admin' || this.user.role === 'editor')
+    }
   },
   created () {
     this.detectTouching()
   },
   methods: {
-    ...mapActions(['seltUseTouch']),
+    ...mapActions(['setUseTouch', 'hideEditor']),
 
     detectTouching () {
       window.addEventListener('touchstart', function onFirstTouch () {
-        this.seltUseTouch()
+        this.setUseTouch()
         window.removeEventListener('touchstart', onFirstTouch, false)
       }.bind(this), false)
     }

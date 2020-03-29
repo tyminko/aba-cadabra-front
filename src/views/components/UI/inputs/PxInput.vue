@@ -128,7 +128,7 @@ export default {
 
 <!--suppress CssInvalidAtRule -->
 <style lang="css">
-  .px-label { @apply block mb-6; }
+  .px-label { @apply block mb-8; }
   .px-label  span.label {
     @apply block relative -mb-1 pl-sm text-xs text-gray-600 capitalize transition-opacity duration-100;
   }
@@ -155,6 +155,6 @@ export default {
   .px-input.error { @apply text-red-500 border-red-500; }
   .px-input.error:focus { @apply text-red-700 border-red-600; }
 
-  .px-label.xl .px-input { @apply h-base text-xl; }
+  .px-label.xl .px-input { @apply h-base text-2xl; }
   .px-label.lg .px-input { @apply h-3/4base text-xl; }
 </style>

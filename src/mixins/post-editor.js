@@ -1,5 +1,6 @@
-import tagsLib from '../lib/tags'
 import { db } from '../lib/firebase'
+import tagsLib from '../lib/tags'
+import * as string from '../lib/string'
 
 export default {
   props: {
@@ -16,8 +17,9 @@ export default {
         thumbnail: '',
         content: '',
         excerpt: '',
+        userExcerpt: false,
         tags: null,
-        status: ''
+        status: 'public'
       },
       emptyPostExtraData: {}
     }
@@ -33,7 +35,19 @@ export default {
     },
     content: {
       get () { return this.postData.content },
-      set (newValue) { this.postData.content = newValue }
+      set (newValue) {
+        this.$set(this.postData, 'content', newValue)
+        if (!this.postData.userExcerpt) {
+          this.postData.excerpt = string.makeExcerpt(newValue, 80)
+        }
+      }
+    },
+    excerpt: {
+      get () { return this.postData.excerpt },
+      set (newValue) {
+        this.$set(this.postData, 'excerpt', newValue)
+        this.postData.userExcerpt = true
+      }
     },
     attachments: {
       get () {
@@ -97,9 +111,11 @@ export default {
           }))
           this.postData.tags = this.postData.tags.map(tag => ({ id: tag.id, title: tag.title }))
         }
-        // !!! DEBUG !!!
-        console.log(`%c savePost() %c this.postData: `, 'background:#ffbbff;color:#000', 'color:#00aaff', this.postData)
-        db.collection('posts').doc(this.value.id).update(this.postData)
+        if ((this.value || {}).id) {
+          db.collection('posts').doc(this.value.id).update(this.postData)
+        } else {
+          db.collection('posts').add(this.postData)
+        }
       } catch (e) {
         console.error(`%c savePost() %c e: `, 'background:#ff00AA;color:#000', 'color:#00aaff', e)
       }

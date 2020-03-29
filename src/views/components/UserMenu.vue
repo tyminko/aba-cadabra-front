@@ -1,38 +1,57 @@
 <template>
-  <sliding-panel ref="menu" class="user-menu">
-    <template v-slot:trigger="{on, open}">
-      <button class="user-menu-button" @click="on">
-        <i v-if="user" class="material-icons dimmed" :class="{open, user}">{{open ? 'sentiment_very_satisfied' : 'sentiment_satisfied'}}</i>
-        <i v-else class="material-icons dimmed" :class="{open}">chevron_right</i>
-      </button>
-    </template>
-    <div class="user-actions-wrapper">
-      <login-form v-if="!user" />
-      <div v-else class="user-actions">
-        <div class="menu-cell">
-          <router-link :to="{ name: 'profile' }">
-            <div> {{user.displayName}} </div>
-            Profile
-          </router-link>
-        </div>
-        <router-link v-if="admin" :to="{name: 'users'}" class="menu-cell nav-item">
-          Users
-        </router-link>
-        <router-link v-if="admin" :to="{name: 'wp-users'}" class="menu-cell nav-item">
-          WP Users
-        </router-link>
-        <router-link v-if="admin" :to="{name: 'wp-posts'}" class="menu-cell nav-item">
-          WP Posts
-        </router-link>
-        <router-link v-if="admin" :to="{name: 'wp-attachments'}" class="menu-cell nav-item">
-          WP Attachmnts
-        </router-link>
-        <button class="login" @click="logOut">
-          <span>Log Out</span>
+  <div class="user-things flex">
+    <sliding-panel v-if="user"  ref="menu" class="user-menu">
+      <template v-slot:trigger="{on, open}">
+        <button class="user-menu-button mr-0" @click="on">
+          <i class="material-icons dimmed">add</i>
         </button>
+      </template>
+      <div class="user-actions-wrapper">
+        <ul class="user-actions">
+          <li v-if="adminOrEditor" class="menu-cell nav-item cursor-pointer" @click="openEditor('post')">
+            Add Blog Post
+          </li>
+          <li v-if="adminOrEditor" class="menu-cell nav-item cursor-pointer" @click="openEditor('event')">
+            Add Event
+          </li>
+        </ul>
       </div>
-    </div>
-  </sliding-panel>
+    </sliding-panel>
+    <sliding-panel ref="menu" class="user-menu">
+      <template v-slot:trigger="{on, open}">
+        <button class="user-menu-button" @click="on">
+          <i v-if="user" class="material-icons dimmed" :class="{open, user}">{{open ? 'sentiment_very_satisfied' : 'sentiment_satisfied'}}</i>
+          <i v-else class="material-icons dimmed" :class="{open}">chevron_right</i>
+        </button>
+      </template>
+      <div class="user-actions-wrapper">
+        <login-form v-if="!user" />
+        <div v-else class="user-actions">
+          <div class="menu-cell">
+            <router-link :to="{ name: 'profile' }">
+              <div> {{user.displayName}} </div>
+              Profile
+            </router-link>
+          </div>
+          <router-link v-if="admin" :to="{name: 'users'}" class="menu-cell nav-item">
+            Users
+          </router-link>
+          <router-link v-if="admin" :to="{name: 'wp-users'}" class="menu-cell nav-item">
+            WP Users
+          </router-link>
+          <router-link v-if="admin" :to="{name: 'wp-posts'}" class="menu-cell nav-item">
+            WP Posts
+          </router-link>
+          <router-link v-if="admin" :to="{name: 'wp-attachments'}" class="menu-cell nav-item">
+            WP Attachmnts
+          </router-link>
+          <button class="login" @click="logOut">
+            <span>Log Out</span>
+          </button>
+        </div>
+      </div>
+    </sliding-panel>
+  </div>
 </template>
 
 <script>
@@ -51,6 +70,9 @@ export default {
     ...mapState(['user']),
     admin () {
       return this.user && this.user.role === 'admin'
+    },
+    adminOrEditor () {
+      return this.user && (this.user.role === 'admin' || this.user.role === 'editor')
     }
   },
 
@@ -61,7 +83,10 @@ export default {
   },
 
   methods: {
-    ...mapActions(['logOut'])
+    ...mapActions(['logOut', 'showEditor']),
+    openEditor (type) {
+      this.showEditor({ type })
+    }
   }
 }
 </script>

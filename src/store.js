@@ -11,7 +11,8 @@ export default new Vuex.Store({
     allowAdmin: false,
     works: null,
     requestToLogin: false,
-    useTouch: false
+    useTouch: false,
+    showEditor: false // could be {type:string, value?:object}
   },
   mutations: {
     UPDATE_WORKS () {
@@ -31,6 +32,9 @@ export default new Vuex.Store({
     },
     SET_ALLOW_ADMIN (state, value) {
       state.allowAdmin = value
+    },
+    SET_SHOW_EDITOR (state, value) {
+      state.showEditor = value
     }
   },
   actions: {
@@ -60,7 +64,15 @@ export default new Vuex.Store({
       commit('REQUEST_LOGIN')
     },
 
-    seltUseTouch ({ commit }) {
+    showEditor ({ commit }, editorInfo) {
+      commit('SET_SHOW_EDITOR', editorInfo)
+    },
+
+    hideEditor ({ commit }) {
+      commit('SET_SHOW_EDITOR', false)
+    },
+
+    setUseTouch ({ commit }) {
       commit('SET_USE_TOUCH')
     }
   }

@@ -29,10 +29,6 @@
         class="flex-1"/>
     </div>
     <location v-model="location"/>
-    <px-input
-      v-model="postData.title"
-      :placeholder="`${postData.type ||type} title`"
-      class="xl"/>
     <credits-input v-model="participants"/>
     <tags-input
       v-model="supportedBy"
@@ -40,6 +36,7 @@
       label="Supported By"
       :query="institutionsQuery"
       :allow-creation="false"/>
+    <tags-input v-model="tags" label="Tags"/>
     <attachments-editor
       ref="attachments-editor"
       :value="attachments"
@@ -47,6 +44,10 @@
       :poster="posterId"
       @remove="onRemoveAttachment"
       @set-poster="posterId = $event"/>
+    <px-input
+      v-model="postData.title"
+      :placeholder="`${eventProgrammeLabel} title`"
+      class="xl"/>
     <text-editor
       ref="text-editor"
       v-model="content"
@@ -55,13 +56,13 @@
 </template>
 
 <script>
+import { db } from '../../lib/firebase'
 import PostEditorMixin from '../../mixins/post-editor'
 import DropdownSelect from '../components/UI/DropdownSelect'
 import CreditsInput from '../components/UI/inputs/CreditsInput'
 import DateTimePicker from '../components/UI/inputs/DateTimePicker'
 import Location from '../components/UI/inputs/Location'
 import TagsInput from '../components/UI/inputs/TagsInput'
-import { db } from '../../lib/firebase'
 import PxInput from '../components/UI/inputs/PxInput'
 import AttachmentsEditor from './attachments/AttachmentsEditor'
 import TextEditor from '../components/UI/TextEditor'
@@ -80,7 +81,8 @@ export default {
       countNumber: null,
       partOfProgramme: null,
       participants: '',
-      supportedBy: ''
+      supportedBy: [],
+      type: 'event'
     },
     programmes: null,
     nextCounts: {}
@@ -108,7 +110,7 @@ export default {
     },
     defaultCountNumber () {
       const programmeId = (this.postData.partOfProgramme || {}).programmeId
-      if (this.partOfProgrammeId === this.value.partOfProgramme.programmeId) {
+      if (this.value && this.partOfProgrammeId === this.value.partOfProgramme.programmeId) {
         return this.value.countNumber
       }
       if (this.nextCounts.hasOwnProperty(programmeId)) {

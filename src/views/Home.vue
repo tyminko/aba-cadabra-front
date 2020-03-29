@@ -28,27 +28,21 @@
         </template>
       </post-cell>
     </div>
-    <editor
-      v-if="adminOrEditor && !!postToEdit"
-      :value="postToEdit"
-      :open="!!postToEdit"
-      @close="closeEditor"/>
   </div>
 </template>
 
 <script>
 import { db } from '../lib/firebase'
-import { mapState } from 'vuex'
+import { mapState, mapActions } from 'vuex'
 import * as date from '../lib/date'
 import Ftellipsis from 'ftellipsis'
 import Popper from './components/UI/Popper.js'
 import PostEditorPalette from './editor/PostEditorPalette'
 import PostCell from './components/PostCell'
-import Editor from './editor/Editor'
 
 export default {
   name: 'Home',
-  components: { Editor, PostCell, Popper, PostEditorPalette },
+  components: { PostCell, Popper, PostEditorPalette },
   props: {},
 
   data: () => ({
@@ -67,17 +61,14 @@ export default {
     }
   },
 
-  watch: {
-  },
-
-  mounted () {
+  async created () {
     this.getFeed()
   },
 
   methods: {
+    ...mapActions(['showEditor']),
     openEditor (post) {
-      this.postToEdit = post
-      this.shouldOpenEditor = true
+      this.showEditor({ value: post })
     },
 
     closeEditor () {
@@ -163,14 +154,6 @@ export default {
             querySnapshot.forEach(async doc => {
               const feedItem = doc.data()
               this.$set(this.feed, doc.id, { ...feedItem, id: doc.id })
-              // setTimeout(() => {
-              //   if (this.$refs[`feed-text-${doc.id}`]) {
-              //     const el = this.$refs[`feed-text-${doc.id}`][0]
-              //     const ellipsis = new Ftellipsis(el)
-              //     ellipsis.calc()
-              //     ellipsis.set()
-              //   }
-              // }, 200)
             })
           },
           err => {
@@ -178,6 +161,21 @@ export default {
           }
         )
     }
+    // regenerateCounts () {
+    //   Object.values(this.feed).forEach(p => {
+    //     if (p.type === 'event' && p.hasOwnProperty('countNumber')) {
+    //       // !!! DEBUG !!!
+    //       console.log(`%c RECOUNT before %c p.countNumber: `, 'background:#ffbb00;color:#000', 'color:#00aaff', p.countNumber)
+    //       db.collection('posts')
+    //         .doc(p.id)
+    //         .update({ countNumber: p.countNumber - 1 })
+    //         .then(() => {
+    //           // !!! DEBUG !!!
+    //           console.log(`%c RECOUNT after %c p.countNumber: `, 'background:#00bbff;color:#000', 'color:#00aaff', p.countNumber)
+    //         })
+    //     }
+    //   })
+    // }
   },
   beforeDestroy () {
     if (typeof this.unsubscribe === 'function') {

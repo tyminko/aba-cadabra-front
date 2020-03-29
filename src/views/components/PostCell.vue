@@ -40,7 +40,7 @@ export default {
   computed: {
     typeLabel () {
       if (!this.post) return null
-      if (this.post.hasOwnProperty('partOfProgramme')) {
+      if (this.post.partOfProgramme) {
         return this.post.partOfProgramme.title || this.post.partOfProgramme.singlePostLabel
       } else {
         switch (this.post.type) {
@@ -51,13 +51,13 @@ export default {
       return ''
     },
     title () {
-      if (this.post.hasOwnProperty('partOfProgramme') && this.post.hasOwnProperty('countNumber')) {
+      if (this.post.partOfProgramme && this.post.countNumber) {
         return `${this.post.partOfProgramme.singlePostLabel} # ${this.post.countNumber}`
       }
       return this.post.title
     },
     secondTittle () {
-      if (this.post.hasOwnProperty('partOfProgramme') && this.post.hasOwnProperty('countNumber')) {
+      if (this.post.partOfProgramme && this.post.countNumber) {
         return this.post.title
       }
       return ''

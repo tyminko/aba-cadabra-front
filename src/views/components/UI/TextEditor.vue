@@ -67,7 +67,7 @@
 
 <script>
 import { Editor, EditorContent, EditorMenuBubble } from 'tiptap'
-import { Bold, Italic, Link, History } from 'tiptap-extensions'
+import { Bold, Italic, Link, History, Placeholder } from 'tiptap-extensions'
 import simpleID from '../../../lib/simpleId'
 import InputFlex from './inputs/InputFlex'
 import Popper from './Popper.js'
@@ -116,7 +116,13 @@ export default {
         new Link({
           openOnClick: false
         }),
-        new History()
+        new History(),
+        new Placeholder({
+          showOnlyCurrent: false,
+          emptyNodeText: node => {
+            return 'Write something'
+          }
+        })
       ]
     })
 
@@ -326,5 +332,14 @@ export default {
       background: transparent;
       color: $color-white;
     }
+  }
+
+  .editor *.is-empty:nth-child(1)::before,
+  .editor *.is-empty:nth-child(2)::before {
+    content: attr(data-empty-text);
+    @apply text-gray-400 font-thin italic capitalize;
+    float: left;
+    pointer-events: none;
+    height: 0;
   }
 </style>

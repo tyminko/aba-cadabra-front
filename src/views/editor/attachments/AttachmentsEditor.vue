@@ -27,7 +27,7 @@
           :no-caption="noCaption"
           :no-crop="noCrop"
           :is-poster="item.id === posterId"
-          class="draggable-box bg-gray-200"
+          class="draggable-box bg-gray-200 cursor-move"
           @set-poster="setPoster"
           @remove="removeAttachment"/>
         <dropzone
