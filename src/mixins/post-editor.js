@@ -11,7 +11,8 @@ export default {
     return {
       postData: {},
       emptyPostData: {
-        type: '',
+        author: null,
+        type: 'post',
         title: '',
         attachments: null,
         thumbnail: '',
@@ -59,11 +60,11 @@ export default {
       }
     },
     author () {
-      if (this.postData && this.postData.author) {
+      if (this.postData.author) {
         return this.postData.author
       } else if (this.user) {
-        const { displayName, uid } = this.user
-        return { displayName, uid }
+        const { displayName, id } = this.user
+        return { displayName, uid: id }
       }
       return null
     },
@@ -111,6 +112,15 @@ export default {
           }))
           this.postData.tags = this.postData.tags.map(tag => ({ id: tag.id, title: tag.title }))
         }
+
+        if (!this.postData.author) {
+          this.postData.author = this.author
+        }
+
+        if (!this.postData.date) {
+          this.postData.date = new Date().getTime()
+        }
+
         if ((this.value || {}).id) {
           db.collection('posts').doc(this.value.id).update(this.postData)
         } else {

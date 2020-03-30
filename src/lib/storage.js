@@ -68,8 +68,6 @@ export function upload (userId, attachments, progressFn) {
     const baseName = attachment.storageName || (attachment.file ? `${attachment.id}-${toSlug(attachment.file.name)}` : '')
     return thingsToUploadForAttachment(attachment)
       .then(thingsToUpload => {
-        // !!! DEBUG !!!
-        console.log(`%c () %c thingsToUpload: `, 'background:#ffbb00;color:#000', 'color:#00aaff', thingsToUpload)
         const attachmentProgress = {
           max: thingsToUpload.length * 100,
           total: 0,
@@ -179,7 +177,7 @@ async function thingsToUploadForAttachment (attachment) {
     const sizeKeys = Object.keys(imageSizeTypes)
     const resizeKeys = sizeKeys.filter(sizeStr => {
       const s = imageSizeTypes[sizeStr]
-      return attachment.image.width >= s || attachment.image.height >= s
+      return attachment.image.naturalWidth >= s || attachment.image.naturalHeight >= s
     })
     if (resizeKeys.length !== sizeKeys.length || alwaysUploadOriginalImage) {
       resizeKeys.push('original')
@@ -190,7 +188,7 @@ async function thingsToUploadForAttachment (attachment) {
   } else {
     const origData = { sizeType: 'original', blob: attachment.file }
     if (mimeType === 'image/gif') {
-      origData.dimensions = { w: attachment.image.width, h: attachment.image.height }
+      origData.dimensions = { w: attachment.image.naturalWidth, h: attachment.image.naturalHeight }
     }
     origData.rawAttachment = attachment
     return Promise.resolve([origData])
@@ -237,7 +235,7 @@ async function resizeForUpload (attachment, sizeType, mime) {
   let image = attachment.image
 
   if (sizeType === 'original') {
-    return { blob: attachment.file, dimensions: { w: image.width, h: image.height } }
+    return { blob: attachment.file, dimensions: { w: image.naturalWidth, h: image.naturalHeight } }
   }
   return ImageLib.resize(image, imageSizeTypes[sizeType])
     .then(resizedData => {
@@ -272,8 +270,6 @@ export function deleteAttachments (userId, attachmentsToDelete) {
             path = match[1] + '/' + match[2]
           }
         }
-        // !!! DEBUG !!!
-        console.log(`%c deleteAttachments %c path: `, 'background:#ffbb00;color:#000', 'color:#00aaff', path)
         return storage.ref(path).delete()
           .catch(e => {
             if (e.code === 'storage/object-not-found') {

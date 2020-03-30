@@ -131,7 +131,7 @@ export default {
     const canvas = this.createCanvas(image, size)
     canvas
       .getContext('2d')
-      .drawImage(image, 0, 0, image.width, image.height, 0, 0, canvas.width, canvas.height)
+      .drawImage(image, 0, 0, image.naturalWidth, image.naturalHeight, 0, 0, canvas.width, canvas.height)
     return Promise.resolve(canvas)
   },
 
@@ -152,7 +152,7 @@ export default {
         }
       })
       .then(() => {
-        return this.basicResize(image, Math.max(image.width, image.height))
+        return this.basicResize(image, Math.max(image.naturalWidth, image.naturalHeight))
           .then(res => pica.resize(res, canvas, settings))
           .catch(e => {
             // console.warn('%c resize ON Err %c e.message: ', 'background:#ffbb00;color:#000', 'color:#00aaff', e.message)
@@ -168,8 +168,8 @@ export default {
    */
   createCanvas (image, size) {
     const canvas = document.createElement('canvas')
-    const w = image.width
-    const h = image.height
+    const w = image.naturalWidth
+    const h = image.naturalHeight
     if (w > size || h > size) {
       if (w > h) {
         canvas.width = size
@@ -186,7 +186,7 @@ export default {
   },
 
   /**
-   * @param {HTMLImageElement|HTMLCanvasElement} pic
+   * @param {HTMLCanvasElement} pic
    * @return {{w: number, h: number}}
    */
   picDimensions (pic) {

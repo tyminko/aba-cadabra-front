@@ -163,8 +163,6 @@ export default {
 
     async addAttachmentFromUrl () {
       const attachment = await this.makeAttachmentFromUrl(this.urlToInsert)
-      // !!! DEBUG !!!
-      console.log(`%c addAttachmentFromUrl() %c attachment: `, 'background:#ff00AA;color:#000', 'color:#00aaff', attachment)
       if (attachment) {
         this.showUrlInput = false
         this.attachments.push(attachment)
@@ -229,7 +227,14 @@ export default {
     async processAttachments () {
       await this.uploadNewAttachments()
       await this.deleteMarkedAttachments()
-      return this.attachments
+      return this.attachments.reduce((res, item) => {
+        const { id, name, caption, order, type, srcSet, pointOfInterest } = item
+        res[id] = { order, type, srcSet }
+        if (name) res[id].caption = name
+        if (caption) res[id].caption = caption
+        if (pointOfInterest) res[id].caption = pointOfInterest
+        return res
+      }, {})
     },
 
     removeAttachment (id) {

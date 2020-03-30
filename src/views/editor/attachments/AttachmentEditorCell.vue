@@ -161,9 +161,7 @@ export default {
     },
     async setRawAttachmentImage (event) {
       if (this.isVisual && event.target instanceof HTMLImageElement) {
-        this.item.image = await event.target.cloneNode()
-        // !!! DEBUG !!!
-        console.log(`%c setRawAttachmentImage() %c this.item.image: `, 'background:#ffccaa;color:#000', 'color:#00aaff', this.item.image)
+        this.item.image = await event.target
       }
     },
 
