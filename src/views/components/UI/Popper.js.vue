@@ -585,7 +585,7 @@ export default {
 
   .popper {
     max-width: calc(100vw - #{$base-padding * 2});
-    max-height: 100%;
+    /*max-height: 100%;*/
     @apply p-base;
 
     width: auto;

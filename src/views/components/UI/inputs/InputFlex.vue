@@ -33,7 +33,8 @@ export default {
   data: () => ({
     tempValue: '',
     defaultMinWidth: 96,
-    actualMinWidth: 0
+    actualMinWidth: 0,
+    testId: 'input-flex-test-width-span'
   }),
 
   computed: {
@@ -83,7 +84,7 @@ export default {
 
     async placeholderWidth () {
       if (!this.$el) return
-      const test = document.createElement('span')
+      const test = document.getElementById(this.testId) || document.createElement('span')
       const style = window.getComputedStyle(this.$el)
       ;(['fontFamily',
         'fontKerning',
@@ -107,15 +108,18 @@ export default {
         test.style[prop] = style[prop]
       })
       test.style.position = 'absolute'
-      test.style.left = 9000
+      test.style.left = '-9000px'
       test.innerText = this.placeholder
-      test.id = 'test-width-f'
+      test.id = this.testId
       document.body.appendChild(test)
       await this.$nextTick()
       const width = test.offsetWidth
-      // test.remove()
       return parseInt(width) || this.defaultMinWidth
     }
+  },
+  beforeDestroy () {
+    const test = document.getElementById(this.testId)
+    if (test) test.parentNode.removeChild(test)
   }
 }
 </script>

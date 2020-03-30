@@ -13,7 +13,7 @@
     </header>
     <div
       v-if="thumbnailUrl"
-      class="thumbnail-box flex-grow min-h-0">
+      class="thumbnail-box flex-grow min-h-x2">
       <!--suppress HtmlUnknownTarget -->
       <img :src="thumbnailUrl" @load="formatText">
     </div>
@@ -172,11 +172,10 @@ export default {
   }
 
   .thumbnail-box {
-    /*margin: 5px -5px;*/
-    /*width: 100%;*/
-    /*height: 150px;*/
+    position: relative;
 
     img {
+      position: absolute;
       width: 100%;
       height: 100%;
       object-fit: cover;

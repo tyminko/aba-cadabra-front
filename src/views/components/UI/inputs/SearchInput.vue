@@ -4,27 +4,26 @@
       ref="popper"
       placement="bottom-start"
       trigger="none"
-      boundaries-selector="body"
       no-arrow
       class="suggestions">
       <template v-slot:reference>
-          <!--suppress HtmlFormInputWithoutLabel -->
-          <input-flex
-            ref="input"
-            class="px-input bg-white"
-            type="text"
-            :placeholder="placeholder"
-            :title="placeholder"
-            :value="inputValue"
-            @input="onInput"
-            @keydown.tab.prevent="onTab"
-            @focus="onFocus"
-            @blur="onBlur"
-            @arrow-down="nextSuggestion"
-            @arrow-up="prevSuggestion"
-            @enter="completeTyping"
-            @keyup="getSuggestions"
-            @esc="onEsc" />
+        <!--suppress HtmlFormInputWithoutLabel -->
+        <input-flex
+          ref="input"
+          class="px-input bg-white"
+          type="text"
+          :placeholder="placeholder"
+          :title="placeholder"
+          :value="inputValue"
+          @input="onInput"
+          @keydown.tab.prevent="onTab"
+          @focus="onFocus"
+          @blur="onBlur"
+          @arrow-down="nextSuggestion"
+          @arrow-up="prevSuggestion"
+          @enter="completeTyping"
+          @keyup="getSuggestions"
+          @esc="onEsc" />
       </template>
       <ul v-show="inputValue && suggestions.length" class="">
         <li v-for="(suggestion, index) in suggestions"
@@ -132,9 +131,9 @@ export default {
       if (this.oldInputValue !== this.inputValue ||
         (!this.suggestions.length && this.suggestionActivationThreshold === 0)
       ) {
-        // this.suggestions = []
         this.selectedIndex = -1
-        let inputValue = this.inputValue.trim()
+        const inputValue = this.inputValue.trim()
+        if (!inputValue) this.suggestions = []
         if ((inputValue.length && inputValue.length >= this.suggestionActivationThreshold) || this.suggestionActivationThreshold === 0) {
           const task = this.query(inputValue)
           if (task && task.then) {
@@ -167,7 +166,6 @@ export default {
       }
       this.$emit('input', this.output)
       this.clearSuggestions()
-      // this.$refs.input.blur()
     },
 
     onFocus () {
@@ -182,7 +180,7 @@ export default {
 
     onInput (value) {
       this.inputValue = value
-      // this.$emit('typing', this.inputValue)
+      this.$emit('typing', this.inputValue)
     },
 
     onTab () {
@@ -247,6 +245,8 @@ export default {
 <!--suppress CssInvalidAtRule -->
 <style lang="scss">
   .suggestions {
+    position: relative;
+    display: block;
     .popper-trigger {
       @apply block h-full;
     }
