@@ -38,13 +38,15 @@ export default {
   },
 
   data: () => ({
-    startEditing: false
+    startEditing: false,
+    text: ''
   }),
 
   computed: {
     caption: {
-      get () { return this.value },
+      get () { return this.text || this.value },
       set (newValue) {
+        this.text = newValue
         this.$emit('input', newValue)
       }
     }

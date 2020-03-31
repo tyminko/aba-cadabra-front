@@ -189,8 +189,6 @@ export default {
         .limit(1)
         .get()
         .then(snapshot => {
-          // !!! DEBUG !!!
-          console.log(`%c () %c snapshot: `, 'background:#ffbb00;color:#000', 'color:#00aaff', snapshot)
           return snapshot.docs.map(doc => (doc.data() || {}).countNumber)[0]
         })
       this.$set(this.nextCounts, programmeId, (parseInt(lastCount) || 0) + 1)

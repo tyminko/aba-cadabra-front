@@ -141,8 +141,7 @@ export default {
   },
 
   mounted () {
-    // this.setAddFilesCellGridColumnStart()
-    // window.addEventListener('resize', this.setAddFilesCellGridColumnStart)
+    this.setSpanOnLastGridCell()
   },
 
   methods: {
@@ -328,6 +327,7 @@ export default {
 }
 </script>
 
+<!--suppress CssInvalidAtRule -->
 <style lang="scss">
   @import "../../../styles/mixins";
   $h: 200px;
