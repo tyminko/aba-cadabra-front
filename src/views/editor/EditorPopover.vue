@@ -4,7 +4,7 @@
     :open="open"
     class="editor max-w-text w-full"
     @esc="$emit('esc')"
-    @close="onClose">
+    @close="close">
     <template v-slot:header>
       <slot name="header">
         <h1 class="capitalize px-sm text-aba-blue">{{type}}</h1>
@@ -20,7 +20,7 @@
       <footer class="flex h-base items-center px-sm">
         <slot name="footer" />
         <template v-if="!processing">
-          <button class="ml-auto" @click.prevent="onClose">Cancel</button>
+          <button class="ml-auto" @click.prevent="close">Cancel</button>
           <button type="submit">Save</button>
         </template>
         <span v-else>Processing...</span>
@@ -43,12 +43,12 @@ export default {
 
   data: () => ({}),
 
-  computed: {},
-
   methods: {
-    onClose () {
+    close () {
       this.$emit('close')
-      this.$refs.popover.releaseBgScroll()
+      if (this.$refs.popover) {
+        this.$refs.popover.releaseBgScroll()
+      }
     }
   }
 }

@@ -1,3 +1,4 @@
+import { mapState } from 'vuex'
 import { db } from '../lib/firebase'
 import tagsLib from '../lib/tags'
 import * as string from '../lib/string'
@@ -27,6 +28,10 @@ export default {
   },
 
   computed: {
+    ...mapState(['user']),
+    adminOrEditor () {
+      return this.user && (this.user.role === 'admin' || this.user.role === 'editor')
+    },
     tags: {
       get () { return this.postData.tags || [] },
       set (newValue) {
@@ -126,6 +131,7 @@ export default {
         } else {
           db.collection('posts').add(this.postData)
         }
+        this.$emit('saved')
       } catch (e) {
         console.error(`%c savePost() %c e: `, 'background:#ff00AA;color:#000', 'color:#00aaff', e)
       }

@@ -18,7 +18,8 @@
       ref="editor"
       :open="open"
       :value="value"
-      @set-header="header = $event"/>
+      @set-header="header = $event"
+      @saved="onSaved"/>
     <template v-slot:footer>
       <button class="flex-col h-auto leading-none" @click.prevent="addAttachment">
         <i class="material-icons">attachment</i>
@@ -68,6 +69,9 @@ export default {
       if (typeof (this.$refs.editor || {}).save === 'function') {
         this.$refs.editor.save()
       }
+    },
+    onSaved () {
+      this.$emit('close')
     }
   }
 }

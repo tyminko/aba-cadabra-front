@@ -24,10 +24,10 @@
       <a class="block min-h-full cursor-pointer" @click.prevent="openEditor">Edit</a>
     </section>
     <section class="text-sm py-3 border-b border-aba-blue-semi">
-      Hide
+      <a class="block min-h-full cursor-pointer" @click.prevent="hidePost">Hide</a>
     </section>
     <section class="text-sm pt-3">
-      Remove
+      <a class="block min-h-full cursor-pointer" @click.prevent="removePost">Remove</a>
     </section>
   </div>
 </template>
@@ -51,6 +51,14 @@ export default {
     setSize (size) {
       this.$emit('close')
       this.$emit('set-size', this.current === size ? '' : size)
+    },
+    removePost () {
+      this.$emit('close')
+      this.$emit('remove-post')
+    },
+    hidePost () {
+      this.$emit('close')
+      this.$emit('hide-post')
     }
   }
 }

@@ -2,7 +2,7 @@
   <div class="home">
     <div class="feed-grid">
       <post-cell
-        v-for="post in feed"
+        v-for="post in posts"
         :key="post.id"
         :post="post">
         <template v-slot:quick-edit-button="{cellSize}">
@@ -22,7 +22,9 @@
                 :current="cellSize"
                 @close="hide"
                 @set-size="setCellSize(post.id, $event)"
-                @open-editor="openEditor(post)"/>
+                @open-editor="openEditor(post)"
+                @hide-post="hidePost(post)"
+                @remove-post="removePost(post)"/>
             </template>
           </popper>
         </template>
@@ -58,6 +60,9 @@ export default {
     ...mapState(['user']),
     adminOrEditor () {
       return this.user && (this.user.role === 'admin' || this.user.role === 'editor')
+    },
+    posts () {
+      return Object.values(this.feed).sort((a, b) => b.date - a.date)
     }
   },
 
@@ -67,6 +72,14 @@ export default {
 
   methods: {
     ...mapActions(['showEditor']),
+    removePost (post) {
+      // !!! DEBUG !!!
+      console.log(`%c removePost() %c post.id: `, 'background:#ffbb00;color:#000', 'color:#00aaff', post.id)
+      db.collection('posts').doc(post.id).update({ status: 'trashed' })
+    },
+    hidePost (post) {
+      db.collection('posts').doc(post.id).update({ status: 'draft' })
+    },
     openEditor (post) {
       this.showEditor({ value: post })
     },
@@ -149,33 +162,25 @@ export default {
     getFeed () {
       this.unsubscribe = db.collection('posts')
         .where('status', '==', 'public').orderBy('date', 'desc')
-        .onSnapshot(
-          querySnapshot => {
-            querySnapshot.forEach(async doc => {
-              const feedItem = doc.data()
-              this.$set(this.feed, doc.id, { ...feedItem, id: doc.id })
+        .onSnapshot({
+          next: querySnapshot => {
+            querySnapshot.docChanges().forEach(docChange => {
+              const doc = docChange.doc
+              switch (docChange.type) {
+                case 'added':
+                case 'modified':
+                  this.$set(this.feed, doc.id, { ...doc.data(), id: doc.id })
+                  break
+                case 'removed':
+                  this.$delete(this.feed, doc.id)
+              }
             })
           },
-          err => {
+          error: err => {
             console.error('getFeed:', err)
           }
-        )
+        })
     }
-    // regenerateCounts () {
-    //   Object.values(this.feed).forEach(p => {
-    //     if (p.type === 'event' && p.hasOwnProperty('countNumber')) {
-    //       // !!! DEBUG !!!
-    //       console.log(`%c RECOUNT before %c p.countNumber: `, 'background:#ffbb00;color:#000', 'color:#00aaff', p.countNumber)
-    //       db.collection('posts')
-    //         .doc(p.id)
-    //         .update({ countNumber: p.countNumber - 1 })
-    //         .then(() => {
-    //           // !!! DEBUG !!!
-    //           console.log(`%c RECOUNT after %c p.countNumber: `, 'background:#00bbff;color:#000', 'color:#00aaff', p.countNumber)
-    //         })
-    //     }
-    //   })
-    // }
   },
   beforeDestroy () {
     if (typeof this.unsubscribe === 'function') {

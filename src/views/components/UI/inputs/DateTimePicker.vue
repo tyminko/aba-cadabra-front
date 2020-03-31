@@ -14,7 +14,7 @@
             :boundaries-padding="10"
             @toggle="calendarIsOpen=$event">
             <template v-slot:reference>
-              <button class="w-2/3base h-2/3base" @click="preventDefault">
+              <button class="w-2/3base h-2/3base" @click.prevent="preventDefault">
                 <i class="material-icons">event</i>
               </button>
             </template>

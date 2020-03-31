@@ -36,7 +36,6 @@
 -->
 
 <script>
-import { mapState } from 'vuex'
 import PostEditorMixin from '../../mixins/post-editor'
 import PxInput from '../components/UI/inputs/PxInput'
 import TextEditor from '../components/UI/TextEditor'
@@ -66,10 +65,6 @@ export default {
   }),
 
   computed: {
-    ...mapState(['user']),
-    adminOrEditor () {
-      return this.user && (this.user.role === 'admin' || this.user.role === 'editor')
-    }
   },
 
   watch: {

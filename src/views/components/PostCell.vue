@@ -21,7 +21,7 @@
         <img :src="thumbnailUrl" @load="formatText">
       </div>
       <div v-else class="patch flex-grow min-h-0 bg-gray-800"/>
-      <div ref="excerpt" class="excerpt min-h-0 overflow-hidden mt-2 mb-4 min-h-line">
+      <div v-if="post.excerpt" ref="excerpt" class="excerpt min-h-0 overflow-hidden mt-2 mb-4 min-h-line">
         <div>{{post.excerpt}}</div>
       </div>
     </router-link>
@@ -104,10 +104,14 @@ export default {
     }
   },
 
+  watch: {
+    post () { this.formatText() }
+  },
+
   methods: {
     async formatText () {
+      await this.$nextTick()
       if (this.$refs.excerpt) {
-        await this.$nextTick()
         const el = this.$refs.excerpt
         const ellipsis = new Ftellipsis(el)
         ellipsis.calc()

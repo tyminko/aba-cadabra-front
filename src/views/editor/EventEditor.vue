@@ -29,6 +29,10 @@
         class="flex-1"/>
     </div>
     <location v-model="location"/>
+    <px-input
+      v-model="postData.title"
+      :placeholder="`${eventProgrammeLabel} title`"
+      class="xl"/>
     <credits-input v-model="participants"/>
     <tags-input
       v-model="supportedBy"
@@ -44,10 +48,6 @@
       :poster="posterId"
       @remove="onRemoveAttachment"
       @set-poster="posterId = $event"/>
-    <px-input
-      v-model="postData.title"
-      :placeholder="`${eventProgrammeLabel} title`"
-      class="xl"/>
     <text-editor
       ref="text-editor"
       v-model="content"
@@ -177,7 +177,7 @@ export default {
       }
     },
     async getActualCountForProgramme (programmeId) {
-      if (this.partOfProgrammeId === this.value.partOfProgramme.programmeId) {
+      if (this.value && this.partOfProgrammeId === this.value.partOfProgramme.programmeId) {
         return this.value.countNumber
       }
       if (this.nextCounts.hasOwnProperty(programmeId)) {
