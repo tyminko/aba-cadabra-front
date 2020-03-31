@@ -22,6 +22,12 @@ const router = new Router({
         import(/* webpackChunkName: "about" */ './views/About.vue')
     },
     {
+      path: '/blog/:authorId',
+      name: 'author-blog',
+      component: () =>
+        import(/* webpackChunkName: "about" */ './views/BlogFeed')
+    },
+    {
       path: '/partners',
       name: 'partners',
       component: () =>
@@ -33,13 +39,13 @@ const router = new Router({
       meta: { restricted: true },
       children: [
         {
-          path: 'users',
           name: 'users',
+          path: 'users',
           component: () => import(/* webpackChunkName: "admin" */ './views/admin/Users.vue')
         },
         {
-          path: 'wp-users',
           name: 'wp-users',
+          path: 'wp-users',
           component: () => import(/* webpackChunkName: "admin" */ './views/admin/CreateUsersFromWP.vue')
         },
         {

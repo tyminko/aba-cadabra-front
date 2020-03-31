@@ -59,7 +59,7 @@ declare interface StaffProfile extends Profile {
 }
 
 declare interface ProfileRef {
-  id: string,
+  uid: string,
   displayName: string,
   photoURL?: string,
   photo?: SourceSet

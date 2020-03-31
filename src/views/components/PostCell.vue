@@ -7,20 +7,24 @@
         <div class="badge mr-2 bg-gray-200 whitespace-no-wrap truncate">{{typeLabel}}</div>
         <slot name="quick-edit-button" :cell-size="cellSize"/>
       </div>
-      <h1 class="mt-1">{{title}}</h1>
-      <h2 v-if="secondTittle" class="">{{secondTittle}}</h2>
-      <div class="my-xs" :class="{'h2':post.type==='event'}">{{formattedDate}}</div>
     </header>
-    <div
-      v-if="thumbnailUrl"
-      class="thumbnail-box flex-grow min-h-x2">
-      <!--suppress HtmlUnknownTarget -->
-      <img :src="thumbnailUrl" @load="formatText">
-    </div>
-    <div v-else class="patch flex-grow min-h-0 bg-gray-800" />
-    <div ref="excerpt" class="excerpt min-h-0 overflow-hidden mt-2 mb-4 min-h-line">
-      <div>{{post.excerpt}}</div>
-    </div>
+    <router-link :to="routerLink" class="block flex flex-col flex-grow min-h-0">
+      <div>
+        <h1 class="mt-1">{{title}}</h1>
+        <h2 v-if="secondTittle" class="">{{secondTittle}}</h2>
+        <div class="my-xs" :class="{'h2':post.type==='event'}">{{formattedDate}}</div>
+      </div>
+      <div
+        v-if="thumbnailUrl"
+        class="thumbnail-box flex-grow min-h-x2">
+        <!--suppress HtmlUnknownTarget -->
+        <img :src="thumbnailUrl" @load="formatText">
+      </div>
+      <div v-else class="patch flex-grow min-h-0 bg-gray-800"/>
+      <div ref="excerpt" class="excerpt min-h-0 overflow-hidden mt-2 mb-4 min-h-line">
+        <div>{{post.excerpt}}</div>
+      </div>
+    </router-link>
   </div>
 </template>
 
@@ -38,6 +42,13 @@ export default {
   data: () => ({}),
 
   computed: {
+    routerLink () {
+      if (this.post.type === 'post' && this.post.author) {
+        return { name: 'author-blog', params: { authorId: this.post.author.uid } }
+      } else {
+        return ''
+      }
+    },
     typeLabel () {
       if (!this.post) return null
       if (this.post.partOfProgramme) {
@@ -114,7 +125,7 @@ export default {
   @import "../../styles/mixins";
   .post-cell {
     position: relative;
-    border-bottom: 2px solid transparentize($color-dimmed, 0.5);
+    border-bottom: 1px solid #000;
     hyphens: auto;
 
     h1, h2, .h2 {

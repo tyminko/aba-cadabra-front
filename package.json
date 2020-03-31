@@ -12,6 +12,7 @@
     "@popperjs/core": "^2.0.6",
     "axios": "^0.19.0",
     "core-js": "^3.4.3",
+    "dompurify": "^2.0.8",
     "firebase": "^7.5.1",
     "ftellipsis": "^0.2.3",
     "luxon": "^1.22.0",
