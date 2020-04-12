@@ -19,23 +19,26 @@ export const FieldValue = firebase.firestore.FieldValue
 
 export const syncAuth = store => {
   app.auth().onAuthStateChanged(user => {
-    // console.log('onAuthStateChanged:', user)
     if (user) {
       auth.currentUser.getIdTokenResult(true)
         .then(token => {
           return token.claims.role
         })
         .then(role => {
+          const { uid, displayName, email, emailVerified, phoneNumber, photoURL } = user
           store.dispatch('updateUser', {
-            id: user.uid,
-            displayName: user.displayName || user.email,
-            photoURL: user.photoURL,
+            uid,
+            displayName: displayName || email,
+            email,
+            emailVerified,
+            phoneNumber,
+            photoURL,
             role
           })
         })
         .catch((error) => {
           // eslint-disable-next-line no-console
-          console.log(error)
+          console.error(error)
           store.dispatch('clearUser')
         })
     } else {

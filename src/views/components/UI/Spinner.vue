@@ -1,21 +1,11 @@
 <template>
-  <transition>
-    <div v-if="show" class="spinner" />
-  </transition>
+  <transition><div v-if="show" class="spinner" /></transition>
 </template>
 
 <script>
 export default {
   name: 'Spinner',
-  props: {
-    show: Boolean
-  },
-
-  data: () => ({}),
-
-  computed: {},
-
-  methods: {}
+  props: { show: Boolean }
 }
 </script>
 

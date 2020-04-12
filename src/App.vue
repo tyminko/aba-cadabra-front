@@ -25,7 +25,7 @@
       </template>
       <template v-slot:content>
         <keep-alive>
-          <router-view :key="$route.fullPath" />
+          <router-view :key="$route.fullPath"/>
         </keep-alive>
       </template>
     </layout-with-push-sidebar>
@@ -33,13 +33,14 @@
       v-if="user && showEditor"
       :value="showEditor.value"
       :type="showEditor.type"
+      :on-saved="showEditor.onSaved"
       :open="!!showEditor"
       @close="hideEditor"/>
   </div>
 </template>
 <script>
 import { mapState, mapActions } from 'vuex'
-import LayoutWithPushSidebar from './views/components/UI/LayoutWithPushSidebar'
+import LayoutWithPushSidebar from './views/components/UI/layouts/LayoutWithPushSidebar'
 import MainHeader from './views/components/MainHeader'
 import Editor from './views/editor/Editor'
 

@@ -35,7 +35,7 @@ declare interface InstitutionRef {
 
 declare interface Profile {
   displayName: string,
-  email: string,
+  // email: string,
   registered: number,
   photoURL?: string,
   photo?: SourceSet,

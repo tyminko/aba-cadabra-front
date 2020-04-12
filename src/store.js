@@ -9,10 +9,10 @@ export default new Vuex.Store({
   state: {
     user: null,
     allowAdmin: false,
-    works: null,
+    posts: null,
     requestToLogin: false,
     useTouch: false,
-    showEditor: false // could be {type:string, value?:object}
+    showEditor: false // could be {type:string, value?:object, onSaved?:function}
   },
   mutations: {
     UPDATE_WORKS () {

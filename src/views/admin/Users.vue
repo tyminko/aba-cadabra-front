@@ -1,49 +1,34 @@
 <template>
   <div class="users">
-    <v-dialog
-      ref="editor"
-      v-model="showEditor"
-      persistent
-      scrollable
-      transition="slide-x-transition"
-      max-width="700"
-      :fullscreen="viewportIsSmall"
-      class="user-editor">
-      <template v-slot:activator="{ on }">
-        <v-btn color="primary" v-on="on" depressed :ripple="false">Add User</v-btn>
-      </template>
-      <user-editor
-        :user="selectedUser"
-        @close="showEditor=false"
-        @complete="updateUserInList"/>
-    </v-dialog>
-    <div>
-      <div v-for="user in users" :key="user.uid" class="user-card">
-        <div class="photo"  >
+    <div class="flex flex-wrap p-base">
+      <div
+        v-for="user in users"
+        :key="user.uid"
+        class="user-card m-sm p-sm w-64"
+        @click="openEditor(user)">
+        <div class="photo">
           <img v-if="user.photoURL" :src="user.photoURL">
         </div>
-        <div class="name">{{user.displayName || user.email}}</div>
-        <div class="email">Email: {{user.email}}</div>
-        <div class="phone">Phone: {{user.phoneNumber}}</div>
-        <div class="role">Role: {{user.role}}</div>
+        <h2 class="name">{{user.displayName || user.email}}</h2>
+        <div class="email">{{user.email}}</div>
+        <div class="phone desc">Phone: {{user.phoneNumber}}</div>
+        <div class="role desc">Role: {{user.role}}</div>
       </div>
-      <v-progress-circular v-if="processing" indeterminate />
+<!--      <v-progress-circular v-if="processing" indeterminate />-->
     </div>
+<!--    <editor :open="showEditor" :value="selectedUser" type="profile" @close="showEditor = false"/>-->
   </div>
 </template>
 
 <script>
-import { mapState } from 'vuex'
+import { mapState, mapActions } from 'vuex'
 import * as users from '../../lib/users'
-// import { UiButton, UiModal } from 'keen-ui'
-// import PopoverModal from '../../components/UI/PopoverModal'
-import UserEditor from './UserEditor'
+// import Editor from '../editor/Editor'
+// import { db } from '../../lib/firebase'
 
 export default {
   name: 'Users',
-  components: {
-    UserEditor
-  },
+  // components: { Editor },
 
   data: () => ({
     users: [],
@@ -51,7 +36,6 @@ export default {
     allUsersFunc: null,
     nextPageToken: '',
     viewportIsSmall: false,
-    showEditor: false,
     processing: false
   }),
 
@@ -72,6 +56,7 @@ export default {
   },
 
   methods: {
+    ...mapActions(['showEditor']),
     async getUsers () {
       if (this.user && this.user.role === 'admin') {
         this.processing = true
@@ -92,8 +77,17 @@ export default {
       }
     },
 
-    openEditor () {
-      this.$refs.editor.open()
+    openEditor (user) {
+      this.selectedUser = user
+      this.showEditor({
+        type: 'profile',
+        value: user,
+        onSaved: ({ uid, data }) => {
+          if (!data.displayName) return
+          const index = this.users.findIndex(u => u.uid === user.uid)
+          if (index > -1) this.$set(this.users, index, { ...user, displayName: data.displayName })
+        }
+      })
     },
 
     isViewportSmall () {

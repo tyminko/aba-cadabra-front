@@ -5,6 +5,9 @@
     v-model="model"
     v-input-auto-width="autoWidthOptions"
     :placeholder="placeholder"
+    :autocomplete="autocomplete"
+    :disabled="disabled"
+    :spellcheck="spellcheck"
     @click="focus"
     @focus="$emit('focus')"
     @blur="$emit('blur')"
@@ -24,6 +27,9 @@ export default {
   directives: { inputAutoWidth },
   props: {
     value: [String, Number],
+    autocomplete: String,
+    disabled: Boolean,
+    spellcheck: Boolean,
     placeholder: [String, Number],
     type: { type: String, default: 'text' },
     minWidth: { type: [String, Number], default: 0 },

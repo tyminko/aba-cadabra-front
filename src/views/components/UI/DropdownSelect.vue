@@ -5,9 +5,10 @@
         {{label}}
       </span>
     </label>
-    <div class="dropdown-select input mb-6"
-         :class="{open:isOpen, 'float-label-wrap':label}">
-      <div ref="valueEl" class="value" :class="{'no-value': value === '--'}" @click="isOpen=!isOpen">
+    <div
+      class="dropdown-select input mb-6"
+      :class="{open:isOpen, 'float-label-wrap':label, disabled}">
+      <div ref="valueEl" class="value" :class="{'no-value': value === '--'}" @click.prevent="toggle">
         <span class="selected">{{selectedTitle}}</span>
       </div>
       <transition-expand>
@@ -24,7 +25,7 @@
           </li>
         </ul>
       </transition-expand>
-      <button class="compact square" type="button" @click="isOpen=!isOpen">
+      <button v-if="!disabled" class="compact square" type="button" @click.prevent="toggle">
         <i class="material-icons">{{isOpen ? 'expand_less' : 'expand_more'}}</i>
       </button>
     </div>
@@ -41,7 +42,8 @@ export default {
     value: [String, Number],
     options: { type: [Object, Array], required: true },
     label: String,
-    placeholder: String
+    placeholder: String,
+    disabled: Boolean
   },
 
   data () {
@@ -53,7 +55,7 @@ export default {
   computed: {
     selectedTitle () {
       if (typeof this.value !== 'undefined') {
-        return this.options[this.value]
+        return Array.isArray(this.options) ? this.value : this.options[this.value]
       }
       return this.placeholder
     },
@@ -61,7 +63,7 @@ export default {
       const filtered = {}
       if (Array.isArray(this.options)) {
         this.options.forEach((v, i) => {
-          if (i !== this.value) {
+          if (v !== this.value) {
             filtered[i] = this.options[i]
           }
         })
@@ -77,10 +79,17 @@ export default {
   },
 
   methods: {
+    toggle () {
+      if (this.disabled) return
+      this.isOpen = !this.isOpen
+    },
     close () {
       this.isOpen = false
     },
     select (value) {
+      if (Array.isArray(this.options)) {
+        value = this.options[value]
+      }
       this.$emit('input', value)
     },
     setWidth () {
@@ -146,6 +155,11 @@ export default {
 
     &.open {
       z-index: 10;
+    }
+
+    &.disabled {
+      pointer-events: none;
+      border-bottom: none;
     }
 
     .options {

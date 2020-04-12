@@ -110,7 +110,7 @@ export default {
 </script>
 
 <style lang="scss">
-  @import "../../../styles/vars";
+  @import "../../../../styles/vars";
 
   $max-width-disable: 800px;
   $transition-time: 0.15s;

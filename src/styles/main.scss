@@ -30,6 +30,11 @@ p {
   margin-bottom: 1em;
 }
 
+//noinspection CssInvalidAtRule
+.desc {
+  @apply text-sm text-gray-700;
+}
+
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 @import "autofill";

@@ -38,6 +38,17 @@ export async function addUser (userData) {
   return null
 }
 
+export async function updateUser (userData) {
+  try {
+    const updateUserFunc = firebase.functions().httpsCallable('users-update')
+    const res = await updateUserFunc(userData)
+    return res.data
+  } catch (error) {
+    console.error('Update User:', error)
+    return Promise.reject(error)
+  }
+}
+
 export async function remove (id) {
   try {
     const removeUserFunc = firebase.functions().httpsCallable('users-remove')
@@ -49,6 +60,7 @@ export async function remove (id) {
     }
   } catch (error) {
     console.error(error)
+    return Promise.reject(error)
   }
   return false
 }

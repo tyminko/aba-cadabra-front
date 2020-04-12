@@ -7,9 +7,12 @@
       <slot>
         <input-flex
           ref="input"
-          :type="type"
           v-model="model"
+          :type="type"
           :placeholder="placeholderText"
+          :autocomplete="autocomplete"
+          :disabled="disabled"
+          :spellcheck="!noSpellcheck"
           :min-width="minWidth"
           :class="{error}"
           class="px-input"
@@ -21,9 +24,9 @@
       <slot name="add-on" />
     </span>
     <span v-if="errorText" class="px-sm text-xs text-red-700">{{errorText}}</span>
-    <div v-else-if="haveDescription" ref="desc" class="desc px-sm text-xs text-gray-500">
+    <span v-else-if="haveDescription" ref="desc" class="desc block px-sm text-xs text-gray-500">
       <slot name="desc"/>
-    </div>
+    </span>
   </label>
 </template>
 
@@ -38,9 +41,14 @@ export default {
     type: { type: String, default: 'text' },
     placeholder: [String, Number],
     label: [String, Number],
+    autocomplete: String,
+    disabled: Boolean,
+    required: Boolean,
+    noSpellcheck: Boolean,
     minWidth: { type: [String, Number], default: 200 },
-    error: [String, Boolean],
-    lazy: Boolean
+    lazy: Boolean,
+    rules: { type: Array, default: () => ([]) },
+    error: [String, Boolean]
   },
 
   data: () => ({
@@ -77,7 +85,7 @@ export default {
     },
 
     labelVisible () {
-      return !!this.model
+      return !!this.lazyValue
     },
 
     errorText () {
@@ -89,9 +97,15 @@ export default {
     }
   },
 
-  mounted () {},
+  mounted () {
+    this.lazyValue = this.value
+  },
 
-  watch: {},
+  watch: {
+    value (val) {
+      this.lazyValue = val
+    }
+  },
 
   methods: {
     focus () {
@@ -104,11 +118,6 @@ export default {
 
     onBlur () {
       this.$el.classList.remove('focus')
-      // if (this.lazy) {
-      //   clearTimeout(this.lazyTimeout)
-      //   this.$emit('input', this.lazyValue)
-      //   this.lazyValue = ''
-      // }
       this.$emit('blur')
     },
 

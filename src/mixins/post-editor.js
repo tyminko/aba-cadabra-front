@@ -68,8 +68,8 @@ export default {
       if (this.postData.author) {
         return this.postData.author
       } else if (this.user) {
-        const { displayName, id } = this.user
-        return { displayName, uid: id }
+        const { displayName, uid } = this.user
+        return { displayName, uid }
       }
       return null
     },

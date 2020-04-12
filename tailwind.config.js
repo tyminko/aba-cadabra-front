@@ -12,6 +12,7 @@ module.exports = {
         'aba-blue-dark': '#001776',
         'aba-blue-semi': 'rgba(0,61,255,0.44)',
         'shadow': 'rgba(0,0,0,0.2)',
+        'milk': 'rgba(255,255,255,0.5)',
         gray: {
           100: '#fafafa',
           200: '#e6e6e6',
@@ -43,7 +44,8 @@ module.exports = {
         'base': `${baseSize / 3}rem`,
         'xs': `${baseSize / 12}rem`,
         'sm': `${baseSize / 6}rem`,
-        'xl': `${baseSize / 3 * 2}rem`
+        'xl': `${baseSize / 3 * 2}rem`,
+        'xxl': `${baseSize * 2}rem`
       },
       margin: {
         'base': `${baseSize / 3}rem`,
@@ -52,7 +54,8 @@ module.exports = {
         'xs': `${baseSize / 12}rem`,
         '-sm': `-${baseSize / 6}rem`,
         'xl': `${baseSize / 3 * 2}rem`,
-        '-xl': `-${baseSize / 3 * 2}rem`
+        '-xl': `-${baseSize / 3 * 2}rem`,
+        'xxl': `${baseSize}rem`
       },
       maxWidth: {
         'text': `${textBlockWidth}em`,
@@ -83,6 +86,9 @@ module.exports = {
       },
       inset: {
         '1/12base': `${baseSize / 12}rem`
+      },
+      transitionProperty: {
+        'spacing': 'margin, padding'
       }
     }
   },

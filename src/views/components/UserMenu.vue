@@ -8,11 +8,14 @@
       </template>
       <div class="user-actions-wrapper">
         <ul class="user-actions">
-          <li v-if="adminOrEditor" class="menu-cell nav-item cursor-pointer" @click="openEditor('post')">
-            Add Blog Post
+          <li v-if="adminOrEditor" class="menu-cell nav-item cursor-pointer">
+            <a @click.prevent="openEditor('post')">Add Blog Post</a>
           </li>
-          <li v-if="adminOrEditor" class="menu-cell nav-item cursor-pointer" @click="openEditor('event')">
-            Add Event
+          <li v-if="adminOrEditor" class="menu-cell nav-item cursor-pointer">
+            <a @click.prevent="openEditor('event')">Add Event</a>
+          </li>
+          <li v-if="admin" class="menu-cell nav-item cursor-pointer">
+            <a @click.prevent="openEditor('profile')">Add User</a>
           </li>
         </ul>
       </div>
@@ -28,10 +31,10 @@
         <login-form v-if="!user" />
         <div v-else class="user-actions">
           <div class="menu-cell">
-            <router-link :to="{ name: 'profile' }">
-              <div> {{user.displayName}} </div>
+            <a @click.prevent="openMyProfileEditor" class="cursor-pointer">
+              <span class="block">{{user.displayName}}</span>
               Profile
-            </router-link>
+            </a>
           </div>
           <router-link v-if="admin" :to="{name: 'users'}" class="menu-cell nav-item">
             Users
@@ -83,9 +86,19 @@ export default {
   },
 
   methods: {
-    ...mapActions(['logOut', 'showEditor']),
-    openEditor (type) {
-      this.showEditor({ type })
+    ...mapActions(['logOut', 'showEditor', 'updateUser']),
+    openEditor (type, value) {
+      this.showEditor({ type, value })
+    },
+    openMyProfileEditor () {
+      this.showEditor({
+        type: 'profile',
+        value: this.user,
+        onSaved: ({ data }) => {
+          if (!data.displayName) return
+          this.updateUser({ ...this.user, displayName: data.displayName })
+        }
+      })
     }
   }
 }

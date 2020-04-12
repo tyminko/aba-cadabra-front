@@ -23,7 +23,10 @@ export default {
   watch: {
     user (value) {
       if (value) {
-        this.$router.push(localData.get('last-visited-route') || { name: 'works' })
+        const lastRoute = localData.get('last-visited-route')
+        if ((lastRoute || {}).name !== this.$route.name) {
+          this.$router.push(lastRoute || { name: 'home' })
+        }
       }
     }
   },

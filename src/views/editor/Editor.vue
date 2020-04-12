@@ -8,7 +8,7 @@
     @close="$emit('close')"
     @save="save">
     <template v-slot:header>
-      <h1 class="capitalize px-sm text-aba-blue">
+      <h1 class="capitalize px-sm text-aba-blue truncate overflow-y-visible">
         <span :class="{'type-with-title': !!header}">{{postType}}</span>
         {{header}}
       </h1>
@@ -19,37 +19,35 @@
       :open="open"
       :value="value"
       @set-header="header = $event"
+      @setProcessing="processing = $event"
+      @close="$emit('close')"
       @saved="onSaved"/>
-    <template v-slot:footer>
-      <button class="flex-col h-auto leading-none" @click.prevent="addAttachment">
-        <i class="material-icons">attachment</i>
-        <span class="text-xs text-gray-600 text-center mt-1">Attach File</span>
-      </button>
-      <button class="flex-col h-auto leading-none" @click.prevent="embedUrl">
-        <i class="material-icons">link</i>
-        <span class="text-xs text-gray-600 text-center mt-1">Embed Url</span>
-      </button>
-    </template>
+    <div v-if="processing" class="progress-overlay absolute w-full h-full inset-0 flex items-center justify-center z-50 bg-milk">
+      <div class="text-xl text-aba-blue">Saving...</div>
+    </div>
   </editor-popover>
 </template>
 
 <script>
 import EventEditor from './EventEditor'
 import PostEditor from './PostEditor'
+import ProfileEditor from '../admin/ProfileEditor'
 import EditorPopover from './EditorPopover'
+import Spinner from '../components/UI/Spinner'
 
 export default {
   name: 'Editor',
-  components: { EditorPopover, EventEditor, PostEditor },
+  components: { Spinner, EditorPopover, EventEditor, PostEditor, ProfileEditor },
   props: {
     open: Boolean,
     value: { type: Object, default: null },
-    type: String
+    type: String,
+    onSaved: { type: Function, default: null }
   },
   data () {
     return {
-      processing: false,
-      header: ''
+      header: '',
+      processing: false
     }
   },
   computed: {
@@ -57,7 +55,11 @@ export default {
       return (this.value || {}).type || this.type || 'post'
     },
     component () {
-      return this.postType === 'event' ? 'EventEditor' : 'PostEditor'
+      switch (this.postType) {
+        case 'event': return 'EventEditor'
+        case 'profile': return 'ProfileEditor'
+        default: return 'PostEditor'
+      }
     },
     headerTitle () {
       return this.header || (this.$refs.editor || {}).headerTitle || ''
@@ -69,10 +71,13 @@ export default {
       if (typeof (this.$refs.editor || {}).save === 'function') {
         this.$refs.editor.save()
       }
-    },
-    onSaved () {
-      this.$emit('close')
     }
+    // onSaved (payload) {
+    //   this.$emit('close')
+    //   if (payload && typeof this.onSaved === 'function') {
+    //     this.onSaved(payload)
+    //   }
+    // }
   }
 }
 </script>

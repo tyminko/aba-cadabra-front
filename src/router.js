@@ -18,20 +18,12 @@ const router = new Router({
     {
       path: '/about',
       name: 'about',
-      component: () =>
-        import(/* webpackChunkName: "about" */ './views/About.vue')
-    },
-    {
-      path: '/blog/:authorId',
-      name: 'author-blog',
-      component: () =>
-        import(/* webpackChunkName: "about" */ './views/BlogFeed')
+      component: () => import(/* webpackChunkName: "about" */ './views/About.vue')
     },
     {
       path: '/partners',
       name: 'partners',
-      component: () =>
-        import(/* webpackChunkName: "institutions" */ './views/Institutions')
+      component: () => import(/* webpackChunkName: "institutions" */ './views/Institutions')
     },
     {
       path: '/admin',

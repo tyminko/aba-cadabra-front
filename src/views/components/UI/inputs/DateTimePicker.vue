@@ -23,6 +23,7 @@
         </template>
       </px-input>
       <px-input
+        v-if="!dateOnly"
         v-model="timeString"
         placeholder="00:00"
         label="Time"
@@ -49,7 +50,8 @@ export default {
   props: {
     value: { type: [String, Number] },
     required: Boolean,
-    label: String
+    label: String,
+    dateOnly: Boolean
   },
 
   data: () => ({

@@ -89,7 +89,7 @@ export default {
   name: 'AttachmentsEditor',
   components: { Draggable, Dropzone, AttachmentEditorCell, PxInput },
   props: {
-    value: { type: Array, default: () => ([]) },
+    value: { type: [Array, Object], default: () => ([]) },
     poster: { type: String, default: '' },
     authorId: { type: String, default: '' },
     sizes: { type: Object, default: () => ({ large: 2048, small: 512 }) },
@@ -201,7 +201,7 @@ export default {
       const rawAttachments = this.attachments.filter(a => a.file instanceof Blob)
       rawAttachments.forEach(a => this.$set(a, 'progress', 1))
       try {
-        const authorId = this.authorId || this.user.id
+        const authorId = this.authorId || this.user.uid
         const uploadedAttachments = await upload(authorId, rawAttachments, (id, progress) => {
           const index = this.attachments.findIndex(a => a.id === id)
           if (!index) return
@@ -219,7 +219,7 @@ export default {
     async deleteMarkedAttachments () {
       const toDelete = this.removedAttachments // attachments.filter(a => a.removed)
       if (!toDelete.length) return
-      const authorId = this.authorId || this.user.id
+      const authorId = this.authorId || this.user.uid
       await deleteAttachments(authorId, toDelete)
     },
 
@@ -255,22 +255,16 @@ export default {
       this.$emit('set-poster', id)
     },
 
-    /** @param {Object<string,*>[]} oldAttachments */
-    convertToAttachments (oldAttachments) {
-      this.attachments = oldAttachments
-      /* .map((item, i) => {
-        let srcSet = {}
-        if (!item.hasOwnProperty('srcSet')) {
-          const { preview, full, original } = item
-          if (preview) srcSet.preview = preview
-          if (full) srcSet.full = full
-          if (original) srcSet.original = original
-        } else {
-          srcSet = item.srcSet
-        }
-        const { id, type, mime, order, caption, name } = item
-        return { id, name, type: type || mime, order, srcSet, caption: caption || '' }
-      }) */
+    /** @param {{}|[]} inputAttachments */
+    convertToAttachments (inputAttachments) {
+      if (Array.isArray(inputAttachments)) {
+        this.attachments = inputAttachments
+      } else {
+        this.attachments = Object.entries(inputAttachments).reduce((res, [id, value]) => {
+          res.push({ ...value, id })
+          return res
+        }, [])
+      }
       this.updateAttachmentsOrder()
     },
 
