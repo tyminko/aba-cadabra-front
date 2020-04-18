@@ -1,19 +1,26 @@
 <template>
   <article class="blog-article py-xl border-b">
-    <div>{{formattedDate}}</div>
-    <h2>{{post.title}}</h2>
-    <div class="gallery">
+    <div class="mb-base">{{formattedDate}}</div>
+    <h2 class="mb-base">{{post.title}}</h2>
+    <div class="gallery flex flex-wrap">
       <div
         v-for="item in attachments"
         :key="item.id"
         class="attachment mb-sm">
-        <img :src="item.url" :alt="item.caption"/>
-        <div v-if="item.caption" class="text-sm">
-          {{item.caption}}
+        <div class="attachment-box relative">
+          <img
+            :src="item.url"
+            :alt="item.caption"
+            :width="(item.dimensions || {}).w"
+            :height="(item.dimensions || {}).h"
+            class="bg-gray-400"/>
+          <div v-if="item.caption" class="text-sm">
+            {{item.caption}}
+          </div>
         </div>
       </div>
     </div>
-    <div v-if="content" v-html="content" />
+    <div v-if="content" v-html="content" class="mt-base w-text"/>
   </article>
 </template>
 
@@ -24,7 +31,8 @@ import DOMPurify from 'dompurify'
 export default {
   name: 'BlogArticle',
   props: {
-    post: { type: Object, required: true }
+    post: { type: Object, required: true },
+    preloadAttachments: Boolean
   },
 
   data: () => ({}),
@@ -38,7 +46,8 @@ export default {
       if (!count) return []
       return Object.entries(this.post.attachments).reduce((res, [id, item]) => {
         const { preview, full, original } = item.srcSet
-        res.push({ id, type: item.type, url: (full || preview || original).url, caption: item.caption })
+        const src = full || preview || original
+        res.push({ id, type: item.type, url: src.url, dimensions: src.dimensions, caption: item.caption })
         return res
       }, [])
     },
@@ -51,11 +60,36 @@ export default {
     }
   },
 
+  mounted () {
+
+  },
+
   methods: {}
 }
 </script>
 
+<!--suppress CssInvalidFunction -->
+<style lang="css">
+  .blog-article .attachment-box img {
+    max-height: calc(100vh - theme('spacing.base') * 2);
+    /*max-width: calc(100vh - theme('spacing.base') * 2);*/
+    width: auto;
+  }
+</style>
+<!--suppress CssInvalidAtRule -->
 <style lang="scss">
   .blog-article {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    -webkit-hyphens: auto;
+    -ms-hyphens: auto;
+    hyphens: auto;
+
+    & > *:not(.gallery) {
+      /*@apply px-sm;*/
+    }
+    .attachment-box{
+      /*@apply mx-sm;*/
+    }
   }
 </style>

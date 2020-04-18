@@ -16,6 +16,11 @@ const router = new Router({
       component: Home
     },
     {
+      path: '/blog/:authorId/:postId?',
+      name: 'author-blog',
+      component: () => import(/* webpackChunkName: "blog" */ './views/BlogFeed')
+    },
+    {
       path: '/about',
       name: 'about',
       component: () => import(/* webpackChunkName: "about" */ './views/About.vue')

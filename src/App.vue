@@ -27,6 +27,15 @@
         <keep-alive>
           <router-view :key="$route.fullPath"/>
         </keep-alive>
+<!--          <layout-two-sliding-views :show-second="showSecondView">-->
+<!--            <template v-slot:first>-->
+<!--            </template>-->
+<!--            <template v-slot:second>-->
+<!--              <keep-alive>-->
+<!--                <router-view name="second" :key="`${$route.fullPath}-second`"/>-->
+<!--              </keep-alive>-->
+<!--            </template>-->
+<!--          </layout-two-sliding-views>-->
       </template>
     </layout-with-push-sidebar>
     <editor
@@ -43,6 +52,7 @@ import { mapState, mapActions } from 'vuex'
 import LayoutWithPushSidebar from './views/components/UI/layouts/LayoutWithPushSidebar'
 import MainHeader from './views/components/MainHeader'
 import Editor from './views/editor/Editor'
+// import LayoutTwoSlidingViews from './views/components/UI/layouts/LayoutTwoSlidingViews'
 
 export default {
   name: 'App',
@@ -51,6 +61,9 @@ export default {
     ...mapState(['requestToLogin', 'user', 'showEditor']),
     adminOrEditor () {
       return this.user && (this.user.role === 'admin' || this.user.role === 'editor')
+    },
+    showSecondView () {
+      return this.$route.name !== 'home'
     }
   },
   created () {

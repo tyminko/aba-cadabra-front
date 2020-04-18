@@ -46,11 +46,11 @@
             WP Posts
           </router-link>
           <router-link v-if="admin" :to="{name: 'wp-attachments'}" class="menu-cell nav-item">
-            WP Attachmnts
+            WP Attachments
           </router-link>
-          <button class="login" @click="logOut">
-            <span>Log Out</span>
-          </button>
+          <a href="#" class="menu-cell nav-item" @click.prevent="logOut">
+            <span class="whitespace-no-wrap">Log Out</span>
+          </a>
         </div>
       </div>
     </sliding-panel>
@@ -81,7 +81,7 @@ export default {
 
   watch: {
     user () {
-      if (this.$refs.menu) this.$nextTick(() => this.$refs.menu.jumpTop())
+      // if (this.$refs.menu) this.$nextTick(() => this.$refs.menu.jumpTop())
     }
   },
 
@@ -104,6 +104,7 @@ export default {
 }
 </script>
 
+<!--suppress CssInvalidAtRule -->
 <style lang='scss'>
   @import '../../styles/vars';
   @import '../../styles/mixins';
@@ -145,9 +146,9 @@ export default {
       overflow: hidden;
 
       .user-actions {
-        padding-top: 0;
+        @apply px-sm;
 
-        .menu-cell {
+        .menu-cell, button {
           display: flex;
           align-items: center;
           min-height: $base-size;
@@ -156,16 +157,20 @@ export default {
             border-bottom: 1px #0000ff7e solid;
           }
         }
-        & > div, & > button {
+
+        /*& > div, & > button {
           min-height: $base-size;
           display: flex;
           flex-flow: column;
           justify-content: center;
+        }*/
+        button {
+          width: auto;
         }
-
         a {
-          display: block;
-          text-decoration: none;
+          /*display: block;*/
+          /*text-decoration: none;*/
+          margin: 0;
         }
       }
     }

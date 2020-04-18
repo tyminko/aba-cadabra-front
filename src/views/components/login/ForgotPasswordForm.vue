@@ -1,47 +1,47 @@
 <!--suppress HtmlFormInputWithoutLabel -->
 <template>
-  <v-card class="login-container forgot">
-    <v-card-title>
-      <v-icon @click="$emit('close')">close</v-icon> Reset Password
-    </v-card-title>
-    <v-card-text>
-      <v-form
-        ref="form"
-        v-model="formValid"
-        class="login-box"
-        @submit.prevent="sendRequest">
-          <v-text-field
-            ref="email"
-            v-model="userEmail"
-            label="Email"
-            type="email"
-            hint="Request an email with the password resetting details."
-            :validate-on-blur="true"
-            :rules="[rules.required, rules.email, rules.serverError]"
-            @input="clearMessage" />
-          <p class="message" :class="{open: message}">
-            {{message}}
-          </p>
-      </v-form>
-    </v-card-text>
-    <v-card-actions class="justify-end">
+  <div class="login-container forgot bg-white px-sm">
+    <button class="flex items-center">
+      <i class="material-icons text-xl text-gray-600 hover:text-aba-blue" @click="$emit('close')">close</i>
+    </button>
+    <div class="px-sm mb-sm">Reset Password</div>
+    <form
+      ref="form"
+      class="login-box"
+      @submit.prevent="sendRequest">
+        <px-input
+          ref="email"
+          v-model="userEmail"
+          label="Email"
+          type="email"
+          hint="Request an email with the password resetting details."
+          :error="error"
+          :validate-on-blur="true"
+          :rules="[rules.required, rules.email, rules.serverError]"
+          @input="clearMessage" />
+        <div v-if="message" class="desc" :class="{open: message}">
+          {{message}}
+        </div>
+    </form>
+    <div class="flex justify-end">
       <button
         :disabled="!enableRequest"
         @click="sendRequest"
-        class="submit">
+        class="submit w-auto p-sm">
         Send Email
       </button>
-    </v-card-actions>
-  </v-card>
+    </div>
+  </div>
 </template>
 
 <script>
 import { mapState } from 'vuex'
 import { auth } from '../../../lib/firebase'
+import PxInput from '../UI/inputs/PxInput'
 
 export default {
   name: 'ForgotPasswordForm',
-  components: {},
+  components: { PxInput },
   data () {
     return {
       userEmail: '',
@@ -49,7 +49,6 @@ export default {
       emailIsSent: false,
       messageBarOpen: false,
       error: null,
-      formValid: true,
       rules: {
         required: value => (!!value || this.emailIsSent) || 'Required',
         email: value => /.+@.+\..+/.test(value) || 'E-mail must be valid',
@@ -73,6 +72,13 @@ export default {
       // }
       return ''
     },
+    formValid () {
+      return (this.userEmail && (this.$refs.email || {}).isValid)
+      // const pxInputs = [this.$refs.email]
+      // // !!! DEBUG !!!
+      // console.log(`%c formValid() %c pxInputs.find(input => !input.isValid): `, 'background:#ffbb00;color:#000', 'color:#00aaff', pxInputs.find(input => !input.isValid))
+      // return pxInputs.find(input => !input.isValid).length === 0
+    },
     enableRequest () {
       return this.formValid
     }
@@ -89,10 +95,10 @@ export default {
           this.emailIsSent = true
           this.savedEmail = this.userEmail
           this.userEmail = ''
+          this.error = null
         })
         .catch(err => {
-          this.error = err
-          this.$refs.form.validate()
+          this.error = this.errorMessages[err.code] || this.errorMessages.default
         })
     },
 
@@ -101,7 +107,7 @@ export default {
     },
 
     clearMessage () {
-      this.error = false
+      this.error = null
       this.emailIsSent = false
       this.savedEmail = ''
       // if (this.message) this.message = ''
@@ -111,39 +117,4 @@ export default {
 </script>
 
 <style lang='scss'>
-  @import '../../../styles/vars';
-  .v-card.login-container {
-    max-width: 300px;
-    width: 100%;
-    border: none;
-
-    .v-card__title {
-      padding-top: 0;
-    }
-    .message {
-      height: 0;
-      overflow: hidden;
-      margin: 0;
-      transition: height 0.2s;
-      // font-size: 90%;
-      line-height: 1.3;
-      color: #0000ff !important;
-
-      &.open {
-        height: auto;
-      }
-
-      &.error {
-        color: red;
-        background: transparent !important;
-      }
-    }
-
-    button.submit {
-      color: #0000ff;
-      &:disabled {
-        color: #ccc;
-      }
-    }
-  }
 </style>

@@ -23,19 +23,22 @@
       </slot>
       <slot name="add-on" />
     </span>
-    <span v-if="errorText" class="px-sm text-xs text-red-700">{{errorText}}</span>
-    <span v-else-if="haveDescription" ref="desc" class="desc block px-sm text-xs text-gray-500">
-      <slot name="desc"/>
-    </span>
+    <smooth-reflow>
+      <span v-if="showError && errorText" class="block px-sm mt-sm text-xs leading-tight text-red-700">{{errorText}}</span>
+      <span v-else-if="haveDescription" ref="desc" class="desc block px-sm text-xs leading-none text-gray-500">
+        <slot name="desc"/>
+      </span>
+    </smooth-reflow>
   </label>
 </template>
 
 <script>
 import InputFlex from './InputFlex'
+import SmoothReflow from '../SmoothReflow'
 
 export default {
   name: 'PxInput',
-  components: { InputFlex },
+  components: { SmoothReflow, InputFlex },
   props: {
     value: [String, Number],
     type: { type: String, default: 'text' },
@@ -47,14 +50,17 @@ export default {
     noSpellcheck: Boolean,
     minWidth: { type: [String, Number], default: 200 },
     lazy: Boolean,
-    rules: { type: Array, default: () => ([]) },
+    rules: { type: Array, default: () => ([]) }, // a list of functions which return true or error message
     error: [String, Boolean]
   },
 
   data: () => ({
     lazyValue: '',
     lazyDelay: 10000,
-    lazyTimeout: null
+    lazyTimeout: null,
+    clearErrorTimeout: null,
+    validationError: '',
+    showError: false
   }),
 
   computed: {
@@ -64,6 +70,7 @@ export default {
       },
       set (val) {
         this.lazyValue = val
+        this.validate(val)
         if (this.lazy) {
           clearTimeout(this.lazyTimeout)
           this.lazyTimeout = setTimeout(() => {
@@ -89,8 +96,12 @@ export default {
     },
 
     errorText () {
-      return this.error && typeof this.error === 'string' ? this.error : ''
+      // !!! DEBUG !!!
+      console.log(`%c errorText() %c this.error: `, 'background:#ff0000;color:#000', 'color:#00aaff', this.error)
+      return this.validationError || (this.error && typeof this.error === 'string' ? this.error : '')
     },
+
+    isValid () { return !this.validationError },
 
     haveDescription () {
       return !!this.$slots.desc
@@ -104,6 +115,14 @@ export default {
   watch: {
     value (val) {
       this.lazyValue = val
+    },
+    error (val) {
+      // !!! DEBUG !!!
+      console.log(`%c error() %c val: `, 'background:#ffbb00;color:#000', 'color:#00aaff', val)
+      console.log(`%c error() %c this.validationError: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.validationError)
+      if (!this.validationError) this.showError = !!val
+      // !!! DEBUG !!!
+      console.log(`%c error() %c this.showEditor: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.showEditor)
     }
   },
 
@@ -114,22 +133,41 @@ export default {
 
     onFocus () {
       this.$el.classList.add('focus')
+      this.clearErrorTimeout = setTimeout(() => { this.showError = false }, 1000)
     },
 
     onBlur () {
+      clearTimeout(this.clearErrorTimeout)
+      this.showError = this.validate(this.value)
       this.$el.classList.remove('focus')
       this.$emit('blur')
     },
 
     onChange () {
       if (this.lazy) {
-        // !!! DEBUG !!!
-        console.log(`%c PxInput lazy onChange %c this.lazyValue: `, 'background:#00bbff;color:#000', 'color:#00aaff', this.lazyValue)
         clearTimeout(this.lazyTimeout)
         this.$emit('input', this.lazyValue)
         this.lazyValue = ''
       }
       this.$emit('change', this.lazyValue)
+    },
+
+    validate (val) {
+      this.validationError = ''
+      if (this.required && !val) {
+        this.validationError = 'required'
+        return false
+      }
+      if ((this.rules || []).length) {
+        for (const rule of this.rules) {
+          const res = rule(val)
+          if (res !== true) {
+            this.validationError = res
+            break
+          }
+        }
+      }
+      return !!this.validationError
     }
   }
 }

@@ -1,23 +1,21 @@
 <!--suppress HtmlFormInputWithoutLabel -->
 <template>
   <div class="login-wrap">
-    <div class="login-container">
-      <span>
-        Log In
-      </span>
+    <div class="login-container px-sm">
+      <div class="mb-sm px-sm">Log In</div>
       <div class="card-content">
         <form
           ref="form"
           class="login-box"
           @submit.prevent="login">
-            <input
+            <px-input
               ref="email"
               v-model="userEmail"
               label="Email"
               type="email"
               :rules="[rules.required, rules.email]"
               @input="clearMessage" />
-            <input
+            <px-input
               v-model="userPassword"
               label="Password"
               type="password"
@@ -25,21 +23,19 @@
               spellcheck="false"
               autocomplete="current-password"
               @input="clearMessage" />
-            <p class="message" :class="{open: message}">
+            <p v-if="message" class="message" :class="{open: message}">
               {{message}}
             </p>
         </form>
-        <div @click="forgotPassword = true" class="link mini">
+        <a href="#" @click.prevent="forgotPassword = true" class="block px-sm text-sm text-gray-900 -mt-sm">
           Forgot my password
-        </div>
+        </a>
       </div>
-      <footer class="justify-end">
-        <button
-          :disabled="!enableLogin"
-          @click="login">
-          Log In
+      <div class="flex justify-end">
+        <button :disabled="!enableLogin" class="w-auto my-base px-sm" @click="login">
+          <span>Log In</span>
         </button>
-      </footer>
+      </div>
     </div>
     <transition name="push">
       <forgot-form
@@ -55,10 +51,11 @@
 import { mapState } from 'vuex'
 import { auth } from '../../../lib/firebase'
 import ForgotForm from './ForgotPasswordForm'
+import PxInput from '../UI/inputs/PxInput'
 
 export default {
   name: 'Login',
-  components: { ForgotForm },
+  components: { PxInput, ForgotForm },
   data () {
     return {
       userEmail: '',

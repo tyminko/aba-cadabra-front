@@ -8,7 +8,9 @@
         <slot name="quick-edit-button" :cell-size="cellSize"/>
       </div>
     </header>
-    <router-link :to="routerLink" class="block flex flex-col flex-grow min-h-0">
+    <router-link
+      :to="routerLink"
+      class="block flex flex-col flex-grow min-h-0">
       <div>
         <h1 class="mt-1">{{title}}</h1>
         <h2 v-if="secondTittle" class="">{{secondTittle}}</h2>
@@ -44,7 +46,7 @@ export default {
   computed: {
     routerLink () {
       if (this.post.type === 'post' && this.post.author) {
-        return { name: 'author-blog', params: { authorId: this.post.author.uid } }
+        return { name: 'author-blog', params: { authorId: this.post.author.uid, postId: this.post.id } }
       } else {
         return ''
       }
@@ -136,6 +138,13 @@ export default {
       font-size: $h3;
       margin: 0;
       line-height: 1.1em;
+    }
+
+    a {
+      @apply text-black;
+      &:hover {
+        @apply text-aba-blue no-underline;
+      }
     }
 
     .type-badge {
