@@ -19,7 +19,7 @@
           :validate-on-blur="true"
           :rules="[rules.required, rules.email, rules.serverError]"
           @input="clearMessage" />
-        <div v-if="message" class="desc" :class="{open: message}">
+        <div v-if="message" class="desc px-sm" :class="{open: message}">
           {{message}}
         </div>
     </form>

@@ -20,7 +20,7 @@
         </ul>
       </div>
     </sliding-panel>
-    <sliding-panel ref="menu" class="user-menu">
+    <sliding-panel ref="user-menu" class="user-menu">
       <template v-slot:trigger="{on, open}">
         <button class="user-menu-button" @click="on">
           <i v-if="user" class="material-icons dimmed" :class="{open, user}">{{open ? 'sentiment_very_satisfied' : 'sentiment_satisfied'}}</i>
@@ -81,7 +81,8 @@ export default {
 
   watch: {
     user () {
-      // if (this.$refs.menu) this.$nextTick(() => this.$refs.menu.jumpTop())
+      if (this.$refs.menu) this.$nextTick(() => this.$refs.menu.jumpTop())
+      if (this.$refs['user-menu']) this.$nextTick(() => this.$refs['user-menu'].jumpTop())
     }
   },
 

@@ -9,7 +9,14 @@ button, .button {
     @apply text-aba-blue;
   }
   &:active {
-    @apply bg-gray-200 rounded-3/8base;
+    &:after {
+      content: '';
+      display: block;
+      width: 80%;
+      height: 80%;
+      background: rgba(0,0,0,0.1) !important;
+      @apply rounded-3/8base;
+    }
   }
   &:disabled {
     pointer-events: none;

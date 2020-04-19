@@ -26,7 +26,7 @@ export default {
   },
 
   data: () => ({
-    open: true
+    open: false
   }),
 
   computed: {
@@ -82,7 +82,7 @@ export default {
       const { display, boxShadow } = window.getComputedStyle(panel)
       const shadow = this.parseShadow(boxShadow)
       const bottomShadow = shadow[1] + shadow[2] + (shadow.length > 3 ? shadow[3] : 0)
-      if (display === 'none') panel.style.display = 'blobk'
+      if (display === 'none') panel.style.display = 'block'
       const h = panel.getBoundingClientRect().height + bottomShadow
       if (display === 'none') panel.style.display = preDisplay
       return h
@@ -118,15 +118,17 @@ export default {
       box-sizing: border-box;
       max-height: 100vh;
       overflow: auto;
+      opacity: 0;
 
       z-index: $z-high;
 
       top: -1000px;
-      transition: top $reverse-time $reverse-delay ease-in-out;
+      transition: top $reverse-time $reverse-delay ease-in-out, opacity 0s $reverse-delay * 2;
 
       &.open {
         top: 0;
-        transition: top $transition-time ease-in-out;
+        opacity: 1;
+        transition: top $transition-time ease-in-out, opacity 0s 0s;
       }
 
       &.align-end {
