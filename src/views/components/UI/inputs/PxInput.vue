@@ -138,7 +138,7 @@ export default {
 
     onBlur () {
       clearTimeout(this.clearErrorTimeout)
-      this.showError = this.validate(this.value)
+      this.showError = !this.validate(this.value)
       this.$el.classList.remove('focus')
       this.$emit('blur')
     },
@@ -167,7 +167,7 @@ export default {
           }
         }
       }
-      return !!this.validationError
+      return !this.validationError
     }
   }
 }

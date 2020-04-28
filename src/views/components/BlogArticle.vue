@@ -1,7 +1,7 @@
 <template>
   <article class="blog-article py-xl border-b">
-    <div class="mb-base">{{formattedDate}}</div>
-    <h2 class="mb-base">{{post.title}}</h2>
+    <div class="mb-base text-block">{{formattedDate}} {{post.id}}</div>
+    <h2 class="mb-base text-block">{{post.title}}</h2>
     <div class="gallery flex flex-wrap">
       <div
         v-for="item in attachments"
@@ -14,13 +14,13 @@
             :width="(item.dimensions || {}).w"
             :height="(item.dimensions || {}).h"
             class="bg-gray-400"/>
-          <div v-if="item.caption" class="text-sm">
+          <div v-if="item.caption" class="text-block text-sm">
             {{item.caption}}
           </div>
         </div>
       </div>
     </div>
-    <div v-if="content" v-html="content" class="mt-base w-text"/>
+    <div v-if="content" v-html="content" class="text-block mt-base w-text"/>
   </article>
 </template>
 

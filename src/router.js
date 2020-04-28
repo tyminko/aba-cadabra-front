@@ -16,9 +16,19 @@ const router = new Router({
       component: Home
     },
     {
+      name: 'event',
+      path: '/event/:id/:token?',
+      component: () => import(/* webpackChunkName: "blog" */ './views/EventView')
+    },
+    {
       path: '/blog/:authorId/:postId?',
       name: 'author-blog',
       component: () => import(/* webpackChunkName: "blog" */ './views/BlogFeed')
+    },
+    {
+      path: '/profile/:id',
+      name: 'profile',
+      component: () => import(/* webpackChunkName: "blog" */ './views/ProfileView')
     },
     {
       path: '/about',

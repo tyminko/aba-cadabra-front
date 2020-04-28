@@ -159,7 +159,6 @@ export default {
     }
 
     .push-box {
-      margin-top: $base-size;
       height: 100%;
       display: flex;
 
@@ -191,7 +190,6 @@ export default {
 
       .layout-content-wrap {
         flex-grow: 1;
-        overflow: hidden;
         &.collapsible {
           width: 100vw;
           min-width: 100vw;
@@ -200,6 +198,7 @@ export default {
 
       .push-sidebar {
         flex-shrink: 0;
+        padding-top: $base-size;
         overflow: auto;
         .sidebar-content {
           position: fixed;

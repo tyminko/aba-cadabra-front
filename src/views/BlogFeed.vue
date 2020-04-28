@@ -1,36 +1,44 @@
 <template>
-  <div class="blog-feed flex justify-center">
-    <div class="feed w-full max-w-text">
-      <h1 class="">Blog by {{authorName}}</h1>
+  <content-with-sidebar>
+    <template v-slot:main>
+      <h1 class="text-block">Blog by {{authorName}}</h1>
       <blog-article
         v-for="post in feed"
         :key="post.id"
+        :id="post.id"
         ref="posts"
         :post="post"
         :preload-attachments="false">
       </blog-article>
-    </div>
-    <div class="feed-sidebar">
-      <blog-sidebar :author="author" />
-    </div>
-  </div>
+      <div class="nav sticky bottom-0 w-full flex justify-center">
+        <button class="large bg-milk" @click="scrollToPrevious"><i class="material-icons">arrow_upward</i></button>
+        <button class="large bg-milk" @click="scrollToNext"><i class="material-icons">arrow_downward</i></button>
+      </div>
+    </template>
+    <template v-slot:sidebar>
+      <blog-sidebar :author="author" :post="activePost"/>
+    </template>
+  </content-with-sidebar>
 </template>
 
 <script>
 import { db } from '../lib/firebase'
 import BlogArticle from './components/BlogArticle'
 import BlogSidebar from './BlogSidebar'
+import ContentWithSidebar from './components/UI/layouts/ContentWithSidebar'
 
 export default {
   name: 'BlogFeed',
-  components: { BlogSidebar, BlogArticle },
+  components: { ContentWithSidebar, BlogSidebar, BlogArticle },
   props: {},
 
   data: () => ({
     unsubscribeFirst: null,
     unsubscribe: null,
     feed: {},
-    authorId: null
+    IntersectionObserver: null,
+    authorId: null,
+    activePostId: null
   }),
 
   computed: {
@@ -41,18 +49,54 @@ export default {
     },
     authorName () {
       return (this.author || {}).displayName
+    },
+    activePostIndex () {
+      if (this.activePostId) {
+        return this.$refs.posts.findIndex(p => p.post.id === this.activePostId)
+      }
+      return null
+    },
+    activePost () {
+      return this.activePostId ? (this.feed || {})[this.activePostId] : null
+    },
+    previousPostIndex () {
+      if (this.activePostIndex !== null) {
+        return this.activePostIndex > 0 ? this.activePostIndex - 1 : null
+      }
+      return null
+    },
+    nextPostIndex () {
+      if (this.activePostIndex !== null) {
+        return this.activePostIndex < this.$refs.posts.length - 1
+          ? this.activePostIndex + 1
+          : null
+      }
+      return null
     }
   },
 
   created () {
     // this.getFirstPost()
     this.subscribe()
+
+    let options = {
+      root: null,
+      rootMargin: '0px',
+      threshold: [0, 0.5, 1]
+    }
+    this.IntersectionObserver = new IntersectionObserver(entries => {
+      const biggest = entries.filter(entry => {
+        return entry.intersectionRatio >= 0.5
+      })
+        .sort((a, b) => a.intersectionRatio - b.intersectionRatio)
+      //   // !!! DEBUG !!!
+      // console.log(`%c () %c ((biggest[0] || {}).target || {}).id: `, 'background:#ffbbFF;color:#000', 'color:#00aaff', ((biggest[0] || {}).target || {}).id)
+      this.activePostId = ((biggest[0] || {}).target || {}).id || null
+    }, options)
   },
 
   watch: {
     $route () {
-      // !!! DEBUG !!!
-      console.log(`%c $route() %c this.unsubscribe: `, 'background:#ffbbff;color:#000', 'color:#00aaff', this.unsubscribe)
       this.onPostsLoaded()
     }
   },
@@ -60,19 +104,45 @@ export default {
   methods: {
     async onPostsLoaded () {
       await this.$nextTick()
-      const postId = this.$route.params.postId
+      // !!! DEBUG !!!
       console.log(`%c onPostsLoaded() %c this.$refs.posts: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.$refs.posts)
+      this.IntersectionObserver.disconnect()
+      this.$refs.posts.forEach(p => {
+        this.IntersectionObserver.observe(p.$el)
+      })
+      const postId = this.$route.params.postId
       const box = this.$refs.posts.find(p => p.post.id === postId)
       if (!box) return
-      // !!! DEBUG !!!
-      console.log(`%c onPostsLoaded() %c box: `, 'background:#ffbb00;color:#000', 'color:#00aaff', box)
-      // !!! DEBUG !!!
-      console.log(`%c onPostsLoaded() %c postId: `, 'background:#ffbb00;color:#000', 'color:#00aaff', postId)
       const focusBox = box.$el // document.getElementById(postId)
       // !!! DEBUG !!!
       console.log(`%c onPostsLoaded() %c focusBox: `, 'background:#ffbb00;color:#000', 'color:#00aaff', focusBox)
       if (focusBox) {
+        this.activePostId = postId
+        // !!! DEBUG !!!
+        console.log(`%c onPostsLoaded() %c this.activePostId: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.activePostId)
         focusBox.scrollIntoView(true)
+      }
+    },
+    scrollToNext () {
+      if (this.nextPostIndex !== null) {
+        const box = this.$refs.posts[this.nextPostIndex]
+        // !!! DEBUG !!!
+        console.log(`%c scrollToNext() %c box: `, 'background:#ffbb00;color:#000', 'color:#00aaff', box)
+        if ((box || {}).$el) {
+          this.activePostId = box.post.id
+          box.$el.scrollIntoView({ behavior: 'smooth' })
+        }
+      }
+    },
+    scrollToPrevious () {
+      if (this.previousPostIndex !== null) {
+        const box = this.$refs.posts[this.previousPostIndex]
+        // !!! DEBUG !!!
+        console.log(`%c scrollToPrevious() %c box: `, 'background:#ffbb00;color:#000', 'color:#00aaff', box)
+        if ((box || {}).$el) {
+          this.activePostId = box.post.id
+          box.$el.scrollIntoView({ behavior: 'smooth' })
+        }
       }
     },
     getFirstPost () {
@@ -91,8 +161,6 @@ export default {
     },
     subscribe () {
       const authorId = this.$route.params.authorId
-      // !!! DEBUG !!!
-      console.log(`%c subscribe() %c authorId: `, 'background:#ff00aa;color:#000', 'color:#00aaff', authorId)
       if (authorId) {
         this.unsubscribe = db.collection('posts')
           .where('author.uid', '==', authorId)
@@ -137,7 +205,4 @@ export default {
 </script>
 
 <style lang="scss">
-  .blog-feed {
-
-  }
 </style>

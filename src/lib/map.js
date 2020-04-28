@@ -10,10 +10,8 @@ export function getMarkerHtml (markerData, mapEl, markerStock) {
   } else {
     markerEl = document.createElement('div')
     markerEl.className = 'aba-marker'
-    // !!! DEBUG !!!
-    console.log(`%c getMarkerHtml() %c mapEl: `, 'background:#ffbbaa;color:#000', 'color:#00aaff', mapEl)
     mapEl.insertAdjacentElement('afterend', markerEl)
-    // markerStock[markerKey] = markerEl
+    markerStock[markerKey] = markerEl
     toReturn = markerEl
   }
   const activeClass = markerData.active ? 'active' : ''
@@ -24,8 +22,15 @@ export function getMarkerHtml (markerData, mapEl, markerStock) {
     const label = '<a href="' + markerData.url + '" class="label ' + activeClass + '">' + markerData.label + '</a>'
     markerEl.insertAdjacentHTML('beforeend', label)
   }
-
   return toReturn
+}
+
+export function markersBounds (google, markersInstances) {
+  const bounds = new google.maps.LatLngBounds()
+  markersInstances.forEach(marker => {
+    bounds.extend(marker.latLng)
+  })
+  return bounds
 }
 
 export function defineABAMarkerClass (google) {

@@ -12,13 +12,13 @@
              :key="profile.id"
              class="credit-item flex items-center h-2/3base mr-sm mb-sm bg-gray-200">
           <span class="pl-sm">{{profile.displayName}}</span>
-          <button class="h-2/3base w-2/3base" @click="toggleStar(profile.id)">
+          <button class="h-2/3base w-2/3base" @click.prevent="toggleStar(profile.id)">
             <i class="material-icons text-base"
                :class="stars.includes(profile.id) ? `text-gray-900` : `text-gray-500`">
-              {{stars.includes(profile.id) ? 'star' : 'star_border' }}
+              {{ stars.includes(profile.id) ? 'star' : 'star_border' }}
             </i>
           </button>
-          <button class="h-2/3base w-2/3base" @click="removeProfile(profile.id)">
+          <button class="h-2/3base w-2/3base" @click.prevent="removeProfile(profile.id)">
             <i class="material-icons text-base text-gray-500">close</i>
           </button>
         </div>
@@ -47,16 +47,20 @@ export default {
           const profileRef = { id: doc.id, displayName: doc.data().displayName || '' }
           return [...result, profileRef]
         }, []))
-    },
-    stars: []
+    }
   }),
 
   computed: {
     model: {
       get () { return this.value },
       set (newValue) {
+        // !!! DEBUG !!!
+        console.log(`%c model set() %c newValue: `, 'background:#00bbff;color:#000', 'color:#00aaff', newValue)
         this.$emit('input', newValue)
       }
+    },
+    stars () {
+      return this.model.reduce((res, p) => p.star ? [...res, p.id] : res, [])
     }
   },
 
@@ -66,11 +70,19 @@ export default {
     },
 
     toggleStar (profileId) {
-      const index = this.stars.indexOf(profileId)
-      if (index < 0) {
-        this.stars.push(profileId)
-      } else {
-        this.stars.splice(index, 1)
+      const index = this.value.findIndex(p => p.id === profileId)
+      // !!! DEBUG !!!
+      console.log(`%c toggleStar() %c index: `, 'background:#ffbb00;color:#000', 'color:#00aaff', index)
+      if (index > -1) {
+        const newVal = [...this.value]
+        if (newVal[index].star) {
+          delete newVal[index].star
+        } else {
+          newVal[index].star = true
+        }
+        // !!! DEBUG !!!
+        console.log(`%c toggleStar() %c newVal: `, 'background:#ffbb00;color:#000', 'color:#00aaff', newVal)
+        this.$emit('input', newVal)
       }
     }
   }

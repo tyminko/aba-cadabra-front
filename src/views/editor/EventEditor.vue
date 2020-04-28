@@ -90,7 +90,7 @@ export default {
 
   computed: {
     participants: {
-      get () { return this.postData.participants || [] },
+      get () { return Object.values(this.postData.participants) || [] },
       set (newValue) { this.$set(this.postData, 'participants', newValue) }
     },
     location: {

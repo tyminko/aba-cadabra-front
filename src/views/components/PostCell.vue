@@ -5,6 +5,7 @@
     <header class="flex-grow-0">
       <div class="flex items-center">
         <div class="badge mr-2 bg-gray-200 whitespace-no-wrap truncate">{{typeLabel}}</div>
+        <span class="text-xs">{{post.id}}</span>
         <slot name="quick-edit-button" :cell-size="cellSize"/>
       </div>
     </header>
@@ -20,10 +21,13 @@
         v-if="thumbnailUrl"
         class="thumbnail-box flex-grow min-h-x2">
         <!--suppress HtmlUnknownTarget -->
-        <img :src="thumbnailUrl" @load="formatText">
+        <img :src="thumbnailUrl">
       </div>
       <div v-else class="patch flex-grow min-h-0 bg-gray-800"/>
-      <div v-if="post.excerpt" ref="excerpt" class="excerpt min-h-0 overflow-hidden mt-2 mb-4 min-h-line">
+      <div
+        v-if="post.excerpt"
+        ref="excerpt"
+        class="excerpt min-h-0 overflow-hidden mt-2 mb-4 min-h-line">
         <div>{{post.excerpt}}</div>
       </div>
     </router-link>
@@ -48,7 +52,7 @@ export default {
       if (this.post.type === 'post' && this.post.author) {
         return { name: 'author-blog', params: { authorId: this.post.author.uid, postId: this.post.id } }
       } else {
-        return ''
+        return { name: 'event', params: { id: this.post.id } }
       }
     },
     typeLabel () {
@@ -107,7 +111,7 @@ export default {
   },
 
   watch: {
-    post () { this.formatText() }
+    // post () { this.formatText() }
   },
 
   methods: {
@@ -162,6 +166,10 @@ export default {
       background: transparentize($color-dimmed, 0.8);
       border-radius: 50%;
       color: $color-aba-blue;
+    }
+
+    .excerpt {
+      @include multi-line-truncate();
     }
 
     &:hover {

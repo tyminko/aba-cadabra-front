@@ -6,11 +6,12 @@
     <div class="tags flex flex-wrap items-center">
       <draggable-content
         v-model="tags"
-        @move="onMove"
         filter=".search-input"
         :draggable="draggableSelector || '.tag-item'"
         container-class="flex items-center flex-wrap"
-        class="tags-input credits flex flex-wrap items-center">
+        class="tags-input credits flex flex-wrap items-center"
+        @end="$emit('input', tags)"
+        @move="onMove">
         <slot :tags="tags">
           <div v-for="tag in tags"
                :key="tag.id"
@@ -21,9 +22,10 @@
             </button>
           </div>
         </slot>
-        <div :key="`search-input`"
-             draggable="false"
-             class="search-input flex items-center mb-sm">
+        <div
+          :key="`search-input`"
+          draggable="false"
+          class="search-input flex items-center mb-sm">
           <search-input
             ref="tagInput"
             :query="query"
@@ -164,7 +166,6 @@ export default {
     },
 
     fromValue () {
-      console.log('tagsFromValue()', this.value)
       if (this.value) {
         const tags = Array.isArray(this.value)
           ? this.value

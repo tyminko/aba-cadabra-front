@@ -21,7 +21,7 @@
       @set-header="header = $event"
       @setProcessing="processing = $event"
       @close="$emit('close')"
-      @saved="onSaved"/>
+      @saved="onSaved || $emit('close')"/>
     <div v-if="processing" class="progress-overlay absolute w-full h-full inset-0 flex items-center justify-center z-50 bg-milk">
       <div class="text-xl text-aba-blue">Saving...</div>
     </div>
@@ -31,7 +31,7 @@
 <script>
 import EventEditor from './EventEditor'
 import PostEditor from './PostEditor'
-import ProfileEditor from '../admin/ProfileEditor'
+import ProfileEditor from './ProfileEditor'
 import EditorPopover from './EditorPopover'
 import Spinner from '../components/UI/Spinner'
 

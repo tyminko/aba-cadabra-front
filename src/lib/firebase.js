@@ -15,7 +15,9 @@ export const app = firebase.initializeApp(config)
 export const db = firebase.firestore()
 export const auth = firebase.auth()
 export const storage = firebase.storage()
+export const functions = firebase.functions()
 export const FieldValue = firebase.firestore.FieldValue
+export const FieldPath = firebase.firestore.FieldPath
 
 export const syncAuth = store => {
   app.auth().onAuthStateChanged(user => {

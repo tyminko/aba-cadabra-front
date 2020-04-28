@@ -1,6 +1,6 @@
 //noinspection CssInvalidAtRule
 button, .button {
-  @apply h-3/4base flex items-center justify-center px-base;
+  @apply relative h-3/4base flex items-center justify-center px-base;
 
   &:focus {
     @apply text-aba-blue;
@@ -12,8 +12,12 @@ button, .button {
     &:after {
       content: '';
       display: block;
+      position: absolute;
       width: 80%;
       height: 80%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       background: rgba(0,0,0,0.1) !important;
       @apply rounded-3/8base;
     }
@@ -31,6 +35,12 @@ button, .button {
     @apply h-base w-base;
     &:active {
       @apply rounded-1/2base;
+    }
+  }
+  &.xl {
+    @apply h-x2 w-x2;
+    @apply rounded-1/2base;
+    &:active {
     }
   }
 

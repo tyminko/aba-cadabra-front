@@ -6,7 +6,9 @@ $border-thick-w: 5px;
 $max-width-phone: 480px;
 $max-width-tablet: 1024px;
 
-$max-width-text-block: 35em;
+$max-width-text-block: 36rem;
+$max-width-text-block-px: 600px;
+$base-padding-px: 16px;
 
 $color-bg: #fff;
 $color-bg-semitransparent: transparentize($color-bg, 0.2);
