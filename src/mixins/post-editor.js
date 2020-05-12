@@ -23,7 +23,8 @@ export default {
         tags: null,
         status: 'public'
       },
-      emptyPostExtraData: {}
+      emptyPostExtraData: {},
+      postStatusList: { public: 'Public', internal: 'Internal', draft: 'Draft' }
     }
   },
 
@@ -80,6 +81,11 @@ export default {
       set (newValue) {
         this.posterTempId = newValue
       }
+    },
+
+    postStatus: {
+      get () { return this.postData.status },
+      set (newValue) { this.$set(this.postData, 'status', newValue) }
     }
   },
 

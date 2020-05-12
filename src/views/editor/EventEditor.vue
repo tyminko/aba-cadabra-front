@@ -1,5 +1,10 @@
 <template>
   <div class="event-editor">
+    <dropdown-select
+      v-model="postStatus"
+      label="Publication Status"
+      :options="postStatusList"
+      class="mr-base"/>
     <div class="flex flex-row flex-wrap">
       <dropdown-select
         v-model="partOfProgrammeId"

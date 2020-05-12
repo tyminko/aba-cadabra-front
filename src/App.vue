@@ -85,6 +85,9 @@ export default {
   @import "https://fonts.googleapis.com/icon?family=Material+Icons";
   @import "./styles/main.scss";
 
+  #app {
+    margin-top: $base-size;
+  }
   .sidebar-menu {
     padding: 0 $base-padding;
     li {

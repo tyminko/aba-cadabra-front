@@ -1,5 +1,10 @@
 <template>
   <div class="post-editor">
+    <dropdown-select
+      v-model="postStatus"
+      label="Publication Status"
+      :options="postStatusList"
+      class="mr-base"/>
     <tags-input v-if="adminOrEditor" v-model="tags" label="Tags"/>
     <attachments-editor
       ref="attachments-editor"
@@ -18,22 +23,6 @@
         label="Content"/>
   </div>
 </template>
-<!--
-### type: DROPDOWN
-### partOfProgramme: DROPDOWN
-### title: INPUT
-### date: DATE PICKER
-### dateEnd: date picker
-### status: dropdown
-### content: EDITABLE / TEXT EDITOR
-### excerpt: TEXTAREA
-### attachments: UPLOADER
-### location: Google map
-### countNumber: auto-counter
-### participants: AUTOCOMPLETE (profiles)
-### supportedBy: autocomplete (institutions)
-### tags: autocomplete (tags)
--->
 
 <script>
 import PostEditorMixin from '../../mixins/post-editor'
@@ -41,11 +30,12 @@ import PxInput from '../components/UI/inputs/PxInput'
 import TextEditor from '../components/UI/TextEditor'
 import AttachmentsEditor from './attachments/AttachmentsEditor'
 import TagsInput from '../components/UI/inputs/TagsInput'
+import DropdownSelect from '../components/UI/DropdownSelect'
 
 export default {
   name: 'PostEditor',
   mixins: [PostEditorMixin],
-  components: { TagsInput, PxInput, TextEditor, AttachmentsEditor },
+  components: { DropdownSelect, TagsInput, PxInput, TextEditor, AttachmentsEditor },
   props: {
     open: { type: Boolean, required: true },
     value: { type: Object, default: null },
