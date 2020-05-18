@@ -16,6 +16,16 @@ const router = new Router({
       component: Home
     },
     {
+      path: '/in/:filter?',
+      name: 'home-filtered',
+      component: Home
+    },
+    {
+      path: '/programme/:id?',
+      name: 'programme',
+      component: () => import(/* webpackChunkName: "programme" */ './views/ProgrammeFeed')
+    },
+    {
       name: 'event',
       path: '/event/:id/:token?',
       component: () => import(/* webpackChunkName: "blog" */ './views/EventView')

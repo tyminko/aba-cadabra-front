@@ -7,16 +7,17 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
-    user: null,
+    user: false,
     allowAdmin: false,
     posts: null,
+    programmes: null,
     requestToLogin: false,
     useTouch: false,
     showEditor: false // could be {type:string, value?:object, onSaved?:function}
   },
   mutations: {
-    UPDATE_WORKS () {
-
+    UPDATE_PROGRAMMES (state, programmes) {
+      state.programmes = programmes
     },
     CLEAR_USER (state) {
       state.user = null
@@ -54,6 +55,10 @@ export default new Vuex.Store({
 
     updateUser: ({ commit }, value) => {
       commit('UPDATE_USER', { ...value })
+    },
+
+    updateProgrammes: ({ commit }, value) => {
+      commit('UPDATE_PROGRAMMES', [ ...value ])
     },
 
     clearUser ({ commit }) {

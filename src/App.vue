@@ -4,42 +4,17 @@
       <template v-slot:header>
         <main-header />
       </template>
-      <template v-slot:sidebar>
-        <ul class="sidebar-menu">
-          <li>
-            <router-link :to="{name:''}">About</router-link>
-          </li>
-          <li>
-            <router-link :to="{name:''}">Salons</router-link>
-          </li>
-          <li>
-            <router-link :to="{name:''}">Residency</router-link>
-          </li>
-          <li>
-            <router-link :to="{name:''}">Residents</router-link>
-          </li>
-          <li>
-            <router-link :to="{name:'partners'}">Partners</router-link>
-          </li>
-        </ul>
+      <template v-slot:sidebar="{refresh}">
+        <aside-menu-editor v-if="adminOrEditor" @updated="$nextTick(refresh)"/>
+        <aside-menu-public v-else @updated="$nextTick(refresh)"/>
       </template>
       <template v-slot:content>
-        <keep-alive>
-          <router-view :key="$route.fullPath"/>
-        </keep-alive>
-<!--          <layout-two-sliding-views :show-second="showSecondView">-->
-<!--            <template v-slot:first>-->
-<!--            </template>-->
-<!--            <template v-slot:second>-->
-<!--              <keep-alive>-->
-<!--                <router-view name="second" :key="`${$route.fullPath}-second`"/>-->
-<!--              </keep-alive>-->
-<!--            </template>-->
-<!--          </layout-two-sliding-views>-->
+        <router-view :key="$route.fullPath"/>
       </template>
     </layout-with-push-sidebar>
     <editor
       v-if="user && showEditor"
+      id="main-editor"
       :value="showEditor.value"
       :type="showEditor.type"
       :on-saved="showEditor.onSaved"
@@ -52,11 +27,13 @@ import { mapState, mapActions } from 'vuex'
 import LayoutWithPushSidebar from './views/components/UI/layouts/LayoutWithPushSidebar'
 import MainHeader from './views/components/MainHeader'
 import Editor from './views/editor/Editor'
+import AsideMenuEditor from './views/AsideMenuEditor'
+import AsideMenuPublic from './views/AsideMenuPublic'
 // import LayoutTwoSlidingViews from './views/components/UI/layouts/LayoutTwoSlidingViews'
 
 export default {
   name: 'App',
-  components: { Editor, LayoutWithPushSidebar, MainHeader },
+  components: { AsideMenuPublic, AsideMenuEditor, Editor, LayoutWithPushSidebar, MainHeader },
   computed: {
     ...mapState(['requestToLogin', 'user', 'showEditor']),
     adminOrEditor () {
@@ -87,17 +64,5 @@ export default {
 
   #app {
     margin-top: $base-size;
-  }
-  .sidebar-menu {
-    padding: 0 $base-padding;
-    li {
-      font-size: 150%;
-      padding: $base-padding / 2 0;
-      color: $color-aba-blue;
-      &:hover {
-        color: $color-aba-blue;
-        text-decoration: underline;
-      }
-    }
   }
 </style>

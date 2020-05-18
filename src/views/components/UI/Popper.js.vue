@@ -1,5 +1,5 @@
 <template>
-  <span ref="popper-root">
+  <span ref="popper-root" v-click-outside="hide">
     <transition :name="transitionName" @after-leave="destroyAfterTransition">
       <span v-if="!disabled && showPopper" ref="popper" :id="id" class="popper">
         <span class="popper-content">
@@ -16,9 +16,11 @@
 <script>
 import simpleID from '../../../lib/simpleId'
 import { createPopper } from '@popperjs/core'
+import ClickOutside from 'vue-click-outside'
 
 export default {
   name: 'Popper',
+  directives: { ClickOutside },
   props: {
     trigger: {
       type: [String, Boolean],
@@ -270,7 +272,7 @@ export default {
         case 'click':
         case 'none':
           if (trigger === 'click') el.addEventListener('click', this.toggle)
-          document.addEventListener('click', this.hideOnClickOutside)
+          // document.addEventListener('click', this.hideOnClickOutside)
           break
         case 'hover':
           const showEvents = ['mouseenter', 'focus']
@@ -291,7 +293,7 @@ export default {
       switch (trigger) {
         case 'click':
           el.removeEventListener('click', this.toggle)
-          document.removeEventListener('click', this.hideOnClickOutside)
+          // document.removeEventListener('click', this.hideOnClickOutside)
           break
         case 'hover':
           const showEvents = ['mouseenter', 'focus']
@@ -375,7 +377,7 @@ export default {
     destroyPopper () {
       this.removeListenersForTrigger(this.triggerAction)
       if (this.triggerAction === 'click') {
-        document.removeEventListener('click', this.hideOnClickOutside)
+        // document.removeEventListener('click', this.hideOnClickOutside)
       }
       if (this.placement.startsWith('cursor-')) {
         if (this.$refs['popper-root']) {

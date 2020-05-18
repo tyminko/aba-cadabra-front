@@ -24,7 +24,8 @@ export default {
         status: 'public'
       },
       emptyPostExtraData: {},
-      postStatusList: { public: 'Public', internal: 'Internal', draft: 'Draft' }
+      postStatusList: { public: 'Public', internal: 'Internal', draft: 'Draft' },
+      collectionRef: null
     }
   },
 
@@ -33,6 +34,12 @@ export default {
     adminOrEditor () {
       return this.user && (this.user.role === 'admin' || this.user.role === 'editor')
     },
+    isAuthor () {
+      return ((this.value || {}).author || {}).uid === this.user.uid
+    },
+
+    defaultPostData () { return { ...this.emptyPostData, ...this.emptyPostExtraData } },
+
     tags: {
       get () { return this.postData.tags || [] },
       set (newValue) {
@@ -86,28 +93,39 @@ export default {
     postStatus: {
       get () { return this.postData.status },
       set (newValue) { this.$set(this.postData, 'status', newValue) }
+    },
+
+    allowDelete () {
+      return (this.adminOrEditor || this.isAuthor) && (this.value || {}).id
     }
   },
 
   watch: {
-    value (value) {
-      this.setPostData()
-    }
+    value (value) { this.setPostData() },
+    user () { this.$emit('allowDelete', this.allowDelete) }
   },
 
   created () {
+    this.collectionRef = db.collection('posts')
     this.setPostData()
+  },
+
+  mounted () {
+    this.$emit('allowDelete', this.allowDelete)
   },
 
   methods: {
     setPostData () {
       this.postData = this.value
         ? JSON.parse(JSON.stringify(this.value))
-        : { ...this.emptyPostData, ...this.emptyPostExtraData }
+        : { ...this.defaultPostData }
     },
 
     async save () {
+      if (!this.postData.author) this.postData.author = this.author
+      if (!this.postData.author) throw new Error('Cant save post without author!')
       try {
+        this.$emit('setProcessing', true)
         const attachmentsEditor = this.$refs['attachments-editor']
         if (attachmentsEditor) {
           const attachmentsData = await attachmentsEditor.processAttachments()
@@ -124,29 +142,63 @@ export default {
           this.postData.tags = this.postData.tags.map(tag => ({ id: tag.id, title: tag.title }))
         }
 
-        if (!this.postData.author) {
-          this.postData.author = this.author
-        }
-
         if (!this.postData.date) {
           this.postData.date = new Date().getTime()
         }
 
         if ((this.value || {}).id) {
-          db.collection('posts').doc(this.value.id).update(this.postData)
+          await this.collectionRef.doc(this.value.id).update(this.postData)
         } else {
-          db.collection('posts').add(this.postData)
+          await this.collectionRef.add(this.postData)
         }
+        this.$emit('setProcessing', false)
         this.$emit('saved')
       } catch (e) {
+        this.$emit('setProcessing', false)
         console.error(`%c savePost() %c e: `, 'background:#ff00AA;color:#000', 'color:#00aaff', e)
       }
     },
+
+    async remove () {
+      if (!this.allowDelete) {
+        console.error(`%c Remove Post %c e: `, 'background:#ff00AA;color:#000', 'color:#00aaff', 'Deleting is not allowed.')
+        return
+      }
+      try {
+        this.$emit('setProcessing', true)
+        await this.collectionRef.doc(this.value.id).update({ status: 'trash' })
+        if (typeof this.afterDeleteFunc === 'function') this.afterDeleteFunc()
+        this.$emit('setProcessing', false)
+        this.$emit('deleted')
+        this.$emit('close')
+      } catch (e) {
+        this.$emit('setProcessing', false)
+        console.error(`%c Remove Post %c e: `, 'background:#ff00AA;color:#000', 'color:#00aaff', e)
+      }
+    },
+
+    afterDeleteFunc: undefined,
 
     onRemoveAttachment (id) {
       if (id === this.posterId) {
         this.posterId = ''
       }
     }
+    // fieldsToSave () {
+    //   const original = this.value || {}
+    //   return Object.keys(this.defaultPostData).reduce((res, key) => {
+    //     if (!this.postData.hasOwnProperty(key)) return res
+    //     if (original.hasOwnProperty(key)) {
+    //       if (this.postData[key] !== original[key]) {
+    //         res[key] = this.postData[key]
+    //       }
+    //     } else {
+    //       if (this.postData[key] !== this.defaultPostData[key]) {
+    //         res[key] = this.postData[key]
+    //       }
+    //     }
+    //     return res
+    //   }, {})
+    // }
   }
 }

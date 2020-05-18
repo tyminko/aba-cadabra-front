@@ -1,5 +1,5 @@
 <template>
-  <label class="px-label" :class="{error}">
+  <label class="px-label" :class="{error, 'no-desc': !haveDescription && !showError}">
     <span v-if="labelText" class="label" :class="labelVisible ? 'opacity-1' : 'opacity-0'">
       {{labelText}}
     </span>
@@ -24,9 +24,13 @@
       <slot name="add-on" />
     </span>
     <smooth-reflow>
-      <span v-if="showError && errorText" class="block px-sm mt-sm text-xs leading-tight text-red-700">{{errorText}}</span>
-      <span v-else-if="haveDescription" ref="desc" class="desc block px-sm text-xs leading-none text-gray-500">
-        <slot name="desc"/>
+      <span
+        class="desc block px-sm pt-sm text-xs leading-none"
+        :class="showError ? 'text-red-700' : 'text-gray-500'">
+        <span v-if="showError && errorText">{{errorText}}</span>
+        <template v-else-if="haveDescription">
+          <slot name="desc"/>
+        </template>
       </span>
     </smooth-reflow>
   </label>
@@ -156,6 +160,7 @@ export default {
       this.validationError = ''
       if (this.required && !val) {
         this.validationError = 'required'
+        this.$emit('validated', false)
         return false
       }
       if ((this.rules || []).length) {
@@ -163,11 +168,13 @@ export default {
           const res = rule(val)
           if (res !== true) {
             this.validationError = res
-            break
+            this.$emit('validated', false)
+            return false
           }
         }
       }
-      return !this.validationError
+      this.$emit('validated', true)
+      return true
     }
   }
 }
@@ -175,7 +182,13 @@ export default {
 
 <!--suppress CssInvalidAtRule -->
 <style lang="css">
-  .px-label { @apply block mb-8; }
+  .px-label {
+    @apply mb-6 block;
+  }
+  .px-label .desc {
+    /*noinspection CssInvalidFunction*/
+    min-height: calc(theme('padding.sm') + theme('fontSize.xs'));
+  }
   .px-label  span.label {
     @apply block relative -mb-1 pl-sm text-xs text-gray-600 capitalize transition-opacity duration-100;
   }

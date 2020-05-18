@@ -13,7 +13,7 @@
     <div class="push-box" :class="side">
       <div ref="sidebar" v-click-outside="pushOut" class="push-sidebar" :class="{collapsible}">
         <div ref="sidebar-content" class="sidebar-content">
-          <slot name="sidebar"/>
+          <slot name="sidebar" :refresh="setPushMargin"/>
         </div>
       </div>
       <div class="layout-content-wrap" :class="{collapsible}">
@@ -25,6 +25,7 @@
 
 <script>
 import ClickOutside from 'vue-click-outside'
+import { mapState } from 'vuex'
 export default {
   name: 'LayoutWithPushSidebar',
   directives: { ClickOutside },
@@ -40,6 +41,7 @@ export default {
   }),
 
   computed: {
+    ...mapState(['showEditor']),
     flow () {
       return this.side === 'left' || this.side === 'right' ? 'row' : 'column'
     }
@@ -50,6 +52,9 @@ export default {
       if (!val) {
         this.pushIn()
       }
+    },
+    showEditor () {
+      this.popupItem = document.getElementById('main-editor')
     }
   },
 
@@ -58,7 +63,7 @@ export default {
       this.setSidebarCollapsible()
       window.addEventListener('resize', this.setSidebarCollapsible)
     } else {
-      this.setPushMargin()
+      // this.setPushMargin()
     }
   },
 
@@ -168,6 +173,7 @@ export default {
       &.left {
         margin-left: var(--push-margin-left);
         transition: margin-left $transition-time;
+        overflow-x: hidden;
       }
       &.right {
         margin-right: var(--push-margin-right);
@@ -198,10 +204,12 @@ export default {
 
       .push-sidebar {
         flex-shrink: 0;
-        padding-top: $base-size;
+        padding: $base-padding 0;
         overflow: auto;
         .sidebar-content {
+          padding: 0 $base-padding $base-padding;
           position: fixed;
+          z-index: 100;
         }
       }
     }

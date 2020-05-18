@@ -3,12 +3,17 @@
     ref="popover"
     :type="postType"
     :open="open"
+    :buttons="editorButtons"
     :processing="processing"
+    :valid="isValid"
     @esc="onEsc"
     @close="$emit('close')"
-    @save="save">
+    @save="save"
+    @remove="remove">
     <template v-slot:header>
-      <h1 class="capitalize px-sm text-aba-blue truncate overflow-y-visible">
+      <h1
+        class="capitalize px-sm truncate overflow-y-visible leading-normal"
+        :class="readyToDelete ? 'text-gray-500': 'text-aba-blue'">
         <span :class="{'type-with-title': !!header}">{{postType}}</span>
         {{header}}
       </h1>
@@ -18,11 +23,21 @@
       ref="editor"
       :open="open"
       :value="value"
+      @validated="isValid = $event"
       @set-header="header = $event"
       @setProcessing="processing = $event"
+      @allowDelete="editorCanDelete = $event"
       @close="$emit('close')"
       @saved="onSaved || $emit('close')"/>
-    <div v-if="processing" class="progress-overlay absolute w-full h-full inset-0 flex items-center justify-center z-50 bg-milk">
+    <template v-if="editorCanDelete" v-slot:footer>
+      <div class="">
+        <button @click.prevent="readyToDelete = !readyToDelete">
+          <i class="material-icons text-gray-600">{{readyToDelete ? 'delete' : 'delete_outline'}}</i>
+        </button>
+      </div>
+    </template>
+    <div v-if="processing"
+         class="progress-overlay absolute w-full h-full inset-0 flex items-center justify-center z-50 bg-milk">
       <div class="text-xl text-aba-blue">Saving...</div>
     </div>
   </editor-popover>
@@ -34,10 +49,12 @@ import PostEditor from './PostEditor'
 import ProfileEditor from './ProfileEditor'
 import EditorPopover from './EditorPopover'
 import Spinner from '../components/UI/Spinner'
+import ProgrammeEditor from './ProgrammeEditor'
+import PageEditor from './PageEditor'
 
 export default {
   name: 'Editor',
-  components: { Spinner, EditorPopover, EventEditor, PostEditor, ProfileEditor },
+  components: { Spinner, EditorPopover, EventEditor, PostEditor, ProfileEditor, ProgrammeEditor, PageEditor },
   props: {
     open: Boolean,
     value: { type: Object, default: null },
@@ -47,23 +64,42 @@ export default {
   data () {
     return {
       header: '',
-      processing: false
+      processing: false,
+      editorCanDelete: false,
+      isValid: true,
+      readyToDelete: false
     }
   },
   computed: {
     postType () {
-      return (this.value || {}).type || this.type || 'post'
+      return this.type || (this.value || {}).type || 'post'
     },
     component () {
       switch (this.postType) {
         case 'event': return 'EventEditor'
         case 'profile': return 'ProfileEditor'
+        case 'programme': return 'ProgrammeEditor'
+        case 'page': return 'PageEditor'
         default: return 'PostEditor'
       }
     },
     headerTitle () {
       return this.header || (this.$refs.editor || {}).headerTitle || ''
+    },
+    editorButtons () {
+      const buttons = { close: 'Cancel' }
+      if (this.readyToDelete) {
+        buttons.delete = 'Trash It'
+      } else {
+        buttons.submit = 'Save'
+      }
+      return buttons
     }
+  },
+  mounted () {
+    // const editor = this.$refs.editor || {}
+    // this.editorCanDelete = typeof (this.$refs.editor || {}).remove === 'function' &&
+    //   ()canDelete
   },
   methods: {
     onEsc () {},
@@ -71,13 +107,12 @@ export default {
       if (typeof (this.$refs.editor || {}).save === 'function') {
         this.$refs.editor.save()
       }
+    },
+    remove () {
+      if (this.editorCanDelete) {
+        this.$refs.editor.remove()
+      }
     }
-    // onSaved (payload) {
-    //   this.$emit('close')
-    //   if (payload && typeof this.onSaved === 'function') {
-    //     this.onSaved(payload)
-    //   }
-    // }
   }
 }
 </script>

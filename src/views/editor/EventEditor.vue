@@ -3,7 +3,8 @@
     <dropdown-select
       v-model="postStatus"
       label="Publication Status"
-      :options="postStatusList"
+      :options="varPostStatusList"
+      @input="setPostStatus"
       class="mr-base"/>
     <div class="flex flex-row flex-wrap">
       <dropdown-select
@@ -61,6 +62,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
 import { db } from '../../lib/firebase'
 import PostEditorMixin from '../../mixins/post-editor'
 import DropdownSelect from '../components/UI/DropdownSelect'
@@ -89,11 +91,12 @@ export default {
       supportedBy: [],
       type: 'event'
     },
-    programmes: null,
-    nextCounts: {}
+    nextCounts: {},
+    statusIsAutoSet: false
   }),
 
   computed: {
+    ...mapState(['programmes']),
     participants: {
       get () { return Object.values(this.postData.participants) || [] },
       set (newValue) { this.$set(this.postData, 'participants', newValue) }
@@ -115,7 +118,7 @@ export default {
     },
     defaultCountNumber () {
       const programmeId = (this.postData.partOfProgramme || {}).programmeId
-      if (this.value && this.partOfProgrammeId === this.value.partOfProgramme.programmeId) {
+      if (this.partOfProgrammeId === ((this.value || {}).partOfProgramme || {}).programmeId) {
         return this.value.countNumber
       }
       if (this.nextCounts.hasOwnProperty(programmeId)) {
@@ -145,20 +148,68 @@ export default {
           this.$set(this.postData, 'partOfProgramme', null)
           this.postData.countNumber = null
         }
+        this.setAutoStatus()
         this.$emit('set-header', this.headerTitle)
       }
     },
+    partOfProgrammeObj () {
+      if (this.partOfProgrammeId === '--') return null
+      return this.programmes.find(pr => pr.id === this.partOfProgrammeId)
+    },
     programmeOptions () {
       return (this.programmes || []).reduce((res, p) => ({ ...res, [p.id]: p.title }), { '--': 'No programme' })
+    },
+    varPostStatusList () {
+      switch ((this.partOfProgrammeObj || {}).status) {
+        case 'draft': return { draft: 'Draft' }
+        case 'internal': return { internal: 'Internal', draft: 'Draft' }
+        default: return { public: 'Public', internal: 'Internal', draft: 'Draft' }
+      }
     }
+    // varPostStatus: {
+    //   get () {
+    //     switch ((this.partOfProgrammeObj || {}).status) {
+    //       case 'draft': return 'draft'
+    //       case 'internal': return this.postData.status === 'public' ? 'internal' : this.postData.status
+    //       default: return this.postData.status
+    //     }
+    //   },
+    //   set (newValue) { this.$set(this.postData, 'status', newValue) }
+    // }
   },
 
   created () {
-    this.getProgrammes()
     this.$emit('set-header', this.headerTitle)
   },
 
   methods: {
+    setPostStatus (status) {
+      this.postStatus = status
+      this.statusIsAutoSet = false
+    },
+    setAutoStatus () {
+      const statusBefore = this.statusIsAutoSet
+        ? (this.value || {}).status || 'public'
+        : this.postStatus
+
+      switch ((this.partOfProgrammeObj || {}).status) {
+        case 'draft':
+          if (statusBefore !== 'draft') {
+            this.postStatus = 'draft'
+            this.statusIsAutoSet = true
+          }
+          return
+        case 'internal':
+          if (statusBefore === 'public') {
+            this.postStatus = 'internal'
+            this.statusIsAutoSet = true
+          }
+          return
+        default:
+          this.postStatus = statusBefore
+          this.statusIsAutoSet = false
+      }
+    },
     async institutionsQuery (str) {
       if (!this.institutions) {
         this.institutions = await db.collection('institutions')
@@ -172,17 +223,9 @@ export default {
       }
       return this.institutions.filter(i => i.title.toLowerCase().includes(str.toLowerCase()))
     },
-    async getProgrammes () {
-      if (!this.programmes) {
-        this.programmes = await db.collection('programmes')
-          .get()
-          .then(snapshot => {
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-          })
-      }
-    },
+
     async getActualCountForProgramme (programmeId) {
-      if (this.value && this.partOfProgrammeId === this.value.partOfProgramme.programmeId) {
+      if (programmeId === ((this.value || {}).partOfProgramme || {}).programmeId) {
         return this.value.countNumber
       }
       if (this.nextCounts.hasOwnProperty(programmeId)) {

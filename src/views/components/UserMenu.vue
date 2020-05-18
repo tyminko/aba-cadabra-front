@@ -39,16 +39,16 @@
           <router-link v-if="admin" :to="{name: 'users'}" class="menu-cell nav-item">
             Users
           </router-link>
-          <router-link v-if="admin" :to="{name: 'wp-users'}" class="menu-cell nav-item">
-            WP Users
-          </router-link>
-          <router-link v-if="admin" :to="{name: 'wp-posts'}" class="menu-cell nav-item">
-            WP Posts
-          </router-link>
-          <router-link v-if="admin" :to="{name: 'wp-attachments'}" class="menu-cell nav-item">
-            WP Attachments
-          </router-link>
-          <a href="#" class="menu-cell nav-item" @click.prevent="logOut">
+<!--          <router-link v-if="admin" :to="{name: 'wp-users'}" class="menu-cell nav-item">-->
+<!--            WP Users-->
+<!--          </router-link>-->
+<!--          <router-link v-if="admin" :to="{name: 'wp-posts'}" class="menu-cell nav-item">-->
+<!--            WP Posts-->
+<!--          </router-link>-->
+<!--          <router-link v-if="admin" :to="{name: 'wp-attachments'}" class="menu-cell nav-item">-->
+<!--            WP Attachments-->
+<!--          </router-link>-->
+          <a href="#" class="menu-cell nav-item justify-end" @click.prevent="logOut">
             <span class="whitespace-no-wrap">Log Out</span>
           </a>
         </div>

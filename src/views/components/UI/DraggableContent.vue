@@ -24,7 +24,7 @@ export default {
   props: {
     value: { type: Array, required: true },
     filter: String,
-    draggable: String,
+    draggable: { type: String, default: '>*' },
     containerClass: String,
     dragOptions: {
       type: Object,
@@ -44,7 +44,9 @@ export default {
   computed: {
     model: {
       get () { return this.value },
-      set (newValue) { this.$emit('input', newValue) }
+      set (newValue) {
+        this.$emit('input', newValue)
+      }
     }
   },
 

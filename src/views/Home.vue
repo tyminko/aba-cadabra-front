@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    <div class="feed-grid">
+    <div v-if="posts.length" class="feed-grid">
       <post-cell
         v-for="post in posts"
         :key="post.id"
@@ -30,6 +30,10 @@
         </template>
       </post-cell>
     </div>
+    <template v-if="!posts.length">
+      <div v-if="processing" class="text-aba-blue">Loading...</div>
+      <div v-else>Nothing there</div>
+    </template>
   </div>
 </template>
 
@@ -53,7 +57,8 @@ export default {
     shouldOpenEditor: false,
     editorPostId: null,
     editorPostType: null,
-    postToEdit: null
+    postToEdit: null,
+    processing: true
   }),
 
   computed: {
@@ -66,8 +71,16 @@ export default {
     }
   },
 
+  watch: {
+    user () {
+      this.getFeed()
+    }
+  },
+
   async created () {
-    this.getFeed()
+    if (this.user) {
+      this.getFeed()
+    }
   },
 
   methods: {
@@ -75,7 +88,7 @@ export default {
     removePost (post) {
       // !!! DEBUG !!!
       console.log(`%c removePost() %c post.id: `, 'background:#ffbb00;color:#000', 'color:#00aaff', post.id)
-      db.collection('posts').doc(post.id).update({ status: 'trashed' })
+      db.collection('posts').doc(post.id).update({ status: 'trash' })
     },
     hidePost (post) {
       db.collection('posts').doc(post.id).update({ status: 'draft' })
@@ -160,26 +173,39 @@ export default {
     },
 
     getFeed () {
-      this.unsubscribe = db.collection('posts')
-        .where('status', '==', 'public').orderBy('date', 'desc')
-        .onSnapshot({
-          next: querySnapshot => {
-            querySnapshot.docChanges().forEach(docChange => {
-              const doc = docChange.doc
-              switch (docChange.type) {
-                case 'added':
-                case 'modified':
-                  this.$set(this.feed, doc.id, { ...doc.data(), id: doc.id })
-                  break
-                case 'removed':
-                  this.$delete(this.feed, doc.id)
-              }
-            })
-          },
-          error: err => {
-            console.error('getFeed:', err)
-          }
-        })
+      this.processing = true
+      let status = 'public'
+      if (this.user) {
+        if (['internal', 'draft', 'trash'].includes(this.$route.params.filter)) {
+          status = this.$route.params.filter
+        }
+      }
+      let query = db.collection('posts').where('status', '==', status)
+      if (status !== 'public' && !this.adminOrEditor) {
+        query = query.where('author.uid', '==', this.user.uid)
+      }
+      query = query.orderBy('date', 'desc')
+
+      this.unsubscribe = query.onSnapshot({
+        next: querySnapshot => {
+          querySnapshot.docChanges().forEach(docChange => {
+            const doc = docChange.doc
+            switch (docChange.type) {
+              case 'added':
+              case 'modified':
+                this.$set(this.feed, doc.id, { ...doc.data(), id: doc.id })
+                break
+              case 'removed':
+                this.$delete(this.feed, doc.id)
+            }
+          })
+          this.processing = false
+        },
+        error: err => {
+          console.error('getFeed:', err)
+          this.processing = false
+        }
+      })
     }
   },
   beforeDestroy () {
@@ -194,12 +220,19 @@ export default {
   @import "../styles/vars";
   @import "../styles/mixins";
   .home {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - #{$base-size * 2});
+
     .feed-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       grid-auto-rows: 320px;
       grid-gap: 24px;
       grid-auto-flow: dense;
+
+      max-width: 100%;
       padding: 24px;
     }
   }

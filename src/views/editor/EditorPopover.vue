@@ -14,16 +14,23 @@
       class="post-editor pb-base"
       @submit.prevent="$emit('save')"
       @keyup.enter.prevent="() => false">
-      <div ref="" class="form-body px-base pb-base overflow-auto">
+      <div
+        ref=""
+        class="form-body px-base pb-base overflow-auto"
+        :class="buttons.delete ? 'opacity-25':''">
         <slot />
       </div>
       <footer class="flex h-base items-center px-sm">
         <slot name="footer" />
         <template v-if="!processing">
-          <button class="ml-auto" @click.prevent="close">Cancel</button>
-          <button type="submit">Save</button>
+          <button v-if="buttons.close" class="ml-auto" @click.prevent="close">{{buttons.close}}</button>
+          <button v-if="buttons.submit" :disabled="!valid" type="submit">{{buttons.submit}}</button>
+          <button v-if="buttons.delete"
+                  class="text-red-600"
+                  @click.prevent="$emit('remove')">
+            {{buttons.delete}}
+          </button>
         </template>
-        <span v-else>Processing...</span>
       </footer>
     </form>
   </popover-modal>
@@ -37,8 +44,10 @@ export default {
   components: { PopoverModal },
   props: {
     open: Boolean,
+    valid: Boolean,
     processing: Boolean,
-    type: { type: String }
+    type: { type: String },
+    buttons: { type: Object, default: () => ({ close: 'Cancel', submit: 'Save' }) }
   },
 
   data: () => ({}),
