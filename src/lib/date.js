@@ -11,6 +11,11 @@ function makeShortFormat (locale) {
     .replace('31', 'dd')
 }
 
+export function dateInFuture (timestamp) {
+  const dt = timestamp instanceof DateTime ? timestamp : DateTime.fromMillis(timestamp)
+  return dt.startOf('day') > DateTime.local().startOf('day')
+}
+
 export function getShortFormatForLocale (locale) {
   if (!locale) locale = DateTime.local().locale
   if (!FORMAT_STRINGS.hasOwnProperty(locale)) {

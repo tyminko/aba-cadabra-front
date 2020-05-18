@@ -166,16 +166,6 @@ export default {
         default: return { public: 'Public', internal: 'Internal', draft: 'Draft' }
       }
     }
-    // varPostStatus: {
-    //   get () {
-    //     switch ((this.partOfProgrammeObj || {}).status) {
-    //       case 'draft': return 'draft'
-    //       case 'internal': return this.postData.status === 'public' ? 'internal' : this.postData.status
-    //       default: return this.postData.status
-    //     }
-    //   },
-    //   set (newValue) { this.$set(this.postData, 'status', newValue) }
-    // }
   },
 
   created () {

@@ -5,7 +5,7 @@
     <header class="flex-grow-0">
       <div class="flex items-center">
         <div class="badge mr-2 bg-gray-200 whitespace-no-wrap truncate">{{typeLabel}}</div>
-        <span class="text-xs">{{post.id}}</span>
+        <!--<span class="text-xs">{{post.id}}</span>-->
         <slot name="quick-edit-button" :cell-size="cellSize"/>
       </div>
     </header>

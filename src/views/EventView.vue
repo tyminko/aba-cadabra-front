@@ -21,6 +21,7 @@
           <credits-string v-if="participants.length" prefix="With" :persons="participants" />
         </div>
         <button
+          v-if="allowReservation"
           class="h-auto px-base py-sm text-aba-blue border-2 border-aba-blue"
           @click="openReservation=!openReservation">
           Make Reservation
@@ -162,13 +163,14 @@ export default {
     },
 
     allowReservation () {
-      return !this.$route.params.token // ...
+      return (this.post || {}).date && date.dateInFuture(this.post.date) && !this.$route.params.token
     },
 
     shouldConfirmReservation () {
       const token = this.$route.params.token
       return !!token && ((this.post || {}).reservationsPending || []).includes(token)
     },
+
     showReservationConfirmedMessage () {
       const token = this.$route.params.token
       return !!token &&
