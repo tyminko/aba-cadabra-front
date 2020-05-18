@@ -177,28 +177,12 @@ export default {
       }
     },
 
-    afterDeleteFunc: undefined,
+    afterDeleteFunc () {},
 
     onRemoveAttachment (id) {
       if (id === this.posterId) {
         this.posterId = ''
       }
     }
-    // fieldsToSave () {
-    //   const original = this.value || {}
-    //   return Object.keys(this.defaultPostData).reduce((res, key) => {
-    //     if (!this.postData.hasOwnProperty(key)) return res
-    //     if (original.hasOwnProperty(key)) {
-    //       if (this.postData[key] !== original[key]) {
-    //         res[key] = this.postData[key]
-    //       }
-    //     } else {
-    //       if (this.postData[key] !== this.defaultPostData[key]) {
-    //         res[key] = this.postData[key]
-    //       }
-    //     }
-    //     return res
-    //   }, {})
-    // }
   }
 }

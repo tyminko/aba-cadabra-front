@@ -98,7 +98,7 @@ export default {
   computed: {
     ...mapState(['programmes']),
     participants: {
-      get () { return Object.values(this.postData.participants) || [] },
+      get () { return Object.values((this.postData.participants) || {}) || [] },
       set (newValue) { this.$set(this.postData, 'participants', newValue) }
     },
     location: {
