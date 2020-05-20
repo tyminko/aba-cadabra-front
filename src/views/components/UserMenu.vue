@@ -81,8 +81,8 @@ export default {
 
   watch: {
     user () {
-      if (this.$refs.menu) this.$nextTick(() => this.$refs.menu.jumpTop())
-      if (this.$refs['user-menu']) this.$nextTick(() => this.$refs['user-menu'].jumpTop())
+      this.$nextTick(() => { if (this.$refs.menu) this.$refs.menu.jumpTop() })
+      this.$nextTick(() => { if (this.$refs['user-menu']) this.$refs['user-menu'].jumpTop() })
     }
   },
 

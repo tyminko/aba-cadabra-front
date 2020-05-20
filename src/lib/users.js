@@ -16,10 +16,10 @@ export async function getAll () {
  *  displayName: string
  *  email: string
  *  password: string
- *  phoneNumber: string
- *  photoURL: string
- *  emailVerified: boolean
- *  disabled: boolean
+ *  phoneNumber?: string
+ *  photoURL?: string
+ *  emailVerified?: boolean
+ *  disabled?: boolean
  *  role: string
  * }} userData
  */
@@ -28,7 +28,7 @@ export async function addUser (userData) {
     const addUserFunc = firebase.functions().httpsCallable('users-add')
     const res = await addUserFunc(userData)
     if (res.data.error) {
-      console.error(res.data.error)
+      console.error('ERROR Creating New User: ', res.data.error)
     } else {
       return res.data
     }

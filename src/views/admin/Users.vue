@@ -1,5 +1,5 @@
 <template>
-  <div class="users">
+  <div class="users h-full flex items-center justify-center">
     <div class="flex flex-wrap p-base">
       <div
         v-for="user in users"
@@ -9,14 +9,15 @@
         <div class="photo">
           <img v-if="user.photoURL" :src="user.photoURL">
         </div>
-        <h2 class="name">{{user.displayName || user.email}}</h2>
-        <div class="email">{{user.email}}</div>
-        <div class="phone desc">Phone: {{user.phoneNumber}}</div>
-        <div class="role desc">Role: {{user.role}}</div>
+        <h2 class="name truncate">{{user.displayName || user.email}}</h2>
+        <div class="email truncate">{{user.email}}</div>
+        <div class="role desc" :class="[user.role]">{{user.role}}</div>
       </div>
-<!--      <v-progress-circular v-if="processing" indeterminate />-->
     </div>
-<!--    <editor :open="showEditor" :value="selectedUser" type="profile" @close="showEditor = false"/>-->
+    <template v-if="!users.length">
+      <div v-if="processing" class="text-aba-blue">Loading...</div>
+      <div v-else>Nothing there</div>
+    </template>
   </div>
 </template>
 
@@ -60,7 +61,12 @@ export default {
     async getUsers () {
       if (this.user && this.user.role === 'admin') {
         this.processing = true
-        this.users = await users.getAll()
+        const ulist = await users.getAll()
+        this.users = ulist.sort((a, b) => {
+          if (a.displayName < b.displayName) return -1
+          if (a.displayName > b.displayName) return 1
+          return 0
+        })
         this.processing = false
       } else {
         this.users = []
@@ -84,8 +90,8 @@ export default {
         value: user,
         onSaved: ({ uid, data }) => {
           if (!data.displayName) return
-          const index = this.users.findIndex(u => u.uid === user.uid)
-          if (index > -1) this.$set(this.users, index, { ...user, displayName: data.displayName })
+          const index = this.users.findIndex(u => u.uid === uid)
+          if (index > -1) this.$set(this.users, index, { ...user, displayName: data.displayName, email: data.email, role: data.role })
         }
       })
     },
@@ -97,8 +103,18 @@ export default {
 }
 </script>
 
+<!--suppress CssInvalidAtRule -->
 <style lang='scss'>
   .users{
-    // position: relative;
+    .admin, .editor {
+      @apply bg-aba-blue text-white px-sm;
+      width: min-content;
+      &.editor {
+        @apply bg-aba-blue-semi;
+      }
+    }
+    .visitor {
+      @apply text-gray-400 italic;
+    }
   }
 </style>

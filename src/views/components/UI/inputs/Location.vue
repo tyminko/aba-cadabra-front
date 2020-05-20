@@ -42,6 +42,7 @@ export default {
     MarkerClass: null,
     markerEl: null,
     markerInstance: null,
+    markersStock: {},
     map: null,
     error: null
   }),
@@ -141,7 +142,7 @@ export default {
         await this.init()
       }
       if (!this.markerEl && this.$refs.map) {
-        this.markerEl = getMarkerHtml({ ...location, active: true }, this.$refs.map.$el)
+        this.markerEl = getMarkerHtml({ ...location, active: true }, this.$refs.map.$el, this.markersStock)
       }
       // !!! DEBUG !!!
       console.log(`%c setMarker() %c this.map: `, 'background:#00bbff;color:#000', 'color:#00aaff', this.map)

@@ -21,7 +21,7 @@
         v-if="thumbnailUrl"
         class="thumbnail-box flex-grow min-h-x2">
         <!--suppress HtmlUnknownTarget -->
-        <img :src="thumbnailUrl">
+        <img :src="thumbnailUrl" :key="thumbnailUrl">
       </div>
       <div v-else class="patch flex-grow min-h-0 bg-gray-800"/>
       <div

@@ -15,11 +15,13 @@
         :disabled="ownProfile" />
     </div>
     <px-input
+      ref="display-name"
       v-model="displayName"
       label="Name"
       no-spellcheck
+      required
       class="lg"
-      :rules="[rules.required]" />
+      @validated="validateForm"/>
     <smooth-reflow>
       <px-input
         v-if="abaStatus==='staff'"
@@ -48,10 +50,13 @@
       </template>
     </smooth-reflow>
     <px-input
+      ref="email"
       v-model="userEmail"
       label="Email"
       no-spellcheck
-      :rules="[rules.required, rules.email]" />
+      required
+      :rules="[rules.email]"
+      @validated="validateForm"/>
     <transition>
       <button
         v-if="!isNew && allowEditSensitiveData"
@@ -74,7 +79,8 @@
         :autocomplete="uid ? 'current-password' : 'new-password'"
         :type="showPassword ? 'text' : 'password'"
         :rules="[rules.password]"
-        @blur="generatePasswordIfEmpty">
+        @blur="generatePasswordIfEmpty"
+        @validated="validateForm">
         <template v-slot:add-on>
           <button class="compact px-sm" @click.prevent="showPassword = !showPassword">
             <i class="material-icons">{{showPassword ? 'visibility' : 'visibility_off'}}</i>
@@ -159,8 +165,8 @@ export default {
             'Min. 8 characters with at least one capital letter, a number and a special character.'
           )
         }
-      },
-      formValid: true
+      }
+      // formValid: true
     }
   },
 
@@ -171,7 +177,7 @@ export default {
     allowChangePermissions () { return this.isAdmin },
     allowEditSensitiveData () { return this.isAdmin || this.ownProfile },
 
-    userData () { return this.value },
+    userData () { return this.value || {} },
     isNew () { return !(this.value || {}).uid },
 
     abaStatus: {
@@ -255,7 +261,19 @@ export default {
     this.$emit('set-header', this.editorTitle)
   },
 
+  mounted () {
+    this.validateForm()
+  },
+
   methods: {
+    validateForm () {
+      const fields = ['email', 'display-name']
+      if (this.isNew || this.changePassword) fields.push('password')
+      const errorField = fields.find(ref => (this.$refs[ref] || {}).isValid !== true)
+      this.$emit('validated', !errorField)
+      return !errorField
+    },
+
     async setProfileData () {
       const profileId = (this.userData || {}).uid
       if (!profileId) return null
@@ -283,12 +301,12 @@ export default {
       this.$set(this.visitedFields, field, true)
     },
 
-    submit () {
-      if (!this.formValid) return
-      if (!this.uid) {
-        this.createUser()
-      }
-    },
+    // submit () {
+    //   if (!this.formValid) return
+    //   if (!this.uid) {
+    //     this.createUser()
+    //   }
+    // },
 
     async createUser () {
       if ((this.user || {}).role === 'admin') {
@@ -296,18 +314,13 @@ export default {
           displayName: this.displayName,
           email: this.email,
           password: this.password,
-          phoneNumber: this.phoneNumber,
-          photoURL: this.photoURL,
-          emailVerified: this.emailVerified,
-          disabled: this.disabled,
+          // phoneNumber: this.phoneNumber,
+          // photoURL: this.photoURL,
+          // emailVerified: this.emailVerified,
+          // disabled: this.disabled,
           role: this.role
         }
-        const newUser = await addUser(data)
-        if (newUser) {
-          this.$emit('complete', newUser)
-          this.$refs.form.reset()
-          this.requestClose()
-        }
+        return addUser(data)
       }
     },
 
@@ -320,13 +333,13 @@ export default {
       if (this.userEmail !== userData.email) userFields.email = this.userEmail
       if (this.password) userFields.password = this.password
       if (this.disabled) userFields.disabled = this.disabled
-      if (this.isAdmin &&
-        !this.ownProfile &&
-        this.role !== userData.role) userFields.role = this.role
+      if (this.isAdmin && !this.ownProfile && this.role !== userData.role) {
+        userFields.role = this.role
+      }
       if (Object.keys(userFields).length) {
-        userFields.id = this.userData.uid
+        userFields.id = userData.uid
         try {
-          userData = await updateUser(userFields)
+          userData = await updateUser(userFields) || userData
           return userData
         } catch (e) {
           return Promise.reject(e)
@@ -343,11 +356,13 @@ export default {
     },
 
     async save () {
-      this.$emit('setProcessing', true)
-      let userData = await this.saveUserData()
-      if (!userData || !userData.uid) return
+      if (!this.validateForm()) return
 
       try {
+        this.$emit('setProcessing', true)
+        let userData = (this.userData || {}).uid ? await this.saveUserData() : await this.createUser()
+        if (!userData || !userData.uid) return
+
         const attachmentsData = await this.saveAttachments()
         this.$set(this.profileData, 'attachments', attachmentsData)
 
@@ -355,12 +370,13 @@ export default {
         if (Object.keys(profileFields).length) {
           await db.collection('profiles').doc(userData.uid).update(profileFields)
           this.$emit('setProcessing', false)
-          this.$emit('saved', { uid: userData.uid, data: profileFields })
+          this.$emit('saved', { uid: userData.uid, data: { ...profileFields, ...userData } })
           this.$emit('close')
         } else {
           this.$emit('setProcessing', false)
         }
       } catch (e) {
+        console.error(`%c save() %c e: `, 'background:#ff0000;color:#000', 'color:#00aaff', e)
         this.$emit('setProcessing', false)
       }
     },

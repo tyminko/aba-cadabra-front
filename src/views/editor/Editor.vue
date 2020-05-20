@@ -28,7 +28,7 @@
       @setProcessing="processing = $event"
       @allowDelete="editorCanDelete = $event"
       @close="$emit('close')"
-      @saved="onSaved || $emit('close')"/>
+      @saved="afterSave"/>
     <template v-if="editorCanDelete" v-slot:footer>
       <div class="">
         <button @click.prevent="readyToDelete = !readyToDelete">
@@ -106,6 +106,13 @@ export default {
     save () {
       if (typeof (this.$refs.editor || {}).save === 'function') {
         this.$refs.editor.save()
+      }
+    },
+    afterSave (data) {
+      if (typeof this.onSaved === 'function') {
+        this.onSaved(data)
+      } else {
+        this.$emit('close')
       }
     },
     remove () {
