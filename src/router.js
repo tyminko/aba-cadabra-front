@@ -18,16 +18,22 @@ const router = new Router({
     {
       path: '/in/:filter?',
       name: 'home-filtered',
+      meta: { restricted: true },
       component: Home
     },
     {
-      path: '/programme/:id?',
+      path: '/programme/:id',
       name: 'programme',
       component: () => import(/* webpackChunkName: "programme" */ './views/ProgrammeFeed')
     },
     {
-      name: 'event',
+      path: '/page/:id',
+      name: 'page',
+      component: () => import(/* webpackChunkName: "programme" */ './views/PageView')
+    },
+    {
       path: '/event/:id/:token?',
+      name: 'event',
       component: () => import(/* webpackChunkName: "blog" */ './views/EventView')
     },
     {

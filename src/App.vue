@@ -37,7 +37,7 @@ export default {
   computed: {
     ...mapState(['requestToLogin', 'user', 'showEditor']),
     adminOrEditor () {
-      return this.user && (this.user.role === 'admin' || this.user.role === 'editor')
+      return !!this.user && (this.user.role === 'admin' || this.user.role === 'editor')
     },
     showSecondView () {
       return this.$route.name !== 'home'

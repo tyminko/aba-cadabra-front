@@ -96,11 +96,6 @@ export default {
       return buttons
     }
   },
-  mounted () {
-    // const editor = this.$refs.editor || {}
-    // this.editorCanDelete = typeof (this.$refs.editor || {}).remove === 'function' &&
-    //   ()canDelete
-  },
   methods: {
     onEsc () {},
     save () {

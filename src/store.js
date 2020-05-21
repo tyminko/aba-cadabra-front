@@ -7,7 +7,7 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
-    user: false,
+    user: false, // later if no user, it will be set to null (this allows distinguish between 'initial' state & when use is definitely logged out )
     allowAdmin: false,
     posts: null,
     programmes: null,

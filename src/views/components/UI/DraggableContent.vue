@@ -26,15 +26,7 @@ export default {
     filter: String,
     draggable: { type: String, default: '>*' },
     containerClass: String,
-    dragOptions: {
-      type: Object,
-      default: () => ({
-        animation: 200,
-        group: 'tabs',
-        disabled: false,
-        ghostClass: 'ghost'
-      })
-    }
+    options: { type: Object, default: () => ({}) }
   },
 
   data: () => ({
@@ -46,6 +38,15 @@ export default {
       get () { return this.value },
       set (newValue) {
         this.$emit('input', newValue)
+      }
+    },
+    dragOptions () {
+      return {
+        animation: 200,
+        group: 'tabs',
+        disabled: false,
+        ghostClass: 'ghost',
+        ...this.options
       }
     }
   },

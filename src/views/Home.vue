@@ -64,7 +64,7 @@ export default {
   computed: {
     ...mapState(['user']),
     adminOrEditor () {
-      return this.user && (this.user.role === 'admin' || this.user.role === 'editor')
+      return !!this.user && (this.user.role === 'admin' || this.user.role === 'editor')
     },
     posts () {
       return Object.values(this.feed).sort((a, b) => b.date - a.date)
@@ -72,15 +72,11 @@ export default {
   },
 
   watch: {
-    user () {
-      this.getFeed()
-    }
+    user () { this.getFeed() }
   },
 
   async created () {
-    if (this.user) {
-      this.getFeed()
-    }
+    if (this.user || this.user === null) { this.getFeed() }
   },
 
   methods: {
