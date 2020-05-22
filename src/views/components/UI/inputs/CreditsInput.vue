@@ -2,9 +2,9 @@
   <div class="credits-input">
     <tags-input
       v-model="model"
-      label="Participants"
+      :label="label"
+      :placeholder="placeholder"
       draggable-selector=".credit-item"
-      placeholder="Add person"
       :query="profileQuery"
       :allow-creation="false">
       <template v-slot:default="{tags}">
@@ -35,7 +35,9 @@ export default {
   name: 'CreditsInput',
   components: { TagsInput },
   props: {
-    value: { type: Array, default: () => ([]) }
+    value: { type: Array, default: () => ([]) },
+    label: { type: String, default: 'Participants' },
+    placeholder: { type: String, default: 'Add person' }
   },
 
   data: () => ({
@@ -54,8 +56,6 @@ export default {
     model: {
       get () { return this.value },
       set (newValue) {
-        // !!! DEBUG !!!
-        console.log(`%c model set() %c newValue: `, 'background:#00bbff;color:#000', 'color:#00aaff', newValue)
         this.$emit('input', newValue)
       }
     },

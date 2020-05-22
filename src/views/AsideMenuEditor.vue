@@ -178,7 +178,11 @@ export default {
     },
 
     updateProgrammesInStorage () {
-      this.updateProgrammes(this.publicMenuList.filter(item => item.routeName === 'programme'))
+      this.updateProgrammes([
+        ...this.publicMenuList.filter(item => item.routeName === 'programme'),
+        ...this.internalMenuList.filter(item => item.routeName === 'programme'),
+        ...this.drafts.filter(item => item.routeName === 'programme')
+      ])
     },
 
     subscribePublicMenu () {

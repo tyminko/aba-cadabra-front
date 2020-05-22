@@ -10,6 +10,7 @@
       placeholder="Page title"
       class="xl"/>
     <tags-input v-if="adminOrEditor" v-model="tags" label="Tags"/>
+    <credits-input v-model="people" label="People mentioned on the page"/>
     <attachments-editor
       ref="attachments-editor"
       v-model="attachments"
@@ -38,11 +39,12 @@ import AttachmentsEditor from './attachments/AttachmentsEditor'
 import TagsInput from '../components/UI/inputs/TagsInput'
 import DropdownSelect from '../components/UI/DropdownSelect'
 import tagsLib from '../../lib/tags'
+import CreditsInput from '../components/UI/inputs/CreditsInput'
 
 export default {
   name: 'PostEditor',
   mixins: [PostEditorMixin],
-  components: { DropdownSelect, TagsInput, PxInput, TextEditor, AttachmentsEditor },
+  components: { CreditsInput, DropdownSelect, TagsInput, PxInput, TextEditor, AttachmentsEditor },
   props: {
     open: { type: Boolean, required: true },
     value: { type: Object, default: null }
@@ -50,6 +52,9 @@ export default {
 
   data: () => ({
     postData: {},
+    emptyPostExtraData: {
+      relatedPeople: []
+    },
     posterTempId: '',
     textEditorFocused: false,
     unsubscribe: null,
@@ -57,6 +62,10 @@ export default {
   }),
 
   computed: {
+    people: {
+      get () { return this.postData.relatedPeople || [] },
+      set (newValue) { this.$set(this.postData, 'relatedPeople', newValue) }
+    },
     allowDelete () {
       return this.adminOrEditor && (this.value || {}).id
     }
