@@ -29,11 +29,6 @@
 <script>
 import { mapState } from 'vuex'
 import { db } from '../../lib/firebase'
-import {
-  addPublicMenuItem,
-  manageUpdatePublicMenuItem,
-  removePublicMenuItem
-} from '../../lib/public-menu'
 import PxInput from '../components/UI/inputs/PxInput'
 import TextEditor from '../components/UI/TextEditor'
 import DropdownSelect from '../components/UI/DropdownSelect'
@@ -137,12 +132,8 @@ export default {
           const collectionRef = db.collection('programmes')
           if (progId) {
             await collectionRef.doc(progId).update(progFields)
-            await manageUpdatePublicMenuItem(progId, 'programme', progFields.status, this.title, !!progFields.title)
           } else {
-            const newProg = await collectionRef.add(progFields)
-            if (newProg) {
-              await addPublicMenuItem(newProg.id, this.title)
-            }
+            await collectionRef.add(progFields)
           }
           this.$emit('setProcessing', false)
           this.$emit('saved')
@@ -163,7 +154,6 @@ export default {
       try {
         await db.collection('programmes').doc(this.value.id).update({ status: 'trash' })
         await Promise.all([
-          removePublicMenuItem(this.value.id),
           disconnectEventsFromProgramme(this.value.id)
         ])
         this.$emit('setProcessing', false)

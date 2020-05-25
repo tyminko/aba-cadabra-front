@@ -28,11 +28,6 @@
 <script>
 import { db } from '../../lib/firebase'
 import PostEditorMixin from '../../mixins/post-editor'
-import {
-  addPublicMenuItem,
-  manageUpdatePublicMenuItem,
-  removePublicMenuItem
-} from '../../lib/public-menu'
 import PxInput from '../components/UI/inputs/PxInput'
 import TextEditor from '../components/UI/TextEditor'
 import AttachmentsEditor from './attachments/AttachmentsEditor'
@@ -53,6 +48,7 @@ export default {
   data: () => ({
     postData: {},
     emptyPostExtraData: {
+      type: 'page',
       relatedPeople: []
     },
     posterTempId: '',
@@ -107,14 +103,9 @@ export default {
 
         const original = (this.value || {})
         if (original.id) {
-          const newStatus = this.postData.status !== original.status ? this.postData.status : null
-          const titleIsNew = this.postData.title !== original.title
-
           await this.collectionRef.doc(this.value.id).update(this.postData)
-          await manageUpdatePublicMenuItem(original.id, 'page', newStatus, this.postData.title, titleIsNew)
         } else {
-          const newPost = await this.collectionRef.add(this.postData)
-          await addPublicMenuItem(newPost.id, 'page', this.postData.title)
+          await this.collectionRef.add(this.postData)
         }
         this.$emit('setProcessing', false)
         this.$emit('saved')
@@ -125,7 +116,6 @@ export default {
       }
     },
     async afterDeleteFunc () {
-      await removePublicMenuItem(this.value.id)
     }
   }
 }

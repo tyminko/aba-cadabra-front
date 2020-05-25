@@ -5,8 +5,7 @@
         <main-header />
       </template>
       <template v-slot:sidebar="{refresh}">
-        <aside-menu-editor v-if="adminOrEditor" @updated="$nextTick(refresh)"/>
-        <aside-menu-public v-else @updated="$nextTick(refresh)"/>
+        <aside-menu @refresh="refresh" />
       </template>
       <template v-slot:content>
         <router-view :key="$route.fullPath"/>
@@ -27,13 +26,11 @@ import { mapState, mapActions } from 'vuex'
 import LayoutWithPushSidebar from './views/components/UI/layouts/LayoutWithPushSidebar'
 import MainHeader from './views/components/MainHeader'
 import Editor from './views/editor/Editor'
-import AsideMenuEditor from './views/AsideMenuEditor'
-import AsideMenuPublic from './views/AsideMenuPublic'
-// import LayoutTwoSlidingViews from './views/components/UI/layouts/LayoutTwoSlidingViews'
+import AsideMenu from './views/menu/AsideMenu'
 
 export default {
   name: 'App',
-  components: { AsideMenuPublic, AsideMenuEditor, Editor, LayoutWithPushSidebar, MainHeader },
+  components: { AsideMenu, Editor, LayoutWithPushSidebar, MainHeader },
   computed: {
     ...mapState(['requestToLogin', 'user', 'showEditor']),
     adminOrEditor () {

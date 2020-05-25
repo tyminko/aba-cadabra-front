@@ -301,13 +301,6 @@ export default {
       this.$set(this.visitedFields, field, true)
     },
 
-    // submit () {
-    //   if (!this.formValid) return
-    //   if (!this.uid) {
-    //     this.createUser()
-    //   }
-    // },
-
     async createUser () {
       if ((this.user || {}).role === 'admin') {
         const data = {

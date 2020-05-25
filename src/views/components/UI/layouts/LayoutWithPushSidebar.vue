@@ -204,10 +204,8 @@ export default {
 
       .push-sidebar {
         flex-shrink: 0;
-        padding: $base-padding 0;
         overflow: auto;
         .sidebar-content {
-          padding: 0 $base-padding $base-padding;
           position: fixed;
           z-index: 100;
         }

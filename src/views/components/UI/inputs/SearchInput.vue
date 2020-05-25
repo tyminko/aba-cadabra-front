@@ -101,13 +101,13 @@ export default {
     suggestions (value) {
       if (!value || !value.length) {
         this.closeSaggestionsTimeout = setTimeout(() => {
-          this.$refs.popper.showPopper = false
+          if (this.$refs.popper) this.$refs.popper.showPopper = false
         }, 1000)
       } else {
         clearTimeout(this.closeSaggestionsTimeout)
-        if (!this.$refs.popper.showPopper) {
+        if (!(this.$refs.popper || {}).showPopper) {
           this.$nextTick(() => {
-            this.$refs.popper.showPopper = true
+            if (this.$refs.popper) this.$refs.popper.showPopper = true
           })
         }
       }

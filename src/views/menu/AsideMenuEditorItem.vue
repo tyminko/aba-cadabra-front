@@ -1,14 +1,12 @@
 <template>
-  <div
-    class="menu-item flex items-center text-lg h-base bg-white pr-base"
-    :class="{'not-sortable': item.status!=='public'}">
+  <div class="menu-item flex items-center text-lg h-base bg-white pr-base">
     <div
       class="handle flex items-center"
       :class="{'opacity-0': item.status==='draft'}">
       <i class="material-icons text-gray-300 cursor-move">drag_indicator</i>
     </div>
     <router-link
-      :to="{name: item.routeName, params: {id: item.id}}"
+      :to="{name: item.type, params: {id: item.id}}"
       class="px-sm"
       :class="[item.status]">
       {{item.title}}
@@ -38,10 +36,10 @@ export default {
     a {
       text-transform: capitalize;
       &.draft {
-        @apply bg-aba-blue-semi text-white italic;
+        @apply text-gray-600 font-light italic;
       }
       &.internal {
-        @apply bg-gray-200;
+        @apply bg-gray-100;
       }
     }
     .handle:active {

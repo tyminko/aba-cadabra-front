@@ -1,22 +1,26 @@
 <template>
   <div class="aside-menu">
-    <div
-      v-for="item in menuList"
-      :key="item.id"
-      class="menu-item flex items-center text-lg h-base bg-white pr-base">
-      <router-link
-        :to="{name: item.type, params: {id: item.id}}"
-        class="px-sm"
-        :class="[item.status]">
-        {{item.title}}
-      </router-link>
-    </div>
+    <template v-for="(sectionList, id) in sections">
+      <section v-if="sectionList.length" :key="id" :class="[id]">
+        <div
+          v-for="item in sectionList"
+          :key="item.id"
+          class="menu-item flex items-center text-lg h-base bg-white px-base"
+          :class="[item.status]">
+          <router-link
+            :to="{name: item.type, params: {id: item.id}}"
+            class="px-sm">
+            {{item.title}}
+          </router-link>
+        </div>
+      </section>
+    </template>
   </div>
 </template>
 
 <script>
 import { mapState } from 'vuex'
-import { db } from '../lib/firebase'
+import { db } from '../../lib/firebase'
 
 export default {
   name: 'AsideMenuPublic',
@@ -31,15 +35,19 @@ export default {
 
   computed: {
     ...mapState(['user']),
-    menuList () {
-      return [
-        ...Object.entries(this.menuItems.internal || {})
-          .map(([id, item]) => ({ ...item, id, status: 'internal' }))
-          .sort((a, b) => a.order - b.order),
-        ...Object.entries(this.menuItems.public || {})
-          .map(([id, item]) => ({ ...item, id }))
-          .sort((a, b) => a.order - b.order)
-      ]
+    sections () {
+      return { internal: this.internalList, public: this.publicList }
+    },
+
+    internalList () {
+      return Object.entries(this.menuItems.internal || {})
+        .map(([id, item]) => ({ ...item, id, status: 'internal' }))
+        .sort((a, b) => a.order - b.order)
+    },
+    publicList () {
+      return Object.entries(this.menuItems.public || {})
+        .map(([id, item]) => ({ ...item, id }))
+        .sort((a, b) => a.order - b.order)
     }
   },
 
@@ -99,3 +107,7 @@ export default {
   }
 }
 </script>
+<!--suppress CssInvalidAtRule -->
+<style lang="scss">
+
+</style>
