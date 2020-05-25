@@ -28,7 +28,7 @@
       <div class="text-block mt-base" v-html="content" />
     </template>
     <template v-slot:sidebar>
-<!--      <event-sidebar :post="post" :show-map="true"/>-->
+      <page-sidebar :post="postData"/>
     </template>
   </content-with-sidebar>
 </template>
@@ -39,10 +39,11 @@ import { db } from '../lib/firebase'
 import PostData from '../mixins/post-data'
 import ContentWithSidebar from './components/UI/layouts/ContentWithSidebar'
 import EditButtonBadge from './components/EditButtonBadge'
+import PageSidebar from './PageSidebar'
 
 export default {
   name: 'PageView',
-  components: { EditButtonBadge, ContentWithSidebar },
+  components: { PageSidebar, EditButtonBadge, ContentWithSidebar },
   mixins: [PostData],
   props: {},
 

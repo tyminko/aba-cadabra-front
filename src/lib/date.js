@@ -48,6 +48,13 @@ export function formatTime (date, locale) {
   return d.toLocaleString(locale, { hour: '2-digit', minute: '2-digit' })
 }
 
+export function formatPeriod (timestampStart, timestampEnd, locale) {
+  const startDT = timestampStart instanceof DateTime ? timestampStart : DateTime.fromMillis(timestampStart)
+  const endDT = timestampEnd instanceof DateTime ? timestampEnd : DateTime.fromMillis(timestampEnd)
+  const startFormat = startDT.year === endDT.year ? 'LLL' : 'LLL y'
+  return `${startDT.toFormat(startFormat, { locale })}-${endDT.toFormat('LLL y', { locale })}`
+}
+
 export function parseTime (string) {
   const parts = string.trim().split(':')
   let hour = parts[0] || 0
@@ -143,8 +150,6 @@ export function getCalendarStringsForLocale (locale) {
   if (!CALENDAR_STRINGS.hasOwnProperty(locale)) {
     CALENDAR_STRINGS[locale] = generateLocaleStrings(locale)
   }
-  // !!! DEBUG !!!
-  console.log(`%c getCalendarStringsForLocale() %c CALENDAR_STRINGS[${locale}]: `, 'background:#ffbb00;color:#000', 'color:#00aaff', CALENDAR_STRINGS[locale])
   return CALENDAR_STRINGS[locale]
 }
 

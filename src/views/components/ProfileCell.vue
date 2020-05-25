@@ -1,13 +1,15 @@
 <template>
   <div class="profile-cell">
-    <h2 class="">{{authorName}}</h2>
-    <img v-if="thumbnailUrl" :src="thumbnailUrl" class="mb-sm">
+    <h2>{{displayName}}</h2>
+    <div class="desc">{{positionStr}}</div>
+<!--    <img v-if="thumbnailUrl" :src="thumbnailUrl" class="mb-sm">-->
     <div class="excerpt mt-sm text-sm">{{description}}...</div>
   </div>
 </template>
 
 <script>
 import { makeExcerpt } from '../../lib/string'
+import { formatPeriod } from '../../lib/date'
 
 export default {
   name: 'ProfileCell',
@@ -18,9 +20,23 @@ export default {
   data: () => ({}),
 
   computed: {
-    authorName () {
+    displayName () {
       return (this.profile || {}).displayName
     },
+
+    positionStr () {
+      const profile = (this.profile || {})
+      const position = profile.abaPosition || ''
+      switch (position) {
+        case 'resident':
+          return 'Residency: ' + formatPeriod(profile.residencyStart, profile.residencyEnd, 'en')
+        case 'guest':
+          return ''
+        default :
+          return position
+      }
+    },
+
     thumbnailUrl () {
       if (!this.profile || !this.profile.attachments) return
       const post = this.profile
@@ -48,6 +64,10 @@ export default {
 </script>
 
 <style lang="scss">
+  @import "../../styles/mixins";
   .profile-cell {
+    .excerpt {
+      @include multi-line-truncate(3);
+    }
   }
 </style>

@@ -41,8 +41,6 @@ export default {
       }
     }
     .sidebar-box {
-      position: sticky;
-      top: 0;
       @apply px-base;
     }
     @include wider-then($max-width-text-block-px + $sidebar-width / 2) {
@@ -53,12 +51,7 @@ export default {
         }
         .sidebar-box {
           flex: 0 0 $sidebar-width;
-          max-height: 100vh;
-          overflow: auto;
           padding: $base-size $base-padding;
-          word-break: break-word;
-          hyphens: auto;
-          /*@apply text-sm ml-sm;*/
         }
       }
     }
