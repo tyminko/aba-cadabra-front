@@ -12,6 +12,7 @@
             :item="item"
             :editable="adminOrEditor"
             class="bg-gray-100"
+            status="internal"
             @open-editor="openEditor(item.type, item)"/>
         </draggable-content>
       </section>
@@ -27,6 +28,7 @@
             :key="item.id"
             :item="item"
             :editable="adminOrEditor"
+            status="public"
             @open-editor="openEditor(item.type, item)"/>
         </draggable-content>
       </section>
@@ -39,18 +41,10 @@
           :key="item.id"
           :item="item"
           :editable="adminOrEditor"
+          status="draft"
           @open-editor="openEditor(item.type, item)"/>
       </section>
     </smooth-reflow>
-<!--    <div class="">-->
-<!--      <aside-menu-editor-item-->
-<!--        v-for="item in combined"-->
-<!--        :key="item.id"-->
-<!--        :item="item"-->
-<!--        :editable="adminOrEditor"-->
-<!--        class="bg-gray-200"-->
-<!--        @open-editor="openEditor(item.type, item)"/>-->
-<!--    </div>-->
     <popper
       v-if="adminOrEditor"
       placement="right"
@@ -100,15 +94,13 @@ export default {
   }),
 
   computed: {
-    ...mapState(['user']),
+    ...mapState(['user', 'menu']),
     adminOrEditor () {
       return !!this.user && (this.user.role === 'admin' || this.user.role === 'editor')
     },
 
-    combined () { return [...Object.values(this.programmes), ...Object.values(this.pages)] },
-
     drafts () {
-      return this.combined.filter(item => item.status === 'draft')
+      return Object.values((this.menu || {}).drafts || {})
         .sort((a, b) => {
           if (a.title < b.title) return -1
           if (a.title > b.title) return 1
@@ -117,10 +109,7 @@ export default {
     },
 
     publicMenuList: {
-      get () {
-        return [...this.publicMenuItems].sort((a, b) => (a.order + 1 || 1000) - (b.order + 1 || 1000))
-      },
-
+      get () { return this.publicMenuItems },
       set (newValue) {
         this.publicMenuItems = newValue.map((item, i) => ({ ...item, order: i }))
         this.updateMenuInSettings('public', newValue)
@@ -128,10 +117,7 @@ export default {
     },
 
     internalMenuList: {
-      get () {
-        return [...this.internalMenuItems].sort((a, b) => (a.order + 1 || 1000) - (b.order + 1 || 1000))
-      },
-
+      get () { return this.internalMenuItems },
       set (newValue) {
         this.internalMenuItems = newValue.map((item, i) => ({ ...item, order: i }))
         this.updateMenuInSettings('internal', newValue)
@@ -140,34 +126,30 @@ export default {
   },
 
   created () {
-    this.subscribeMenu('publicMenu')
-    this.subscribeMenu('internalMenu')
-    if (this.user) {
-      this.getProgrammesAndPages()
-    }
+    this.updateMenuSubscription()
+    this.publicMenuItems = this.objectToOrderedList((this.menu || {}).public || {})
+    this.internalMenuItems = this.objectToOrderedList((this.menu || {}).internal || {})
   },
 
   watch: {
-    user () { this.getProgrammesAndPages() },
+    user () { this.updateMenuSubscription() },
+    menu () {
+      this.publicMenuItems = this.objectToOrderedList((this.menu || {}).public || {})
+      this.internalMenuItems = this.objectToOrderedList((this.menu || {}).internal || {})
+    },
     publicMenuList () { this.$emit('updated') },
     internalMenuList () { this.$emit('updated') },
     drafts () { this.$emit('updated') }
   },
 
-  beforeDestroy () {
-    Object.values(this.unsubscribe).forEach(u => {
-      if (typeof u === 'function') u()
-    })
-  },
-
   methods: {
-    ...mapActions(['showEditor', 'updateProgrammes']),
+    ...mapActions(['showEditor', 'updateMenuSubscription']),
     /**
      * @param {string} type
      * @param {object=} item
      */
     async openEditor (type, item) {
-      item = await this.prepareItemForEditor(type, item)
+      item = item ? await this.prepareItemForEditor(item) : null
       this.showEditor({
         type,
         value: item,
@@ -177,84 +159,16 @@ export default {
       })
     },
 
-    async prepareItemForEditor (type, item) {
-      const id = (item || {}).id
-      if (!id) return null
-      if (type === 'programme') {
-        if (this.programmes.hasOwnProperty(id)) {
-          return this.programmes[id]
-        } else {
-          return db.collection('programmes').doc(id).get()
-        }
-      } else if (type === 'page') {
-        if (this.pages.hasOwnProperty(id)) {
-          return this.pages[id]
-        } else {
-          return db.collection('pages').doc(id).get()
-        }
-      }
-      return null
+    objectToOrderedList (obj) {
+      return Object.values(obj).sort((a, b) => (a.order + 1 || 1000) - (b.order + 1 || 1000))
     },
 
-    updateProgrammesInStorage () {
-      this.updateProgrammes([
-        ...this.publicMenuList.filter(item => item.type === 'programme'),
-        ...this.internalMenuList.filter(item => item.type === 'programme'),
-        ...this.drafts.filter(item => item.type === 'programme')
-      ])
-    },
-
-    getProgrammesAndPages () {
-      this.subscribeCollection('programmes', this.programmes)
-      this.subscribeCollection('pages', this.pages)
-    },
-
-    subscribeMenu (menuName) {
-      this.unsubscribe[menuName] = db.collection('settings')
-        .doc(menuName)
-        .onSnapshot(snap => {
-          this[menuName + 'Items'] = Object.entries((snap.data() || {}).items || {}).map(([id, item]) => ({ ...item, id }))
-          this.updateProgrammesInStorage()
-        })
-    },
-
-    subscribeCollection (collectionId, resultContainer) {
-      let query = db.collection(collectionId)
-      if (!this.user) {
-        query = query.where('status', '==', 'public')
-      }
-      if (this.unsubscribe.hasOwnProperty(collectionId) &&
-        typeof this.unsubscribe[collectionId] === 'function') {
-        this.unsubscribe[collectionId]()
-      }
-      this.unsubscribe[collectionId] = query.onSnapshot({
-        next: querySnapshot => {
-          const itemType = this.routeNameFromCollectionId(collectionId)
-          querySnapshot.docChanges().forEach(docChange => {
-            const doc = docChange.doc
-            switch (docChange.type) {
-              case 'added':
-              case 'modified':
-                const data = doc.data()
-                if (this.shouldIncludeStatus(data.status)) {
-                  this.$set(resultContainer, doc.id, {
-                    ...data,
-                    id: doc.id,
-                    type: itemType
-                  })
-                } else {
-                  this.$delete(resultContainer, doc.id)
-                }
-                break
-              case 'removed':
-                this.$delete(resultContainer, doc.id)
-            }
-          })
-          if (collectionId === 'programmes') this.updateProgrammesInStorage()
-        },
-        error: err => {
-          console.error(`Subscribe to ${collectionId}:`, err)
-        }
+    async prepareItemForEditor (item) {
+      const { id, type } = (item || {})
+      if (!id || !type) return null
+      const collectionId = type + 's'
+      return db.collection(collectionId).doc(id).get().then(doc => {
+        return ({ ...doc.data(), id: doc.id })
       })
     },
 
@@ -265,27 +179,6 @@ export default {
           return res
         }, {})
       })
-    },
-
-    shouldIncludeStatus (status) {
-      switch (status) {
-        case 'trash':
-          return false
-        case 'draft':
-          return this.adminOrEditor
-        case 'internal':
-          return !!this.user
-        default :
-          return true
-      }
-    },
-
-    routeNameFromCollectionId (collectionId) {
-      switch (collectionId) {
-        case 'programmes': return 'programme'
-        case 'pages': return 'page'
-        default: return collectionId
-      }
     }
   }
 }

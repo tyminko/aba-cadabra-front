@@ -2,13 +2,13 @@
   <div class="menu-item flex items-center text-lg h-base bg-white pr-base">
     <div
       class="handle flex items-center"
-      :class="{'opacity-0': item.status==='draft'}">
+      :class="{'opacity-0': status==='draft'}">
       <i class="material-icons text-gray-300 cursor-move">drag_indicator</i>
     </div>
     <router-link
       :to="{name: item.type, params: {id: item.id}}"
       class="px-sm"
-      :class="[item.status]">
+      :class="[status]">
       {{item.title}}
     </router-link>
     <button
@@ -25,7 +25,8 @@ export default {
   name: 'AsideMenuEditorItem',
   props: {
     item: { type: Object, required: true },
-    editable: Boolean
+    editable: Boolean,
+    status: { type: String, default: 'public', validator: val => ['draft', 'internal', 'public'].includes(val) }
   }
 }
 </script>

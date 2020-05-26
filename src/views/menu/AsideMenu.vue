@@ -8,10 +8,10 @@
         </button>
       </header>
     </smooth-reflow>
-<!--    <transition>-->
+    <smooth-reflow>
       <aside-menu-editor v-if="editMenu && adminOrEditor" @updated="emitRefresh"/>
       <aside-menu-public v-else @updated="emitRefresh"/>
-<!--    </transition>-->
+    </smooth-reflow>
   </div>
 </template>
 
@@ -33,6 +33,12 @@ export default {
     ...mapState(['requestToLogin', 'user', 'showEditor']),
     adminOrEditor () {
       return !!this.user && (this.user.role === 'admin' || this.user.role === 'editor')
+    }
+  },
+
+  watch: {
+    editMenu () {
+      this.emitRefresh()
     }
   },
 

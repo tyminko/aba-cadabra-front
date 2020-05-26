@@ -1,9 +1,21 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import { auth } from './lib/firebase'
+import { auth, db } from './lib/firebase'
 import router from './router'
 
 Vue.use(Vuex)
+const unsubscribeMenu = { public: null, internal: null, draftProgrammes: null, draftPages: null }
+const unsubscribeDrafts = () => {
+  ['draftProgrammes', 'draftPages'].forEach(draft => {
+    if (typeof unsubscribeMenu[draft] === 'function') unsubscribeMenu[draft]()
+    unsubscribeMenu[draft] = null
+  })
+}
+const unsubscribeRestricted = () => {
+  unsubscribeDrafts()
+  if (typeof unsubscribeMenu.internal === 'function') unsubscribeMenu.internal()
+  unsubscribeMenu.internal = null
+}
 
 export default new Vuex.Store({
   state: {
@@ -11,11 +23,15 @@ export default new Vuex.Store({
     allowAdmin: false,
     posts: null,
     programmes: null,
+    menu: null,
     requestToLogin: false,
     useTouch: false,
     showEditor: false // could be {type:string, value?:object, onSaved?:function}
   },
   mutations: {
+    UPDATE_MENU (state, menu) {
+      state.menu = menu
+    },
     UPDATE_PROGRAMMES (state, programmes) {
       state.programmes = programmes
     },
@@ -79,6 +95,94 @@ export default new Vuex.Store({
 
     setUseTouch ({ commit }) {
       commit('SET_USE_TOUCH')
+    },
+
+    updateMenuSubscription: ({ commit, state }) => {
+      const adminOrEditor = () => !!state.user && (state.user.role === 'admin' || state.user.role === 'editor')
+
+      if (!unsubscribeMenu.public) {
+        unsubscribeMenu.public = db.collection('settings')
+          .doc('publicMenu')
+          .onSnapshot(snap => {
+            commit('UPDATE_MENU', { ...state.menu, public: (snap.data() || {}).items })
+          })
+      }
+      if (state.user) {
+        if (!unsubscribeMenu.internal) {
+          unsubscribeMenu.internal = db.collection('settings')
+            .doc('internalMenu')
+            .onSnapshot(snap => {
+              commit('UPDATE_MENU', { ...state.menu, internal: (snap.data() || {}).items })
+            })
+        }
+        if (adminOrEditor()) {
+          Object.entries({ programmes: 'draftProgrammes', pages: 'draftPages' })
+            .forEach(([collectionId, unsubName]) => {
+              if (!unsubscribeMenu[unsubName]) {
+                unsubscribeMenu[unsubName] = subscribeCollectionDrafts(
+                  collectionId,
+                  data => {
+                    commit('UPDATE_MENU', {
+                      ...state.menu,
+                      drafts: {
+                        ...state.menu.drafts, [`${collectionId}-${data.id}`]: data
+                      }
+                    })
+                  },
+                  id => {
+                    const tmp = { ...state.menu.drafts }
+                    delete tmp[id]
+                    commit('UPDATE_MENU', { ...state.menu, drafts: { ...tmp } })
+                  })
+              }
+            })
+        } else {
+          unsubscribeDrafts()
+          commit('UPDATE_MENU', { ...state.menu, drafts: null })
+        }
+      } else {
+        unsubscribeRestricted()
+        commit('UPDATE_MENU', { ...state.menu, internal: null, drafts: null })
+      }
     }
   }
 })
+
+/**
+ * @param {string} collectionId
+ * @param {function} onSet
+ * @param {function} onDelete
+ */
+function subscribeCollectionDrafts (collectionId, onSet, onDelete) {
+  return db.collection(collectionId)
+    .where('status', '==', 'draft')
+    .onSnapshot({
+      next: querySnapshot => {
+        querySnapshot.docChanges().forEach(docChange => {
+          const doc = docChange.doc
+          switch (docChange.type) {
+            case 'added':
+            case 'modified':
+              const { title, singlePostLabel } = doc.data()
+              const data = { id: doc.id, title, type: typeFromCollectionId(collectionId) }
+              if (singlePostLabel) data.singlePostLabel = singlePostLabel
+              onSet(data)
+              break
+            case 'removed':
+              onDelete(doc.id)
+          }
+        })
+      },
+      error: err => {
+        console.error(`Subscribe to ${collectionId}:`, err)
+      }
+    })
+}
+
+function typeFromCollectionId (collectionId) {
+  switch (collectionId) {
+    case 'programmes': return 'programme'
+    case 'pages': return 'page'
+    default: return collectionId
+  }
+}

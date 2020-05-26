@@ -96,7 +96,24 @@ export default {
   }),
 
   computed: {
-    ...mapState(['programmes']),
+    ...mapState(['menu']),
+    programmes () {
+      const menu = (this.menu || {})
+      return ['public', 'internal', 'drafts'].reduce((res, section) => {
+        const val = Object.values(menu[section] || {})
+          .filter(item => item.type === 'programme')
+          .sort((a, b) => {
+            const aO = (a.order + 1 || 900)
+            const bO = (b.order + 1 || 900)
+            if (aO < bO) return -1
+            if (aO > bO) return 1
+            if (a.title < b.title) return -1
+            if (a.title > b.title) return 1
+            return 0
+          })
+        return [...res, ...val]
+      }, [])
+    },
     participants: {
       get () { return Object.values((this.postData.participants) || {}) || [] },
       set (newValue) { this.$set(this.postData, 'participants', newValue) }

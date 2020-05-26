@@ -19,33 +19,23 @@
 </template>
 
 <script>
-import { mapState } from 'vuex'
-import { db } from '../../lib/firebase'
+import { mapActions, mapState } from 'vuex'
 
 export default {
   name: 'AsideMenuPublic',
-  props: {},
-
-  data: () => ({
-    publicMenuItems: {},
-    internalMenuItems: {},
-    menuItems: {},
-    unsubscribe: {}
-  }),
-
   computed: {
-    ...mapState(['user']),
+    ...mapState(['user', 'menu']),
     sections () {
       return { internal: this.internalList, public: this.publicList }
     },
 
     internalList () {
-      return Object.entries(this.menuItems.internal || {})
+      return Object.entries(this.menu.internal || {})
         .map(([id, item]) => ({ ...item, id, status: 'internal' }))
         .sort((a, b) => a.order - b.order)
     },
     publicList () {
-      return Object.entries(this.menuItems.public || {})
+      return Object.entries(this.menu.public || {})
         .map(([id, item]) => ({ ...item, id }))
         .sort((a, b) => a.order - b.order)
     }
@@ -53,57 +43,19 @@ export default {
 
   watch: {
     user () {
-      if (this.user) {
-        this.subscribeInternalMenu()
-      } else {
-        this.unsubscribeMenu('internal')
-      }
+      this.updateMenuSubscription()
+    },
+    menu () {
+      this.$emit('updated')
     }
   },
 
   created () {
-    this.subscribeMenus()
-  },
-
-  beforeDestroy () {
-    this.unsubscribeMenus()
+    this.updateMenuSubscription()
   },
 
   methods: {
-    subscribeMenus () {
-      this.subscribePublicMenu()
-      this.subscribeInternalMenu()
-    },
-
-    subscribePublicMenu () {
-      this.unsubscribe.menu = db.collection('settings')
-        .doc('publicMenu')
-        .onSnapshot(snap => {
-          this.$set(this.menuItems, 'public', (snap.data() || {}).items)
-          this.$emit('updated')
-        })
-    },
-
-    subscribeInternalMenu () {
-      if (!this.user) return
-      this.unsubscribe.internalmenu = db.collection('settings')
-        .doc('internalMenu')
-        .onSnapshot(snap => {
-          this.$set(this.menuItems, 'internal', (snap.data() || {}).items)
-          this.$emit('updated')
-        })
-    },
-
-    unsubscribeMenus () {
-      Object.values(this.unsubscribe).forEach(u => {
-        if (typeof u === 'function') u()
-      })
-    },
-    unsubscribeMenu (name) {
-      if (typeof this.unsubscribe[name] === 'function') this.unsubscribe[name]()
-      this.$delete(this.menuItems, name)
-      this.$emit('updated')
-    }
+    ...mapActions(['updateMenuSubscription'])
   }
 }
 </script>

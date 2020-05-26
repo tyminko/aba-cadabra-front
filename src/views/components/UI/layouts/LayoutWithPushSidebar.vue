@@ -12,7 +12,7 @@
     </header>
     <div class="push-box" :class="side">
       <div ref="sidebar" v-click-outside="pushOut" class="push-sidebar" :class="{collapsible}">
-        <div ref="sidebar-content" class="sidebar-content">
+        <div ref="sidebar-content" class="sidebar-content" :class="{'opacity-0':!open}">
           <slot name="sidebar" :refresh="setPushMargin"/>
         </div>
       </div>
@@ -208,6 +208,7 @@ export default {
         .sidebar-content {
           position: fixed;
           z-index: 100;
+          transition: opacity $transition-time;
         }
       }
     }
