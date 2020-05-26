@@ -41,9 +41,10 @@ module.exports = {
         'x3': `${baseSize * 3}rem`
       },
       padding: {
-        'base': `${baseSize / 3}rem`,
         'xs': `${baseSize / 12}rem`,
         'sm': `${baseSize / 6}rem`,
+        'base': `${baseSize / 3}rem`,
+        'lg': `${baseSize / 2}rem`,
         'xl': `${baseSize / 3 * 2}rem`,
         'xxl': `${baseSize * 2}rem`
       },
@@ -52,10 +53,15 @@ module.exports = {
         '-base': `-${baseSize / 3}rem`,
         'sm': `${baseSize / 6}rem`,
         'xs': `${baseSize / 12}rem`,
+        'lg': `${baseSize / 2}rem`,
         '-sm': `-${baseSize / 6}rem`,
         'xl': `${baseSize / 3 * 2}rem`,
         '-xl': `-${baseSize / 3 * 2}rem`,
         'xxl': `${baseSize}rem`
+      },
+      gap: {
+        'base': `${baseSize / 3}rem`,
+        'lg': `${baseSize / 2}rem`
       },
       maxWidth: {
         'text': `${textBlockWidth}em`,

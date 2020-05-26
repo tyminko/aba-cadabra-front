@@ -10,6 +10,7 @@ export function getMarkerHtml (markerData, mapEl, markerStock) {
   } else {
     markerEl = document.createElement('div')
     markerEl.className = 'aba-marker'
+    markerEl.style.zIndex = markerData.lat
     mapEl.insertAdjacentElement('afterend', markerEl)
     markerStock[markerKey] = markerEl
     toReturn = markerEl
@@ -54,6 +55,7 @@ export function defineABAMarkerClass (google) {
 
     this.anchor = document.createElement('div')
     this.anchor.classList.add('popup-tip-anchor')
+    this.anchor.style.zIndex = Math.floor((1 - position.lat / 100) * 1000000)
     this.anchor.appendChild(pixelOffset)
 
     // Optionally stop clicks, etc., from bubbling up to the map.
@@ -72,8 +74,6 @@ export function defineABAMarkerClass (google) {
   /** Called when the popup is removed from the map. */
   ABAMarker.prototype.onRemove = function () {
     if (this.anchor.parentElement) {
-      // !!! DEBUG !!!
-      console.log(`%c onRemove() %c this.anchor: `, 'background:#ff3300;color:#000', 'color:#00aaff', this.anchor)
       this.anchor.parentElement.removeChild(this.anchor)
     }
   }

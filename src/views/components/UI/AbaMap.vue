@@ -91,7 +91,7 @@ export default {
           this.markerInstances.push(m)
         }
       })
-      this.zoomToMarkers()
+      // this.zoomToMarkers()
     }
   }
 }

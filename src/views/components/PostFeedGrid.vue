@@ -94,15 +94,15 @@ export default {
 }
 </script>
 
+<!--suppress CssInvalidAtRule -->
 <style lang="scss">
   .post-feed-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     grid-auto-rows: 320px;
-    grid-gap: 24px;
     grid-auto-flow: dense;
 
+    @apply gap-lg p-lg;
     max-width: 100%;
-    padding: 24px;
   }
 </style>
