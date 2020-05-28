@@ -4,6 +4,7 @@ import { auth, db } from './lib/firebase'
 import router from './router'
 
 Vue.use(Vuex)
+
 const unsubscribeMenu = { public: null, internal: null, draftProgrammes: null, draftPages: null }
 const unsubscribeDrafts = () => {
   ['draftProgrammes', 'draftPages'].forEach(draft => {
@@ -19,21 +20,18 @@ const unsubscribeRestricted = () => {
 
 export default new Vuex.Store({
   state: {
-    user: false, // later if no user, it will be set to null (this allows distinguish between 'initial' state & when use is definitely logged out )
+    user: false, // later if no user, it will be set to null (this allows distinguish between 'initial' state & when the user is definitely logged out )
     allowAdmin: false,
     posts: null,
-    programmes: null,
     menu: null,
     requestToLogin: false,
     useTouch: false,
-    showEditor: false // could be {type:string, value?:object, onSaved?:function}
+    editorToOpen: null, // could be {type:string, value?:object, onSaved?:function}
+    postToOpen: null // could be {type:string, value?:object|string}
   },
   mutations: {
     UPDATE_MENU (state, menu) {
       state.menu = menu
-    },
-    UPDATE_PROGRAMMES (state, programmes) {
-      state.programmes = programmes
     },
     CLEAR_USER (state) {
       state.user = null
@@ -50,8 +48,11 @@ export default new Vuex.Store({
     SET_ALLOW_ADMIN (state, value) {
       state.allowAdmin = value
     },
-    SET_SHOW_EDITOR (state, value) {
-      state.showEditor = value
+    SET_EDITOR_TO_OPEN (state, value) {
+      state.editorToOpen = value
+    },
+    SET_POST_TO_OPEN (state, value) {
+      state.postToOpen = value
     }
   },
   actions: {
@@ -73,10 +74,6 @@ export default new Vuex.Store({
       commit('UPDATE_USER', { ...value })
     },
 
-    updateProgrammes: ({ commit }, value) => {
-      commit('UPDATE_PROGRAMMES', [ ...value ])
-    },
-
     clearUser ({ commit }) {
       commit('CLEAR_USER')
     },
@@ -86,11 +83,19 @@ export default new Vuex.Store({
     },
 
     showEditor ({ commit }, editorInfo) {
-      commit('SET_SHOW_EDITOR', editorInfo)
+      commit('SET_EDITOR_TO_OPEN', editorInfo)
     },
 
     hideEditor ({ commit }) {
-      commit('SET_SHOW_EDITOR', false)
+      commit('SET_EDITOR_TO_OPEN', null)
+    },
+
+    openPost ({ commit }, postInfo) {
+      commit('SET_POST_TO_OPEN', postInfo)
+    },
+
+    closePost ({ commit }) {
+      commit('SET_POST_TO_OPEN', null)
     },
 
     setUseTouch ({ commit }) {

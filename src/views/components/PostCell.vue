@@ -9,8 +9,8 @@
         <slot name="quick-edit-button" :cell-size="cellSize"/>
       </div>
     </header>
-    <router-link
-      :to="routerLink"
+    <a
+      @click.prevent="$emit('request-to-open')"
       class="block flex flex-col flex-grow min-h-0">
       <div>
         <h1 class="mt-1">{{title}}</h1>
@@ -30,7 +30,7 @@
         class="excerpt min-h-0 overflow-hidden mt-2 mb-4 min-h-line">
         <div>{{post.excerpt}}</div>
       </div>
-    </router-link>
+    </a>
   </div>
 </template>
 
@@ -49,11 +49,12 @@ export default {
 
   computed: {
     routerLink () {
-      if (this.post.type === 'post' && this.post.author) {
-        return { name: 'author-blog', params: { authorId: this.post.author.uid, postId: this.post.id } }
-      } else {
-        return { name: 'event', params: { id: this.post.id } }
-      }
+      return { name: this.$route.name, params: { postId: this.post.id } }
+      // if (this.post.type === 'post' && this.post.author) {
+      //   return { name: 'author-blog', params: { authorId: this.post.author.uid, postId: this.post.id } }
+      // } else {
+      //   return { name: 'event', params: { id: this.post.id } }
+      // }
     },
     typeLabel () {
       if (!this.post) return null

@@ -121,12 +121,7 @@ export default {
       this.lazyValue = val
     },
     error (val) {
-      // !!! DEBUG !!!
-      console.log(`%c error() %c val: `, 'background:#ffbb00;color:#000', 'color:#00aaff', val)
-      console.log(`%c error() %c this.validationError: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.validationError)
       if (!this.validationError) this.showError = !!val
-      // !!! DEBUG !!!
-      console.log(`%c error() %c this.showEditor: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.showEditor)
     }
   },
 

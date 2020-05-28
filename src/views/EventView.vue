@@ -73,7 +73,9 @@ import ReservationConfirm from './components/forms/ReservationConfirm'
 export default {
   name: 'EventView',
   components: { ReservationConfirm, ReservationFormPopover, EventSidebar, CreditsString, ContentWithSidebar },
-  props: {},
+  props: {
+    value: { type: Object, default: null }
+  },
 
   data: () => ({
     unsubscribe: null,
@@ -200,6 +202,10 @@ export default {
       if (this.post) this.showEditor({ value: this.post })
     },
     subscribeEvent () {
+      if (this.value) {
+        this.post = this.value
+        return
+      }
       if (!this.eventId) return this.unsubscribeEvent()
       this.unsubscribe = db.collection('posts')
         .doc(this.eventId)

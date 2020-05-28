@@ -41,7 +41,7 @@ export default {
   }),
 
   computed: {
-    ...mapState(['showEditor']),
+    ...mapState(['editorToOpen']),
     flow () {
       return this.side === 'left' || this.side === 'right' ? 'row' : 'column'
     }
@@ -53,7 +53,7 @@ export default {
         this.pushIn()
       }
     },
-    showEditor () {
+    editorToOpen () {
       this.popupItem = document.getElementById('main-editor')
     }
   },

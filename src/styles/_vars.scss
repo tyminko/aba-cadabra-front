@@ -3,11 +3,14 @@ $base-padding: $base-size / 3;
 $input-margin: $base-size / 4;
 $border-thick-w: 5px;
 
-$max-width-phone: 480px;
-$max-width-tablet: 1024px;
+$max-width-phone: 30rem; // = 480px
+$max-width-tablet: 64rem; // = 1024px
 
-$max-width-text-block: 36rem;
-$max-width-text-block-px: 600px;
+$max-width-text-block: 38rem; // = 608px
+$min-width-sidebar: 16rem;
+$max-width-sidebar: 20rem;
+
+$max-width-text-block-px: 38 * 16px;
 $base-padding-px: 16px;
 
 $color-bg: #fff;

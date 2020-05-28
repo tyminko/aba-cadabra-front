@@ -10,7 +10,8 @@
       <post-cell
         v-for="post in posts"
         :key="post.id"
-        :post="post">
+        :post="post"
+        @request-to-open="openPostModal(post)">
         <template v-slot:quick-edit-button="{cellSize}">
           <popper
             v-if="adminOrEditor"
@@ -64,12 +65,20 @@ export default {
   },
 
   methods: {
-    ...mapActions(['showEditor']),
+    ...mapActions(['showEditor', 'openPost']),
     openEditor (post) {
       this.showEditor({
         type: post.type,
         value: post
       })
+    },
+
+    openPostModal (post) {
+      let value = post
+      if (post.type === 'event') {
+
+      }
+      this.openPost({ type: post.type, value })
     },
 
     setCellSize (id, size) {

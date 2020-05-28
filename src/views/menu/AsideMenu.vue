@@ -30,7 +30,7 @@ export default {
   }),
 
   computed: {
-    ...mapState(['requestToLogin', 'user', 'showEditor']),
+    ...mapState(['requestToLogin', 'user', 'editorToOpen']),
     adminOrEditor () {
       return !!this.user && (this.user.role === 'admin' || this.user.role === 'editor')
     }

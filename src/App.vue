@@ -11,13 +11,18 @@
         <router-view :key="$route.fullPath"/>
       </template>
     </layout-with-push-sidebar>
+    <post-popover
+      v-if="postToOpen"
+      :open="!!postToOpen"
+      :value="postToOpen.value"
+      @close="closePost"/>
     <editor
-      v-if="user && showEditor"
+      v-if="user && editorToOpen"
       id="main-editor"
-      :value="showEditor.value"
-      :type="showEditor.type"
-      :on-saved="showEditor.onSaved"
-      :open="!!showEditor"
+      :value="editorToOpen.value"
+      :type="editorToOpen.type"
+      :on-saved="editorToOpen.onSaved"
+      :open="!!editorToOpen"
       @close="hideEditor"/>
   </div>
 </template>
@@ -27,12 +32,13 @@ import LayoutWithPushSidebar from './views/components/UI/layouts/LayoutWithPushS
 import MainHeader from './views/components/MainHeader'
 import Editor from './views/editor/Editor'
 import AsideMenu from './views/menu/AsideMenu'
+import PostPopover from './views/PostPopover'
 
 export default {
   name: 'App',
-  components: { AsideMenu, Editor, LayoutWithPushSidebar, MainHeader },
+  components: { PostPopover, AsideMenu, Editor, LayoutWithPushSidebar, MainHeader },
   computed: {
-    ...mapState(['requestToLogin', 'user', 'showEditor']),
+    ...mapState(['requestToLogin', 'user', 'editorToOpen', 'postToOpen']),
     adminOrEditor () {
       return !!this.user && (this.user.role === 'admin' || this.user.role === 'editor')
     },
@@ -44,7 +50,7 @@ export default {
     this.detectTouching()
   },
   methods: {
-    ...mapActions(['setUseTouch', 'hideEditor']),
+    ...mapActions(['setUseTouch', 'hideEditor', 'closePost']),
 
     detectTouching () {
       window.addEventListener('touchstart', function onFirstTouch () {
