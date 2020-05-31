@@ -3,6 +3,7 @@ import Router from 'vue-router'
 import Home from './views/Home'
 import store from './store'
 import localData from './lib/local-storage'
+import { updateBookmarksHistory } from './lib/bookmarks'
 
 Vue.use(Router)
 
@@ -16,13 +17,13 @@ const router = new Router({
       component: Home
     },
     {
-      path: '/in/:filter?',
+      path: '/in/:filter',
       name: 'home-filtered',
       meta: { restricted: true },
       component: Home
     },
     {
-      path: '/programme/:id',
+      path: '/programme/:id/:postId?',
       name: 'programme',
       component: () => import(/* webpackChunkName: "programme" */ './views/ProgrammeFeed')
     },
@@ -34,12 +35,16 @@ const router = new Router({
     {
       path: '/event/:id/:token?',
       name: 'event',
-      component: () => import(/* webpackChunkName: "blog" */ './views/EventView')
+      components: {
+        popup: () => import(/* webpackChunkName: "blog" */ './views/EventPopover')
+      }
     },
     {
       path: '/blog/:authorId/:postId?',
       name: 'author-blog',
-      component: () => import(/* webpackChunkName: "blog" */ './views/BlogFeed')
+      components: {
+        popup: () => import(/* webpackChunkName: "blog" */ './views/BlogPopover')
+      }
     },
     {
       path: '/profile/:id',
@@ -103,8 +108,6 @@ const router = new Router({
 })
 
 router.beforeEach((to, from, next) => {
-  /* DEBUG */
-  console.log(`%c %c to: `, 'background:#ffbb00;color:#000', 'color:#00aaff', to)
   if (to.name === 'login') {
     if (store.state.user) {
       return next(false)
@@ -116,6 +119,22 @@ router.beforeEach((to, from, next) => {
       return next(false)
     }
   }
+  // A "guard" to keep a "shadow" history stack. That
+  // stack can be used to implement a bookmark functionality,
+  // which allows loading posts into modal and navigate through the history.
+  // based on: https://codepen.io/ksurakka/pen/RwwKyPy
+  // We need to defer the execution to get the state key,
+  // it's not yet there (or it can be, but it's a wrong one)
+  setTimeout(() => {
+    const key = history.state && history.state.key
+    if (key) {
+      updateBookmarksHistory(key, to.fullPath)
+    }
+  })
+  next()
+})
+
+router.beforeEach((to, from, next) => {
   next()
 })
 router.afterEach(to => {

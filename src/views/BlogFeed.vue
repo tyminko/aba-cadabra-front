@@ -30,7 +30,9 @@ import ContentWithSidebar from './components/UI/layouts/ContentWithSidebar'
 export default {
   name: 'BlogFeed',
   components: { ContentWithSidebar, BlogSidebar, BlogArticle },
-  props: {},
+  props: {
+    value: { type: Object, default: null }
+  },
 
   data: () => ({
     unsubscribeFirst: null,
@@ -87,10 +89,7 @@ export default {
     this.IntersectionObserver = new IntersectionObserver(entries => {
       const biggest = entries.filter(entry => {
         return entry.intersectionRatio >= 0.5
-      })
-        .sort((a, b) => a.intersectionRatio - b.intersectionRatio)
-      //   // !!! DEBUG !!!
-      // console.log(`%c () %c ((biggest[0] || {}).target || {}).id: `, 'background:#ffbbFF;color:#000', 'color:#00aaff', ((biggest[0] || {}).target || {}).id)
+      }).sort((a, b) => a.intersectionRatio - b.intersectionRatio)
       this.activePostId = ((biggest[0] || {}).target || {}).id || null
     }, options)
   },

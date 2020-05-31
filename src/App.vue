@@ -8,14 +8,10 @@
         <aside-menu @refresh="refresh" />
       </template>
       <template v-slot:content>
-        <router-view :key="$route.fullPath"/>
+        <router-view-wrap/>
       </template>
     </layout-with-push-sidebar>
-    <post-popover
-      v-if="postToOpen"
-      :open="!!postToOpen"
-      :value="postToOpen.value"
-      @close="closePost"/>
+    <router-view name="popup"/>
     <editor
       v-if="user && editorToOpen"
       id="main-editor"
@@ -32,11 +28,11 @@ import LayoutWithPushSidebar from './views/components/UI/layouts/LayoutWithPushS
 import MainHeader from './views/components/MainHeader'
 import Editor from './views/editor/Editor'
 import AsideMenu from './views/menu/AsideMenu'
-import PostPopover from './views/PostPopover'
+import RouterViewWrap from './views/components/RouterViewWrap'
 
 export default {
   name: 'App',
-  components: { PostPopover, AsideMenu, Editor, LayoutWithPushSidebar, MainHeader },
+  components: { RouterViewWrap, AsideMenu, Editor, LayoutWithPushSidebar, MainHeader },
   computed: {
     ...mapState(['requestToLogin', 'user', 'editorToOpen', 'postToOpen']),
     adminOrEditor () {

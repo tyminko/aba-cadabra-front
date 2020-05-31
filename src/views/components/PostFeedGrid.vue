@@ -10,8 +10,7 @@
       <post-cell
         v-for="post in posts"
         :key="post.id"
-        :post="post"
-        @request-to-open="openPostModal(post)">
+        :post="post">
         <template v-slot:quick-edit-button="{cellSize}">
           <popper
             v-if="adminOrEditor"
@@ -64,6 +63,12 @@ export default {
     }
   },
 
+  watch: {
+    $route () {
+      // if (this.$route.params.) {}
+    }
+  },
+
   methods: {
     ...mapActions(['showEditor', 'openPost']),
     openEditor (post) {
@@ -78,6 +83,9 @@ export default {
       if (post.type === 'event') {
 
       }
+      // !!! DEBUG !!!
+      console.log(`%c openPostModal() %c this.$route.path: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.$route.path)
+      window.history.replaceState({}, '', `/${post.type}/${post.id}`)
       this.openPost({ type: post.type, value })
     },
 

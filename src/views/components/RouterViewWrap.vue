@@ -1,0 +1,82 @@
+<template>
+  <router-view :name="name"/>
+</template>
+
+<script>
+export default {
+  // based on https://codepen.io/ksurakka/pen/RwwKyPy
+  name: 'RouterViewWrap',
+  props: {
+    name: { default: 'default' }
+  },
+
+  data: () => ({
+    // "routeMatches" attribute contains true if the last call to $createElement
+    // returned a new component. In general true means that the current
+    // route generates a request to show some component in the wrapped
+    // router view.
+    routeMatches: false
+  }),
+  created () {
+    // Wrap $createElement function
+    const origCreateElement = this.$createElement
+
+    // "lastComponent" variable contains the last component created
+    // by $createElement function. In certain cases this
+    // stored component is returned instead of a new component.
+    let lastComponent
+
+    this.$createElement = (componentType, data) => {
+      if (componentType && (!data || !data.routerView)) {
+        // Seems that it is someone else (than Vue-router) calling
+        // the  "$createElement", use original function as is.
+        return origCreateElement(componentType, data)
+      }
+      // Find a parent router wrapper
+      let parentRouterViewWrap = this.$parent
+      while (parentRouterViewWrap) {
+        if ((((parentRouterViewWrap || {}).constructor || {}).options || {}).name === 'RouterViewWrap') {
+          break
+        }
+        parentRouterViewWrap = parentRouterViewWrap.$parent
+      }
+      const parentRouteMatch = parentRouterViewWrap && parentRouterViewWrap.routeMatches
+
+      if (componentType && (!parentRouterViewWrap || parentRouteMatch)) {
+        // A specific component is requested and the parent router wrapped
+        // does not exists or has a match.
+
+        // Mark that currently this router wrapper has
+        // a matching route, child router wrappers may check this
+        // information to decide what to show.
+        this.routeMatches = true
+      } else {
+        // An empty component is requested.
+
+        // Mark that currently this router wrapper does not have
+        // a matching route, child router wrappers may check this
+        // information to decide what to show.
+        this.routeMatches = false
+
+        // If the parent route wrapper does not have a match,
+        // return previously created component.
+        if (!parentRouteMatch) {
+          // !!! DEBUG !!!
+          console.log(`%c $createElement() %c lastComponent: `, 'background:#ff0000;color:#000', 'color:#00aaff', lastComponent)
+          return lastComponent
+        }
+        // else
+        // The parent router view has a match but empty view
+        // is requested for this child router view. Let's assume
+        // that this request is OK, continue and create and return
+        // an empty component.
+      }
+
+      lastComponent = origCreateElement(componentType, data)
+      // !!! DEBUG !!!
+      console.log(`%c $createElement() %c lastComponent: `, 'background:#00bbff;color:#000', 'color:#00aaff', lastComponent)
+      return lastComponent
+    }
+  }
+}
+</script>
