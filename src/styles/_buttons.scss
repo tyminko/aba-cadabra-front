@@ -1,6 +1,7 @@
 //noinspection CssInvalidAtRule
 button, .button {
   @apply relative h-3/4base flex items-center justify-center px-base;
+  cursor: pointer;
 
   &:focus {
     @apply text-aba-blue;

@@ -5,7 +5,8 @@
     <header class="flex-grow-0">
       <div class="flex items-center relative">
         <div class="badge">
-          {{typeLabel}}
+          <router-link v-if="routerTypeLink" :to="routerTypeLink">{{typeLabel}}</router-link>
+          <span v-else>{{typeLabel}}</span>
           <div v-if="post.status !== 'public'" class="status">
             {{post.status}}
           </div>
@@ -59,6 +60,13 @@ export default {
       } else {
         return { name: 'event', params: { id: this.post.id } }
       }
+    },
+    routerTypeLink () {
+      if (!this.post) return null
+      if (this.post.partOfProgramme) {
+        return { name: 'programme', params: { id: this.post.partOfProgramme.programmeId } }
+      }
+      return null
     },
     typeLabel () {
       if (!this.post) return null
@@ -149,7 +157,7 @@ export default {
       border-bottom: 1px solid $color-aba-blue;
     }
     &.draft {
-      border-bottom: 1px dashed #9c434e;
+      border-bottom: 1px dashed $color-aba-red;
       /*& > * {opacity: 0.5;}*/
       & img {opacity: 0.5;}
       & * {
@@ -163,7 +171,7 @@ export default {
         }
       }
       .status {
-        background: #9c434e;
+        background: $color-aba-red;
       }
     }
 
