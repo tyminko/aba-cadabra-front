@@ -1,8 +1,8 @@
 <template>
   <div class="main-header">
     <nav>
-      <router-link :to="{name: 'home'}" class="nav-item">
-        <span>ABA</span>
+      <router-link :to="{name: 'home'}" class="nav-item flex justify-center">
+        <a-b-a-logo />
       </router-link>
       <template v-if="showPostFilters">
       </template>
@@ -14,10 +14,11 @@
 <script>
 import { mapState, mapActions } from 'vuex'
 import UserMenu from './UserMenu'
+import ABALogo from './ABALogo'
 
 export default {
   name: 'MainHeader',
-  components: { UserMenu },
+  components: { ABALogo, UserMenu },
   data: () => ({}),
 
   computed: {
