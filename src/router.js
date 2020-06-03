@@ -17,6 +17,24 @@ const router = new Router({
       component: Home
     },
     {
+      path: '/internal',
+      name: 'internal',
+      meta: { authorisation: true },
+      component: () => import(/* webpackChunkName: "programme" */ './views/PostFeedInternal')
+    },
+    {
+      path: '/drafts',
+      name: 'drafts',
+      meta: { authorisation: true },
+      component: () => import(/* webpackChunkName: "programme" */ './views/PostFeedDrafts')
+    },
+    {
+      path: '/trash',
+      name: 'trash',
+      meta: { authorisation: true },
+      component: () => import(/* webpackChunkName: "programme" */ './views/PostFeedTrash')
+    },
+    {
       path: '/in/:filter',
       name: 'home-filtered',
       meta: { restricted: true },
@@ -113,10 +131,14 @@ router.beforeEach((to, from, next) => {
       return next(false)
     }
   } else if (to.matched.some(record => record.meta.restricted)) {
-    if (!store.state.user) {
+    if (store.state.user === null) {
       return next({ name: 'login' })
     } else if (store.state.user.role !== 'admin') {
       return next(false)
+    }
+  } else if (to.matched.some(record => record.meta.authorisation)) {
+    if (store.state.user === null) {
+      return next({ name: 'login' })
     }
   }
   // A "guard" to keep a "shadow" history stack. That

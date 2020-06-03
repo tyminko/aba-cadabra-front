@@ -27,7 +27,9 @@ export default new Vuex.Store({
     requestToLogin: false,
     useTouch: false,
     editorToOpen: null, // could be {type:string, value?:object, onSaved?:function}
-    postToOpen: null // could be {type:string, value?:object|string}
+    postToOpen: null, // could be {type:string, value?:object|string}
+    showDraftsInGrid: false,
+    viewCanToggleDrafts: false
   },
   mutations: {
     UPDATE_MENU (state, menu) {
@@ -53,6 +55,12 @@ export default new Vuex.Store({
     },
     SET_POST_TO_OPEN (state, value) {
       state.postToOpen = value
+    },
+    TOGGLE_DRAFTS_IN_GRID (state) {
+      state.showDraftsInGrid = !state.showDraftsInGrid
+    },
+    SET_VIEW_CAN_TOGGLE_DRAFTS (state, val) {
+      state.viewCanToggleDrafts = val
     }
   },
   actions: {
@@ -100,6 +108,14 @@ export default new Vuex.Store({
 
     setUseTouch ({ commit }) {
       commit('SET_USE_TOUCH')
+    },
+
+    toggleDraftsInGrid ({ commit }) {
+      commit('TOGGLE_DRAFTS_IN_GRID')
+    },
+
+    setViewCanToggleDrafts ({ commit }, val) {
+      commit('SET_VIEW_CAN_TOGGLE_DRAFTS', val)
     },
 
     updateMenuSubscription: ({ commit, state }) => {

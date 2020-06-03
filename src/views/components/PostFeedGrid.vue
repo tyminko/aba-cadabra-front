@@ -18,7 +18,7 @@
             class="ml-auto">
             <template v-slot:reference="{show}">
               <span
-                class="edit-button badge w-2/3base h-2/3base text-gray-600 hover:text-aba-blue"
+                class="button edit-button compact w-2/3base h-2/3base text-gray-600 hover:text-aba-blue"
                 :class="{active:show}">
                 <i class="material-icons text-base cursor-pointer">edit</i>
               </span>
@@ -60,12 +60,6 @@ export default {
     ...mapState(['user']),
     adminOrEditor () {
       return !!this.user && (this.user.role === 'admin' || this.user.role === 'editor')
-    }
-  },
-
-  watch: {
-    $route () {
-      // if (this.$route.params.) {}
     }
   },
 

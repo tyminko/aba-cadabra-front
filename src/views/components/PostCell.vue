@@ -1,11 +1,15 @@
 <template>
   <div
-    :class="cellSize"
-    class="post-cell cell break-words flex flex-col">
+    class="post-cell cell break-words flex flex-col"
+    :class="[cellSize, post.status]">
     <header class="flex-grow-0">
-      <div class="flex items-center">
-        <div class="badge mr-2 bg-gray-200 whitespace-no-wrap truncate">{{typeLabel}}</div>
-        <!--<span class="text-xs">{{post.id}}</span>-->
+      <div class="flex items-center relative">
+        <div class="badge">
+          {{typeLabel}}
+          <div v-if="post.status !== 'public'" class="status">
+            {{post.status}}
+          </div>
+        </div>
         <slot name="quick-edit-button" :cell-size="cellSize"/>
       </div>
     </header>
@@ -70,7 +74,7 @@ export default {
     },
     title () {
       if (this.post.partOfProgramme && this.post.countNumber) {
-        return `${this.post.partOfProgramme.singlePostLabel} # ${this.post.countNumber}`
+        return `${this.post.partOfProgramme.singlePostLabel} #${this.post.countNumber}`
       }
       return this.post.title
     },
@@ -139,6 +143,30 @@ export default {
     border-bottom: 1px solid #000;
     hyphens: auto;
 
+    &.internal {
+      //
+      //box-shadow: 0 0 0 $base-padding /3 $color-aba-blue;
+      border-bottom: 1px solid $color-aba-blue;
+    }
+    &.draft {
+      border-bottom: 1px dashed #9c434e;
+      /*& > * {opacity: 0.5;}*/
+      & img {opacity: 0.5;}
+      & * {
+        font-style: italic !important;
+      }
+
+      a {
+        @apply text-gray-500;
+        &:hover {
+          @apply text-aba-red no-underline;
+        }
+      }
+      .status {
+        background: #9c434e;
+      }
+    }
+
     h1, h2, .h2 {
       font-size: $h3;
       margin: 0;
@@ -156,7 +184,26 @@ export default {
       text-transform: capitalize;
     }
     .badge {
-      @apply flex items-center justify-center px-sm h-1/2base text-xs capitalize;
+      @apply px-sm py-xs text-xs capitalize truncate bg-gray-200;
+      border-radius: 1px;
+      min-width: 0;
+    }
+
+    .status {
+      @apply text-xs;
+      position: absolute;
+      white-space: nowrap;
+      text-transform: capitalize;
+      padding: 0.18rem 0.45rem;
+      bottom: calc(100% - 7px);
+      left: -5px;
+      font-size: 87%;
+      background: $color-aba-blue;
+      color: white;
+      font-weight: lighter;
+      border-radius: 1rem;
+      z-index: 100;
+      transform: rotate(-1.5deg);
     }
 
     .edit-button:not(.active) {

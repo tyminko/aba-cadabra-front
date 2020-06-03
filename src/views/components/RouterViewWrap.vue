@@ -61,8 +61,6 @@ export default {
         // If the parent route wrapper does not have a match,
         // return previously created component.
         if (!parentRouteMatch) {
-          // !!! DEBUG !!!
-          console.log(`%c $createElement() %c lastComponent: `, 'background:#ff0000;color:#000', 'color:#00aaff', lastComponent)
           return lastComponent
         }
         // else
@@ -73,8 +71,6 @@ export default {
       }
 
       lastComponent = origCreateElement(componentType, data)
-      // !!! DEBUG !!!
-      console.log(`%c $createElement() %c lastComponent: `, 'background:#00bbff;color:#000', 'color:#00aaff', lastComponent)
       return lastComponent
     }
   }

@@ -60,8 +60,16 @@ export default {
 <style lang="scss">
   @import "https://fonts.googleapis.com/icon?family=Material+Icons";
   @import "./styles/main.scss";
+  @import "./styles/vars";
 
   #app {
     margin-top: $base-size;
+  }
+
+  .post-feed {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - #{$base-size * 2});
   }
 </style>

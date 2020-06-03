@@ -3,7 +3,7 @@
     <template v-slot:main>
       <h1 class="text-block">Blog by {{authorName}}</h1>
       <blog-article
-        v-for="post in feed"
+        v-for="post in posts"
         :key="post.id"
         :id="post.id"
         ref="posts"
@@ -22,13 +22,16 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
 import { db } from '../lib/firebase'
+import FeedSubscription from '../mixins/feed-subscription'
 import BlogArticle from './components/BlogArticle'
 import BlogSidebar from './BlogSidebar'
 import ContentWithSidebar from './components/UI/layouts/ContentWithSidebar'
 
 export default {
   name: 'BlogFeed',
+  mixins: [FeedSubscription],
   components: { ContentWithSidebar, BlogSidebar, BlogArticle },
   props: {
     value: { type: Object, default: null }
@@ -36,14 +39,25 @@ export default {
 
   data: () => ({
     unsubscribeFirst: null,
-    unsubscribe: null,
+    subscriptionPostType: 'post',
     feed: {},
     IntersectionObserver: null,
-    authorId: null,
     activePostId: null
   }),
 
   computed: {
+    ...mapState(['user']),
+
+    adminOrEditor () {
+      return !!this.user && (this.user.role === 'admin' || this.user.role === 'editor')
+    },
+
+    authorId () { return this.$route.params.authorId },
+
+    posts () {
+      return Object.values(this.feed).sort((a, b) => b.date - a.date)
+    },
+
     author () {
       const firstPost = Object.values(this.feed || {})[0]
       if (!firstPost) return null
@@ -78,9 +92,7 @@ export default {
   },
 
   created () {
-    // this.getFirstPost()
-    this.subscribe()
-
+    this.setViewCanToggleDrafts(true)
     let options = {
       root: null,
       rootMargin: '0px',
@@ -95,18 +107,20 @@ export default {
   },
 
   watch: {
-    $route () {
+    feed () {
       this.onPostsLoaded()
     }
   },
+
+  beforeDestroy () { this.setViewCanToggleDrafts(false) },
 
   methods: {
     async onPostsLoaded () {
       await this.$nextTick()
       // !!! DEBUG !!!
       console.log(`%c onPostsLoaded() %c this.$refs.posts: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.$refs.posts)
-      this.IntersectionObserver.disconnect()
-      this.$refs.posts.forEach(p => {
+      if (this.IntersectionObserver) this.IntersectionObserver.disconnect()
+      ;(this.$refs.posts || []).forEach(p => {
         this.IntersectionObserver.observe(p.$el)
       })
       const postId = this.$route.params.postId
@@ -157,47 +171,6 @@ export default {
             console.error('Blog subscribe:', err)
           })
       }
-    },
-    subscribe () {
-      const authorId = this.$route.params.authorId
-      if (authorId) {
-        this.unsubscribe = db.collection('posts')
-          .where('author.uid', '==', authorId)
-          .where('type', '==', 'post')
-          .where('status', '==', 'public')
-          .orderBy('date', 'desc')
-          .onSnapshot({
-            next: querySnapshot => {
-              querySnapshot.docChanges().forEach(docChange => {
-                const doc = docChange.doc
-                switch (docChange.type) {
-                  case 'added':
-                  case 'modified':
-                    this.$set(this.feed, doc.id, { ...doc.data(), id: doc.id })
-                    break
-                  case 'removed':
-                    this.$delete(this.feed, doc.id)
-                }
-              })
-              // !!! DEBUG !!!
-              console.log(`%c next() %c Object.keys(this.feed): `, 'background:#ffbb00;color:#000', 'color:#00aaff', Object.keys(this.feed))
-              this.onPostsLoaded()
-            },
-            error: err => {
-              console.error('Blog subscribe:', err)
-            }
-          })
-      }
-    }
-  },
-  beforeDestroy () {
-    // !!! DEBUG !!!
-    console.log(`%c beforeDestroy() %c this.unsubscribe: `, 'background:#ff0000;color:#000', 'color:#00aaff', this.unsubscribe)
-    if (typeof this.unsubscribe === 'function') {
-      this.unsubscribe()
-    }
-    if (typeof this.unsubscribeFirst === 'function') {
-      this.unsubscribeFirst()
     }
   }
 }

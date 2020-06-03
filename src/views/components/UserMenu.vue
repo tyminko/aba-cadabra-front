@@ -1,5 +1,8 @@
 <template>
-  <div class="user-things flex">
+  <div class="user-things flex items-center">
+    <a v-if="viewCanToggleDrafts" @click.prevent="toggleDraftsInGrid" class="ml-auto nav-item select-none text-xs">
+      <span>{{messageToggleDrafts}}</span>
+    </a>
     <sliding-panel v-if="user"  ref="menu" class="user-menu">
       <template v-slot:trigger="{on, open}">
         <button class="user-menu-button mr-0" @click="on">
@@ -8,7 +11,7 @@
       </template>
       <div class="user-actions-wrapper">
         <ul class="user-actions">
-          <li v-if="adminOrEditor" class="menu-cell nav-item cursor-pointer">
+          <li v-if="contributor" class="menu-cell nav-item cursor-pointer">
             <a @click.prevent="openEditor('post')">Add Blog Post</a>
           </li>
           <li v-if="adminOrEditor" class="menu-cell nav-item cursor-pointer">
@@ -39,15 +42,18 @@
           <router-link v-if="admin" :to="{name: 'users'}" class="menu-cell nav-item">
             Users
           </router-link>
-<!--          <router-link v-if="admin" :to="{name: 'wp-users'}" class="menu-cell nav-item">-->
-<!--            WP Users-->
-<!--          </router-link>-->
-<!--          <router-link v-if="admin" :to="{name: 'wp-posts'}" class="menu-cell nav-item">-->
-<!--            WP Posts-->
-<!--          </router-link>-->
-<!--          <router-link v-if="admin" :to="{name: 'wp-attachments'}" class="menu-cell nav-item">-->
-<!--            WP Attachments-->
-<!--          </router-link>-->
+          <router-link :to="{name: 'internal'}" class="menu-cell nav-item">
+            <span>Internal Posts</span>
+          </router-link>
+          <router-link :to="{name: 'home-filtered', params: {filter: 'my'}}" class="menu-cell nav-item">
+            <span>My Posts</span>
+          </router-link>
+          <router-link :to="{name: 'drafts'}" class="menu-cell nav-item">
+            <span>Drafts</span>
+          </router-link>
+          <router-link :to="{name: 'trash'}" class="menu-cell nav-item">
+            <span>Trash</span>
+          </router-link>
           <a href="#" class="menu-cell nav-item justify-end" @click.prevent="logOut">
             <span class="whitespace-no-wrap">Log Out</span>
           </a>
@@ -70,12 +76,18 @@ export default {
   }),
 
   computed: {
-    ...mapState(['user']),
+    ...mapState(['user', 'viewCanToggleDrafts', 'showDraftsInGrid']),
     admin () {
       return this.user && this.user.role === 'admin'
     },
     adminOrEditor () {
       return this.user && (this.user.role === 'admin' || this.user.role === 'editor')
+    },
+    contributor () {
+      return this.user && (this.user.role === 'contributor' || this.adminOrEditor)
+    },
+    messageToggleDrafts () {
+      return this.showDraftsInGrid ? 'Hide Drafts' : `Show ${!this.adminOrEditor ? 'Mine ' : ''}Drafts`
     }
   },
 
@@ -87,7 +99,7 @@ export default {
   },
 
   methods: {
-    ...mapActions(['logOut', 'showEditor', 'updateUser']),
+    ...mapActions(['logOut', 'showEditor', 'updateUser', 'toggleDraftsInGrid']),
     openEditor (type, value) {
       this.showEditor({ type, value })
     },

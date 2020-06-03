@@ -17,27 +17,20 @@
 </template>
 
 <script>
-import { getBookmark, gotoBookmark } from '../../../lib/bookmarks'
+import { gotoBookmark } from '../../../lib/bookmarks'
 import { bodyScrollGuard } from '../../../lib/control-body-scroll'
 import clickOutside from 'vue-click-outside'
 
 export default {
   name: 'PopoverModalPost',
   directives: { clickOutside },
-
+  props: {
+    bookmark: null
+  },
   data: () => ({
     allowClickOutside: true,
-    bookmark: null,
     open: true
   }),
-
-  beforeRouteEnter (to, from, next) {
-    next(c => {
-      /* DEBUG */
-      console.log('%c %c c: ', 'background:#ffbb00;color:#000', 'color:#00aaff', c)
-      c.bookmark = getBookmark()
-    })
-  },
 
   created () {
     window.addEventListener('keydown', e => {
