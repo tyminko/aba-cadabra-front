@@ -31,8 +31,12 @@ declare interface PostAttachment {
   pointOfInterest?: { x:number, y:number },
 }
 
-declare interface PostVideoAttachment extends PostAttachment {
+declare interface PostAVAttachment extends PostAttachment {
   duration: number
+}
+
+declare interface PostEmbedAttachment extends PostAttachment {
+  html: string
 }
 
 declare interface RawAttachment extends PostAttachment {
@@ -69,6 +73,17 @@ declare interface VimeoEmbedData {
   thumbnail_width: number,
   video_id: number,
   width: number,
+}
+
+declare interface MixcloudEmbedData {
+  image: string, // url
+  author_name: string,
+  height: number|string,
+  title: string,
+  url: string, // 'https://www.mixcloud.com/spartacus/party-time/',
+  html: string,
+  width: number|string,
+  version: string
 }
 
 declare function upload(

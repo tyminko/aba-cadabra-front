@@ -2,6 +2,7 @@
   <div ref="box"
        class="attachment-editor-cell border-white border"
        :class="{err:item.err}">
+    <div v-if="item.type==='embed/mixcloud'" v-html="item.html" />
     <vimeo-player
       v-if="item.type==='embed/vimeo'"
       v-show="playVideo"
@@ -143,13 +144,6 @@ export default {
       }
       return null
     }
-  },
-
-  mounted () {
-    // window.addEventListener('keydown', this.onEsc)
-    // addEventListener('keypress', (e) => {
-    //   if ()
-    // })
   },
 
   methods: {

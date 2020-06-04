@@ -57,7 +57,6 @@ export default {
 
   /**
    * @param {string} url
-   *
    * @return {Promise<HTMLImageElement>}
    */
   imageFromUrl (url) {
@@ -183,6 +182,15 @@ export default {
       canvas.height = h
     }
     return canvas
+  },
+
+  /**
+   * @param {string} url
+   * @return {Promise<{w: number, h: number}>}
+   */
+  async imageDimensionsFromUrl (url) {
+    const image = await this.imageFromUrl(url)
+    return { w: image.naturalWidth, h: image.naturalHeight }
   },
 
   /**

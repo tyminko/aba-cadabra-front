@@ -105,7 +105,7 @@ export default {
     .content-box {
       position: relative;
       height: calc(100vh - (#{$base-padding} - #{$border-thick-w}) * 2);
-      border: $border-thick-w solid #ebeceb;
+      border: $border-thick-w solid #888888;
 
       & > header {
         position: absolute;

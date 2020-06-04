@@ -83,7 +83,7 @@ import AttachmentEditorCell from './AttachmentEditorCell'
 import Dropzone from '../../components/UI/Dropzone'
 import PxInput from '../../components/UI/inputs/PxInput'
 import vimeo from '../../../lib/vimeo'
-import simpleId from '../../../lib/simpleId'
+import mixcloud from '../../../lib/mixcloud'
 
 export default {
   name: 'AttachmentsEditor',
@@ -227,9 +227,10 @@ export default {
       await this.uploadNewAttachments()
       await this.deleteMarkedAttachments()
       return this.attachments.reduce((res, item) => {
-        const { id, name, caption, order, type, srcSet, pointOfInterest } = item
+        const { id, name, html, caption, order, type, srcSet, pointOfInterest } = item
         res[id] = { order, type, srcSet }
-        if (name) res[id].caption = name
+        if (name) res[id].name = name
+        if (html) res[id].html = html
         if (caption) res[id].caption = caption
         if (pointOfInterest) res[id].caption = pointOfInterest
         return res
@@ -287,7 +288,7 @@ export default {
 
     /**
      * @param url
-     * @return {Promise<PostVideoAttachment|never>}
+     * @return {Promise<PostAVAttachment|PostEmbedAttachment|never>}
      */
     async makeAttachmentFromUrl (url) {
       if (!url) {
@@ -295,26 +296,11 @@ export default {
       }
       if (vimeo.isVimeoVideoUrl(url)) {
         const vimeoEmbed = await vimeo.getVimeoVideoInfo(url)
-        return {
-          id: simpleId(),
-          name: vimeoEmbed.video_id,
-          type: 'embed/vimeo',
-          duration: vimeoEmbed.duration,
-          srcSet: {
-            full: {
-              url: vimeoEmbed.thumbnail_url,
-              dimensions: { w: vimeoEmbed.thumbnail_width, h: vimeoEmbed.thumbnail_height }
-            },
-            original: {
-              url: url,
-              dimensions: { w: vimeoEmbed.width, h: vimeoEmbed.height }
-            }
-          },
-          order: null,
-          caption: vimeoEmbed.description,
-          pointOfInterest: null,
-          err: null
-        }
+        return vimeo.castEmbedToAttachment(url, vimeoEmbed)
+      }
+      if (mixcloud.isMixCloudUrl(url)) {
+        const mixcloudEmbed = await mixcloud.getMixCloudUrlInfo(url)
+        return mixcloud.castEmbedToAttachment(mixcloudEmbed)
       }
     }
   }

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import simpleId from './simpleId'
 
 export default {
   /**
@@ -37,5 +38,33 @@ export default {
     }).then(response => {
       return response.data
     })
+  },
+
+  /**
+   * @param {string} url
+   * @param {VimeoEmbedData} vimeoEmbed
+   * @return {PostAVAttachment}
+   */
+  castEmbedToAttachment (url, vimeoEmbed) {
+    return {
+      id: simpleId(),
+      name: vimeoEmbed.video_id,
+      type: 'embed/vimeo',
+      duration: vimeoEmbed.duration,
+      srcSet: {
+        full: {
+          url: vimeoEmbed.thumbnail_url,
+          dimensions: { w: vimeoEmbed.thumbnail_width, h: vimeoEmbed.thumbnail_height }
+        },
+        original: {
+          url,
+          dimensions: { w: vimeoEmbed.width, h: vimeoEmbed.height }
+        }
+      },
+      order: null,
+      caption: vimeoEmbed.description,
+      pointOfInterest: null,
+      err: null
+    }
   }
 }

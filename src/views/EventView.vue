@@ -29,7 +29,10 @@
       </div>
       <div v-for="item in attachments" :key="item.id" class="attachment mt-base mb-sm">
         <div class="attachment-box relative">
+          <vimeo-player v-if="item.type === 'embed/vimeo'" :value="item" />
+          <div v-else-if="item.type === 'embed/mixcloud'" v-html="item.html"/>
           <img
+            v-else
             :src="item.url"
             :alt="item.caption"
             :width="(item.dimensions || {}).w"
@@ -69,10 +72,11 @@ import CreditsString from './components/CreditsString'
 import EventSidebar from './EventSidebar'
 import ReservationFormPopover from './components/forms/ReservationFormPopover'
 import ReservationConfirm from './components/forms/ReservationConfirm'
+import VimeoPlayer from './components/VimeoPlayer'
 
 export default {
   name: 'EventView',
-  components: { ReservationConfirm, ReservationFormPopover, EventSidebar, CreditsString, ContentWithSidebar },
+  components: { ReservationConfirm, ReservationFormPopover, EventSidebar, CreditsString, ContentWithSidebar, VimeoPlayer },
   props: {
     value: { type: Object, default: null }
   },
@@ -139,12 +143,23 @@ export default {
     attachments () {
       const count = Object.keys((this.post || {}).attachments || {}).length
       if (!count) return []
-      return Object.entries(this.post.attachments).reduce((res, [id, item]) => {
-        const { preview, full, original } = item.srcSet
-        const src = full || (preview || {}).size > original.size ? preview : original
-        res.push({ id, type: item.type, url: src.url, dimensions: src.dimensions, caption: item.caption })
-        return res
-      }, [])
+      return Object.entries(this.post.attachments)
+        .sort((a, b) => a.order - b.order)
+        .reduce((res, [id, item]) => {
+          const { preview, full, original } = item.srcSet
+          let src
+          if (item.type === 'embed/vimeo') {
+            src = full
+            res.push({ id, type: item.type, vimeoId: item.name, url: src.url, dimensions: src.dimensions, caption: item.caption })
+          } else if (item.type === 'embed/mixcloud') {
+            src = full
+            res.push({ id, type: item.type, html: item.html, url: src.url, dimensions: src.dimensions, caption: item.caption })
+          } else {
+            src = full || (preview || {}).size > original.size ? preview : original
+            res.push({ id, type: item.type, url: src.url, dimensions: src.dimensions, caption: item.caption })
+          }
+          return res
+        }, [])
     },
 
     hosts () {
