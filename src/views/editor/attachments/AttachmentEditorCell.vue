@@ -2,7 +2,6 @@
   <div ref="box"
        class="attachment-editor-cell border-white border"
        :class="{err:item.err}">
-    <div v-if="item.type==='embed/mixcloud'" v-html="item.html" />
     <vimeo-player
       v-if="item.type==='embed/vimeo'"
       v-show="playVideo"
@@ -26,6 +25,10 @@
       object-position="center"
       class="w-full h-full"
       @load="onImageLoad">
+      <div
+        v-if="item.type==='embed/mixcloud'"
+        class="audio-player absolute w-full z-50"
+        v-html="item.html" />
       <div class="left-buttons absolute flex items-center h-3/4base top-0 left-0">
         <button
           v-if="!noPoster"

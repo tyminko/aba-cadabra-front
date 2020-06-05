@@ -13,7 +13,7 @@ module.exports = {
         'aba-blue-dark': '#001776',
         'aba-blue-semi': 'rgba(0,61,255,0.44)',
         'shadow': 'rgba(0,0,0,0.2)',
-        'milk': 'rgba(255,255,255,0.5)',
+        'milk': 'rgba(255,255,255,0.8)',
         gray: {
           100: '#fafafa',
           200: '#e6e6e6',

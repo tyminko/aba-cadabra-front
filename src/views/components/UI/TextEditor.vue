@@ -5,31 +5,24 @@
         {{labelText}}
       </span>
     </label>
-    <editor-menu-bubble
+    <editor-menu-bar
       ref="menu-host"
       :editor="editor"
-      :keep-in-bounds="false"
       v-slot="{ commands, isActive, getMarkAttrs, menu }">
-      <popper
+      <div
         ref="menu"
-        :trigger="menu.isActive"
-        :position="convertMenuToPopperPosition(menu)"
-        :arrow-size="8"
-        enable-quick-reset
-        placement="cursor-top"
-        boundaries-selector="body"
-        class="menu-bubble">
+        class="menu-bar">
         <div ref="menu-content" :id="menuId" class="menu flex items-center">
-          <button :class="{ active: isActive.bold() }" @click="commands.bold">
-            <i class="material-icons text-xl text-gray-100">format_bold</i>
+          <button :class="{ active: isActive.bold() }" @click.prevent="commands.bold">
+            <i class="material-icons">format_bold</i>
           </button>
-          <button :class="{ active: isActive.italic() }" @click="commands.italic">
-            <i class="material-icons text-xl text-gray-100">format_italic</i>
+          <button :class="{ active: isActive.italic() }" @click.prevent="commands.italic">
+            <i class="material-icons">format_italic</i>
           </button>
 
           <form
             v-if="linkMenuIsActive"
-            class="flex items-center pl-sm overflow-hidden"
+            class="flex items-center pl-sm overflow-hidden bg-milk"
             @submit.prevent="setLinkUrl(commands.link, linkUrl)">
             <input-flex
               ref="linkInput"
@@ -38,25 +31,25 @@
               class="bg-transparent text-sm italic placeholder-gray-300 truncate"
               comfort-zone="5"
               @keydown.esc="hideLinkMenu"/>
-            <button @click="setLinkUrl(commands.link, linkUrl)">
-              <i class="material-icons text-xl text-gray-100">done</i>
+            <button class="compact" @click.prevent="setLinkUrl(commands.link, linkUrl)">
+              <i class="material-icons">done</i>
             </button>
           </form>
-          <button v-else :class="{ active: isActive.link() }" @click="showLinkMenu(getMarkAttrs('link'))">
+          <button v-else :class="{ active: isActive.link() }" @click.prevent="showLinkMenu(getMarkAttrs('link'))">
             <i class="material-icons">link</i>
           </button>
 
           <template v-if="isActive.link()">
-            <button @click="setLinkUrl(commands.link, null)">
+            <button @click.prevent="setLinkUrl(commands.link, null)">
               <i class="material-icons">link_off</i>
             </button>
-            <button @click="goToLink(getMarkAttrs('link'))">
+            <button @click.prevent="goToLink(getMarkAttrs('link'))">
               <i class="material-icons">launch</i>
             </button>
           </template>
         </div>
-      </popper>
-    </editor-menu-bubble>
+      </div>
+    </editor-menu-bar>
     <editor-content
       ref="editor-content"
       :editor="editor"
@@ -66,18 +59,17 @@
 </template>
 
 <script>
-import { Editor, EditorContent, EditorMenuBubble } from 'tiptap'
+import { Editor, EditorContent, EditorMenuBar } from 'tiptap'
 import { Bold, Italic, Link, History, Placeholder } from 'tiptap-extensions'
 import simpleID from '../../../lib/simpleId'
 import InputFlex from './inputs/InputFlex'
-import Popper from './Popper.js'
 import inputAutoWidth from 'vue-input-autowidth'
 import ClickOutside from 'vue-click-outside'
 
 export default {
   name: 'TextEditor',
   directives: { ClickOutside, inputAutoWidth },
-  components: { EditorContent, EditorMenuBubble, Popper, InputFlex },
+  components: { EditorContent, EditorMenuBar, InputFlex },
   props: {
     value: String,
     label: String,
@@ -148,9 +140,9 @@ export default {
 
   mounted () {
     window.addEventListener('keydown', this.onEsc)
-    this.getScrollableParents(this.$refs['menu'].$el, []).forEach(el => {
-      el.addEventListener('scroll', this.hideMenu)
-    })
+    // this.getScrollableParents(this.$refs['menu'].$el, []).forEach(el => {
+    //   el.addEventListener('scroll', this.hideMenu)
+    // })
   },
 
   watch: {
@@ -277,6 +269,30 @@ export default {
         outline: none;
       }
     }
+    .menu-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      /*width: max-content;*/
+      @apply bg-milk;
+    }
+    .menu {
+      @apply py-xs pt-base pr-base bg-milk;
+      button {
+        @apply w-1/2base h-1/2base border-r border-gray-400 rounded-none bg-transparent;
+        &:last-child {
+          border: none;
+        }
+        i {
+          @apply  text-xl text-gray-900;
+        }
+        &.active {
+          i {
+            @apply  text-xl text-aba-blue;
+          }
+        }
+      }
+    }
   }
   .menu-bubble {
     --popper-bg-color: #3e4b78;
@@ -286,20 +302,6 @@ export default {
     .popper {
       padding: 0;
       color: #fff;
-    }
-
-    .menu {
-      @apply py-xs;
-
-      button {
-        @apply w-1/2base h-1/2base border-r border-gray-400 rounded-none bg-transparent;
-        &:last-child {
-          border: none;
-        }
-        i {
-          @apply  text-xl text-gray-100;
-        }
-      }
     }
 
   }
