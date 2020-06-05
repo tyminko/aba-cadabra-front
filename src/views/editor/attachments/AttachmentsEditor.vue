@@ -264,7 +264,7 @@ export default {
         this.attachments = Object.entries(inputAttachments).reduce((res, [id, value]) => {
           res.push({ ...value, id })
           return res
-        }, [])
+        }, []).sort((a, b) => a.order - b.order)
       }
       this.updateAttachmentsOrder()
     },
