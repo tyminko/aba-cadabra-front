@@ -2,11 +2,11 @@
   <transition name="fade">
     <div v-if="open"
          class="popover-modal modal-post">
-      <div class="modal-shadow" @click="requestClose"/>
+      <div class="modal-shadow" @click="close"/>
       <div class="content-box bg-white rounded-sm">
         <header class="flex h-base items-center pl-base">
           <slot name="header" />
-          <button class="w-base h-base ml-auto" @click="requestClose">
+          <button class="w-base h-base ml-auto" @click="close">
             <i class="material-icons">close</i>
           </button>
         </header>
@@ -36,7 +36,7 @@ export default {
     window.addEventListener('keydown', e => {
       if (e.key === 'Escape' || e.keyCode === 27) {
         this.$emit('esc', e)
-        this.requestClose()
+        this.close()
       }
     })
   },
@@ -54,7 +54,7 @@ export default {
   },
 
   methods: {
-    requestClose () {
+    close () {
       if (this.open && this.allowClickOutside) {
         this.open = false
         setTimeout(() => {

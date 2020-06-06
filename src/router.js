@@ -67,7 +67,9 @@ const router = new Router({
     {
       path: '/profile/:id',
       name: 'profile',
-      component: () => import(/* webpackChunkName: "blog" */ './views/ProfileView')
+      components: {
+        popup: () => import(/* webpackChunkName: "blog" */ './views/ProfilePopover')
+      }
     },
     {
       path: '/about',
@@ -150,7 +152,7 @@ router.beforeEach((to, from, next) => {
   setTimeout(() => {
     const key = history.state && history.state.key
     if (key) {
-      updateBookmarksHistory(key, to.fullPath)
+      updateBookmarksHistory(key, to.fullPath, (from || {}).fullPath)
     }
   })
   next()

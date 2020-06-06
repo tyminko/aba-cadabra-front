@@ -24,15 +24,16 @@ export function clearForwardHistory () {
  * @return {number}
  */
 export function add (pathInfo) {
-  pathStack.push(pathInfo)
+  pathStack = [...pathStack, pathInfo]
   return pathStack.length - 1
 }
 
 /**
  * @param {string} key
  * @param {string} path
+ * @param {string} fromPath
  */
-export function updateBookmarksHistory (key, path) {
+export function updateBookmarksHistory (key, path, fromPath) {
   if (!key) return
   const index = findHistoryKey(key)
   if (index === -1) {
@@ -42,7 +43,7 @@ export function updateBookmarksHistory (key, path) {
     if (currentPosition >= 0) {
       clearForwardHistory()
     }
-    currentPosition = add({ key, path })
+    currentPosition = add({ key, path, fromPath })
   } else {
     // Key exists already, we are moving in history,
     // just update the position
@@ -50,10 +51,14 @@ export function updateBookmarksHistory (key, path) {
   }
 }
 
-// Return a bookmark information that can be then used to
-// navigate back to that location
-export function getBookmark () {
-  return pathStack[currentPosition]
+/**
+ * Return a bookmark information that can be then used to navigate back to that location
+ * @param {string} path
+ * @return {{ key:string, path:string, fromPath:string }}
+ */
+export function getBookmarkForPath (path) {
+  const current = pathStack[currentPosition] || {}
+  return (current.path !== path && current.fromPath !== path) ? current : null
 }
 
 // Goes back/forward in history by given bookmark

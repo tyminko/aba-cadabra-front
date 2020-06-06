@@ -1,9 +1,10 @@
 <template>
   <div class="profile-cell">
-    <h2>{{displayName}}</h2>
-    <div class="desc">{{positionStr}}</div>
-<!--    <img v-if="thumbnailUrl" :src="thumbnailUrl" class="mb-sm">-->
-    <div class="excerpt mt-sm text-sm">{{description}}...</div>
+    <router-link :to="{name: 'profile', params: {id: this.profile.id}}"><h2>{{displayName}}</h2>
+      <div class="desc">{{positionStr}}</div>
+      <!--    <img v-if="thumbnailUrl" :src="thumbnailUrl" class="mb-sm">-->
+      <div class="excerpt mt-sm text-sm">{{description}}...</div>
+    </router-link>
   </div>
 </template>
 

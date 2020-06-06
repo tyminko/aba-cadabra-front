@@ -1,20 +1,21 @@
 <template>
   <popover-modal-post :bookmark="bookmark">
-      <event-view/>
+    <profile-view/>
   </popover-modal-post>
 </template>
 
 <script>
 import PopoverModalPost from './components/UI/PopoverModalPost'
-import EventView from './EventView'
 import { getBookmarkForPath } from '../lib/bookmarks'
+import ProfileView from './ProfileView'
 
 export default {
-  name: 'PostPopover',
-  components: { PopoverModalPost, EventView },
+  name: 'ProfilePopover',
+  components: { ProfileView, PopoverModalPost },
   data: () => ({
     bookmark: null
   }),
+  computed: {},
   beforeRouteEnter (to, from, next) {
     next(thisComponent => {
       thisComponent.bookmark = getBookmarkForPath(to.fullPath)

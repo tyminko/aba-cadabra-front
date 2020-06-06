@@ -12,7 +12,7 @@
 <script>
 import PopoverModalPost from './components/UI/PopoverModalPost'
 import BlogFeed from './BlogFeed'
-import { getBookmark } from '../lib/bookmarks'
+import { getBookmarkForPath } from '../lib/bookmarks'
 import { mapActions, mapState } from 'vuex'
 
 export default {
@@ -31,11 +31,8 @@ export default {
     }
   },
   beforeRouteEnter (to, from, next) {
-    next(c => {
-      const bookmark = getBookmark()
-      if (bookmark.path !== to.fullPath) {
-        c.bookmark = getBookmark()
-      }
+    next(thisComponent => {
+      thisComponent.bookmark = getBookmarkForPath(to.fullPath)
     })
   },
   methods: {
