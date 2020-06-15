@@ -5,6 +5,9 @@
       <div class="modal-shadow" @click="close"/>
       <div class="content-box bg-white rounded-sm">
         <header class="flex h-base items-center pl-base">
+          <button v-if="allowCoBack" class="w-base h-base ml-auto" @click="goBack">
+            <i class="material-icons">arrow_back</i>
+          </button>
           <slot name="header" />
           <button class="w-base h-base ml-auto" @click="close">
             <i class="material-icons">close</i>
@@ -17,7 +20,7 @@
 </template>
 
 <script>
-import { gotoBookmark } from '../../../lib/bookmarks'
+import { getRootPath } from '../../../lib/bookmarks'
 import { bodyScrollGuard } from '../../../lib/control-body-scroll'
 import clickOutside from 'vue-click-outside'
 
@@ -29,6 +32,7 @@ export default {
   },
   data: () => ({
     allowClickOutside: true,
+    allowCoBack: true,
     open: true
   }),
 
@@ -54,17 +58,18 @@ export default {
   },
 
   methods: {
+    goBack () {
+      history.back()
+    },
+
     close () {
       if (this.open && this.allowClickOutside) {
         this.open = false
+        this.$emit('close')
         setTimeout(() => {
-          if (this.bookmark) {
-            gotoBookmark(this.bookmark)
-          } else {
-            this.$router.push('/')
-          }
-          this.$emit('close')
-        }, 500)
+          const rootPath = getRootPath() || '/'
+          this.$router.push(rootPath)
+        }, 200)
       }
     },
 

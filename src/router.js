@@ -3,7 +3,6 @@ import Router from 'vue-router'
 import Home from './views/Home'
 import store from './store'
 import localData from './lib/local-storage'
-import { updateBookmarksHistory } from './lib/bookmarks'
 
 Vue.use(Router)
 
@@ -143,18 +142,6 @@ router.beforeEach((to, from, next) => {
       return next({ name: 'login' })
     }
   }
-  // A "guard" to keep a "shadow" history stack. That
-  // stack can be used to implement a bookmark functionality,
-  // which allows loading posts into modal and navigate through the history.
-  // based on: https://codepen.io/ksurakka/pen/RwwKyPy
-  // We need to defer the execution to get the state key,
-  // it's not yet there (or it can be, but it's a wrong one)
-  setTimeout(() => {
-    const key = history.state && history.state.key
-    if (key) {
-      updateBookmarksHistory(key, to.fullPath, (from || {}).fullPath)
-    }
-  })
   next()
 })
 

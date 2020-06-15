@@ -7,18 +7,9 @@
 <script>
 import PopoverModalPost from './components/UI/PopoverModalPost'
 import EventView from './EventView'
-import { getBookmarkForPath } from '../lib/bookmarks'
 
 export default {
   name: 'PostPopover',
-  components: { PopoverModalPost, EventView },
-  data: () => ({
-    bookmark: null
-  }),
-  beforeRouteEnter (to, from, next) {
-    next(thisComponent => {
-      thisComponent.bookmark = getBookmarkForPath(to.fullPath)
-    })
-  }
+  components: { PopoverModalPost, EventView }
 }
 </script>

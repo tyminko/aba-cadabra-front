@@ -3,6 +3,8 @@
 </template>
 
 <script>
+import { setRootPath } from '../../lib/bookmarks'
+
 export default {
   // based on https://codepen.io/ksurakka/pen/RwwKyPy
   name: 'RouterViewWrap',
@@ -19,7 +21,7 @@ export default {
   }),
   created () {
     // Wrap $createElement function
-    const origCreateElement = this.$createElement
+    const origCreateElementFunc = this.$createElement
 
     // "lastComponent" variable contains the last component created
     // by $createElement function. In certain cases this
@@ -30,8 +32,13 @@ export default {
       if (componentType && (!data || !data.routerView)) {
         // Seems that it is someone else (than Vue-router) calling
         // the  "$createElement", use original function as is.
-        return origCreateElement(componentType, data)
+        return origCreateElementFunc(componentType, data)
       }
+
+      if (componentType) {
+        setRootPath(this.$route.fullPath)
+      }
+
       // Find a parent router wrapper
       let parentRouterViewWrap = this.$parent
       while (parentRouterViewWrap) {
@@ -41,7 +48,6 @@ export default {
         parentRouterViewWrap = parentRouterViewWrap.$parent
       }
       const parentRouteMatch = parentRouterViewWrap && parentRouterViewWrap.routeMatches
-
       if (componentType && (!parentRouterViewWrap || parentRouteMatch)) {
         // A specific component is requested and the parent router wrapped
         // does not exists or has a match.
@@ -70,7 +76,7 @@ export default {
         // an empty component.
       }
 
-      lastComponent = origCreateElement(componentType, data)
+      lastComponent = origCreateElementFunc(componentType, data)
       return lastComponent
     }
   }

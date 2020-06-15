@@ -10,17 +10,13 @@
 </template>
 
 <script>
+import { mapActions, mapState } from 'vuex'
 import PopoverModalPost from './components/UI/PopoverModalPost'
 import BlogFeed from './BlogFeed'
-import { getBookmarkForPath } from '../lib/bookmarks'
-import { mapActions, mapState } from 'vuex'
 
 export default {
   name: 'BlogPopover',
   components: { BlogFeed, PopoverModalPost },
-  data: () => ({
-    bookmark: null
-  }),
   computed: {
     ...mapState(['user', 'viewCanToggleDrafts', 'showDraftsInGrid']),
     adminOrEditor () {
@@ -29,11 +25,6 @@ export default {
     messageToggleDrafts () {
       return this.showDraftsInGrid ? 'Hide Drafts' : `Show ${!this.adminOrEditor ? 'Mine ' : ''}Drafts`
     }
-  },
-  beforeRouteEnter (to, from, next) {
-    next(thisComponent => {
-      thisComponent.bookmark = getBookmarkForPath(to.fullPath)
-    })
   },
   methods: {
     ...mapActions(['toggleDraftsInGrid'])

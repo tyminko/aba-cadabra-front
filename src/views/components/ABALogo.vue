@@ -10,6 +10,7 @@
 export default { name: 'ABALogo' }
 </script>
 
+<!--suppress CssInvalidAtRule -->
 <style lang="scss">
   .a-b-a-logo {
     & > span {
@@ -35,5 +36,11 @@ export default { name: 'ABALogo' }
       .a2{ transform: rotate(18deg) translateY(20%) translateX(5%); }
       .b { font-weight: 600; font-size: 110% }
     }
+  }
+  #app .a-b-a-logo.main.text-2xl {
+    font-size: 10vw;
+    line-height: 0.7;
+    margin-bottom: 3vw;
+    @apply text-aba-blue;
   }
 </style>
