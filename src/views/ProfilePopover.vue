@@ -1,5 +1,5 @@
 <template>
-  <popover-modal-post :bookmark="bookmark">
+  <popover-modal-post>
     <profile-view/>
   </popover-modal-post>
 </template>

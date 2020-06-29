@@ -1,5 +1,5 @@
 <template>
-  <popover-modal-post :bookmark="bookmark">
+  <popover-modal-post>
       <event-view/>
   </popover-modal-post>
 </template>
@@ -9,7 +9,7 @@ import PopoverModalPost from './components/UI/PopoverModalPost'
 import EventView from './EventView'
 
 export default {
-  name: 'PostPopover',
+  name: 'EventPopover',
   components: { PopoverModalPost, EventView }
 }
 </script>

@@ -7,18 +7,22 @@
       </div>
       <div class="text-block mt-base" v-html="description" />
     </template>
+    <template v-slot:sidebar>
+      <profile-sidebar :profile="profile"/>
+    </template>
   </content-with-sidebar>
 </template>
 
 <script>
 import { db } from '../lib/firebase'
-import ContentWithSidebar from './components/UI/layouts/ContentWithSidebar'
 import { formatPeriod } from '../lib/date'
 import DOMPurify from 'dompurify'
+import ContentWithSidebar from './components/UI/layouts/ContentWithSidebar'
+import ProfileSidebar from './ProfileSidebar'
 
 export default {
   name: 'ProfileView',
-  components: { ContentWithSidebar },
+  components: { ProfileSidebar, ContentWithSidebar },
   props: {},
 
   data: () => ({
@@ -71,7 +75,7 @@ export default {
         .doc(this.profileId)
         .onSnapshot(
           snapshot => {
-            this.profile = snapshot.data()
+            this.profile = { uid: this.profileId, ...snapshot.data() }
           },
           err => {
             console.error(`%c SUBSCRIBE PROFILE ERROR%c: `, 'background:#ff0000;color:#000', 'color:#00aaff', err)

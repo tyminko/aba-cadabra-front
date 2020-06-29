@@ -1,5 +1,5 @@
 <template>
-  <popover-modal-post :bookmark="bookmark">
+  <popover-modal-post>
     <template v-slot:header>
       <a v-if="viewCanToggleDrafts" @click.prevent="toggleDraftsInGrid" class="ml-auto nav-item select-none text-xs">
         <span>{{messageToggleDrafts}}</span>

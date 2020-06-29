@@ -14,7 +14,7 @@
     "axios-jsonp": "^1.0.4",
     "core-js": "^3.4.3",
     "dompurify": "^2.0.8",
-    "firebase": "^7.14.6",
+    "firebase": "^7.15.4",
     "ftellipsis": "^0.2.3",
     "lodash.findlastindex": "^4.6.0",
     "luxon": "^1.22.0",
