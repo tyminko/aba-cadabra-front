@@ -1,6 +1,6 @@
 <template>
   <div class="attachments-view">
-    <div v-for="item in attachments" :key="item.id" class="attachment mt-base mb-sm">
+    <div v-for="item in attachmentsList" :key="item.id" class="attachment mt-base mb-sm">
       <div class="attachment-box relative">
         <vimeo-player v-if="item.type === 'embed/vimeo'" :value="item" />
         <div v-else-if="item.type === 'embed/mixcloud'" v-html="item.html"/>

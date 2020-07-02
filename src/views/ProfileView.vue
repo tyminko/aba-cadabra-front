@@ -5,7 +5,8 @@
         <h1 class="text-5xl mt-sm">{{displayName}}</h1>
         <h2 v-if="positionStr" class="mt-sm">{{positionStr}}</h2>
       </div>
-      <div class="text-block mt-base" v-html="description" />
+      <attachments-view :attachments="attachments" />
+      <div class="text-block mt-base" v-html="text" />
     </template>
     <template v-slot:sidebar>
       <profile-sidebar :profile="profile"/>
@@ -19,10 +20,11 @@ import { formatPeriod } from '../lib/date'
 import DOMPurify from 'dompurify'
 import ContentWithSidebar from './components/UI/layouts/ContentWithSidebar'
 import ProfileSidebar from './ProfileSidebar'
+import AttachmentsView from './components/AttachmentsView'
 
 export default {
   name: 'ProfileView',
-  components: { ProfileSidebar, ContentWithSidebar },
+  components: { AttachmentsView, ProfileSidebar, ContentWithSidebar },
   props: {},
 
   data: () => ({
@@ -45,11 +47,11 @@ export default {
           return position
       }
     },
-    description () {
-      if ((this.profile || {}).description) {
-        return DOMPurify.sanitize(this.profile.description)
-      }
-      return ''
+    text () {
+      return DOMPurify.sanitize((this.profile || {}).text || (this.profile || {}).description || '')
+    },
+    attachments () {
+      return (this.profile || {}).attachments || {}
     }
   },
 

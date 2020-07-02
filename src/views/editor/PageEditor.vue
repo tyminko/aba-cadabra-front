@@ -9,6 +9,11 @@
       v-model="postData.title"
       placeholder="Page title"
       class="xl"/>
+    <dropdown-select
+      v-model="template"
+      label="Template"
+      :options="contentTemplates"
+      class="mr-base"/>
     <tags-input v-if="adminOrEditor" v-model="tags" label="Tags"/>
     <credits-input v-model="people" label="People mentioned on the page"/>
     <attachments-editor
@@ -49,18 +54,27 @@ export default {
     postData: {},
     emptyPostExtraData: {
       type: 'page',
+      template: null,
       relatedPeople: []
     },
     posterTempId: '',
     textEditorFocused: false,
     unsubscribe: null,
-    institutions: null
+    institutions: null,
+    contentTemplates: {
+      '--': 'Default',
+      'Residency': 'AIR'
+    }
   }),
 
   computed: {
     people: {
       get () { return this.postData.relatedPeople || [] },
       set (newValue) { this.$set(this.postData, 'relatedPeople', newValue) }
+    },
+    template: {
+      get () { return this.postData.template || '--' },
+      set (newValue) { this.$set(this.postData, 'template', newValue) }
     },
     allowDelete () {
       return this.adminOrEditor && (this.value || {}).id

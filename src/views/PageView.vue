@@ -8,9 +8,6 @@
         @open-editor="openEditor" />
       <div class="text-block relative">
         <h1 class="relative text-5xl mt-sm">{{title}}</h1>
-<!--        <div class="flex mt-base">-->
-<!--          <h1 class="font-light">{{formattedDate}}</h1>-->
-<!--        </div>-->
       </div>
       <div v-for="item in attachments" :key="item.id" class="attachment mt-base mb-sm">
         <div class="attachment-box relative">
@@ -26,6 +23,9 @@
         </div>
       </div>
       <div class="text-block mt-base" v-html="content" />
+      <template v-if="template">
+        <component :is="template" />
+      </template>
     </template>
     <template v-slot:sidebar>
       <page-sidebar :post="postData"/>
@@ -40,10 +40,11 @@ import PostData from '../mixins/post-data'
 import ContentWithSidebar from './components/UI/layouts/ContentWithSidebar'
 import EditButtonBadge from './components/EditButtonBadge'
 import PageSidebar from './PageSidebar'
+import Residency from './components/page-templates/Residency'
 
 export default {
   name: 'PageView',
-  components: { PageSidebar, EditButtonBadge, ContentWithSidebar },
+  components: { PageSidebar, EditButtonBadge, ContentWithSidebar, Residency },
   mixins: [PostData],
   props: {},
 
@@ -54,7 +55,12 @@ export default {
 
   computed: {
     ...mapState(['user']),
-    allowEdit () { return !!this.user && (this.user.role === 'admin' || this.user.role === 'editor') }
+    allowEdit () { return !!this.user && (this.user.role === 'admin' || this.user.role === 'editor') },
+    template () {
+      const t = this.postData.template
+      const components = ['Residency']
+      return components.includes(t) ? t : null
+    }
   },
 
   created () {},

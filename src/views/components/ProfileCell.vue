@@ -56,7 +56,7 @@ export default {
     },
 
     description () {
-      return makeExcerpt((this.profile || {}).description || (this.profile || {}).text)
+      return makeExcerpt((this.profile || {}).text || (this.profile || {}).description)
     }
   },
 
