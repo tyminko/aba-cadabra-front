@@ -1,6 +1,6 @@
 <template>
   <div class="profile-sidebar">
-    <section>
+    <section v-if="blogPost">
       <post-cell :post="blogPost" />
     </section>
     <section v-if="authorEventsStarred.length">
@@ -30,7 +30,7 @@ export default {
   data: () => ({
     authorEventsStarred: [],
     authorEvents: [],
-    blogPost: {}
+    blogPost: null
   }),
 
   computed: {},
@@ -52,7 +52,7 @@ export default {
   methods: {
     getLatestBlogPost () {
       if (!(this.profile || {}).uid) {
-        this.blogPost = {}
+        this.blogPost = null
         return
       }
       db.collection('posts')
