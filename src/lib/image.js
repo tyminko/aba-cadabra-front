@@ -16,14 +16,6 @@ export default {
 
   /**
    * @param {File} file
-   * @return {boolean}
-   */
-  isJpgPngGif (file) {
-    return /image\/(jpeg|png|gif)/i.test(file.type)
-  },
-
-  /**
-   * @param {File} file
    * @return {Promise<string>}
    */
   fileToDataUrl (file) {
@@ -41,7 +33,7 @@ export default {
   },
 
   /**
-   * @param {File} file
+   * @param {File|Blob} file
    * @return {Promise<HTMLImageElement>}
    */
   imageFromFile (file) {
@@ -121,13 +113,22 @@ export default {
   },
 
   /**
+   * @param {HTMLImageElement} img
+   * @return {{w: *, h: *}}
+   */
+  imageDimensions (img) {
+    const { naturalWidth, naturalHeight } = img
+    return { w: naturalWidth, h: naturalHeight }
+  },
+
+  /**
    * @param {HTMLImageElement} image
    * @param {number} size
    *
    * @return {Promise<HTMLCanvasElement>}
    */
   basicResize (image, size) {
-    const canvas = this.createCanvas(image, size)
+    const canvas = this.createCanvas(this.imageDimensions(image), size)
     canvas
       .getContext('2d')
       .drawImage(image, 0, 0, image.naturalWidth, image.naturalHeight, 0, 0, canvas.width, canvas.height)
@@ -135,7 +136,7 @@ export default {
   },
 
   /**
-   * @param {HTMLImageElement} image
+   * @param {HTMLImageElement|HTMLCanvasElement} image
    * @param {number} size
    * @param {Object=} settings
    *
@@ -143,7 +144,7 @@ export default {
    */
   picaResize (image, size, settings) {
     if (!settings) settings = this.defaultResizeSettings
-    const canvas = this.createCanvas(image, size)
+    const canvas = this.createCanvas(this.imageDimensions(image), size)
     return pica.resize(image, canvas, settings)
       .catch(e => {
         if (e.message !== 'The ImageBitmap could not be allocated.') {
@@ -153,22 +154,23 @@ export default {
       .then(() => {
         return this.basicResize(image, Math.max(image.naturalWidth, image.naturalHeight))
           .then(res => pica.resize(res, canvas, settings))
-          .catch(e => {
+          .catch(() => {
             // console.warn('%c resize ON Err %c e.message: ', 'background:#ffbb00;color:#000', 'color:#00aaff', e.message)
           })
       })
   },
 
   /**
-   * @param {HTMLImageElement} image
-   * @param {number} size
+   * @param {{w:number, h:number}} dimensions
+   * @param {number=} size
    *
    * @return {HTMLCanvasElement}
    */
-  createCanvas (image, size) {
+  createCanvas (dimensions, size) {
     const canvas = document.createElement('canvas')
-    const w = image.naturalWidth
-    const h = image.naturalHeight
+    const { w, h } = dimensions
+    if (!size) size = Math.max(w, h)
+
     if (w > size || h > size) {
       if (w > h) {
         canvas.width = size

@@ -5,7 +5,7 @@
       type="file"
       style="display:none"
       multiple
-      accept="image/*"
+      accept="image/*, application/pdf"
       @change="addFilesFromOpenDialog">
     <draggable
       ref="previews"
@@ -84,6 +84,8 @@ import Dropzone from '../../components/UI/Dropzone'
 import PxInput from '../../components/UI/inputs/PxInput'
 import vimeo from '../../../lib/vimeo'
 import mixcloud from '../../../lib/mixcloud'
+import { imageFromPdf } from '../../../lib/pdf-reader'
+import imageLib from '../../../lib/image'
 
 export default {
   name: 'AttachmentsEditor',
@@ -182,8 +184,18 @@ export default {
       }
       addedFiles
         .sort((a, b) => (a.name < b.name) ? -1 : (a.name > b.name) ? 1 : 0)
-        .forEach(/** @type File */file => {
-          this.attachments.push(fileToRawAttachment(file))
+        .forEach(/** @type File */ async file => {
+          if (file.type === 'application/pdf') {
+            const attachmentData = fileToRawAttachment(file)
+            const url = URL.createObjectURL(file)
+            const image = await imageFromPdf(url)
+            const blob = await imageLib.canvasToBlob(image, 'image/jpeg')
+            attachmentData.image = await imageLib.imageFromFile(blob)
+            this.attachments.push(attachmentData)
+            URL.revokeObjectURL(url)
+          } else {
+            this.attachments.push(fileToRawAttachment(file))
+          }
         })
 
       this.updateAttachmentsOrder()
@@ -269,7 +281,7 @@ export default {
       this.updateAttachmentsOrder()
     },
 
-    onDragging (event) {
+    onDragging () {
       // return event.related.className.indexOf('new-attachment-cell') === -1
     },
 

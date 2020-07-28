@@ -10,7 +10,15 @@
           :alt="item.caption"
           :width="(item.dimensions || {}).w"
           :height="(item.dimensions || {}).h"
-          class="bg-gray-400"/>
+          class="bg-gray-400"
+          :class="{outline: item.type === 'application/pdf'}"/>
+        <a
+          v-if="item.type === 'application/pdf'"
+          class="button compact absolute top-0 right-0 mt-sm mr-sm flex flex-col items-center justify-center hover:no-underline focus:no-underline bg-milk"
+          :href="item.original.url"
+          target="_blank" download>
+          <i class="material-icons">get_app</i><span class="text-xs">PDF</span>
+        </a>
         <div v-if="item.caption" class="text-block text-sm">
           {{item.caption}}
         </div>
@@ -48,7 +56,7 @@ export default {
             res.push({ id, type: item.type, html: item.html, url: src.url, dimensions: src.dimensions, caption: item.caption })
           } else {
             src = full || (preview || {}).size > original.size ? preview : original
-            res.push({ id, type: item.type, url: src.url, dimensions: src.dimensions, caption: item.caption })
+            res.push({ id, type: item.type, url: src.url, dimensions: src.dimensions, caption: item.caption, original })
           }
           return res
         }, [])
@@ -61,5 +69,8 @@ export default {
 
 <style lang="scss">
   .attachments-view {
+    .outline {
+      border: 1px solid #f2f2f2;
+    }
   }
 </style>

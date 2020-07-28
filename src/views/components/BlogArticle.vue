@@ -3,22 +3,7 @@
     <div class="mb-base text-block">{{formattedDate}} {{post.id}}</div>
     <h2 class="mb-base text-block">{{post.title}}</h2>
     <div class="gallery flex flex-wrap">
-      <div
-        v-for="item in attachments"
-        :key="item.id"
-        class="attachment mb-sm">
-        <div class="attachment-box relative">
-          <img
-            :src="item.url"
-            :alt="item.caption"
-            :width="(item.dimensions || {}).w"
-            :height="(item.dimensions || {}).h"
-            class="bg-gray-400"/>
-          <div v-if="item.caption" class="text-block text-sm">
-            {{item.caption}}
-          </div>
-        </div>
-      </div>
+      <attachments-view :attachments="attachments"/>
     </div>
     <div v-if="content" v-html="content" class="text-block mt-base w-text"/>
   </article>
@@ -27,9 +12,11 @@
 <script>
 import * as date from '../../lib/date'
 import DOMPurify from 'dompurify'
+import AttachmentsView from './AttachmentsView'
 
 export default {
   name: 'BlogArticle',
+  components: { AttachmentsView },
   props: {
     post: { type: Object, required: true },
     preloadAttachments: Boolean
@@ -42,14 +29,7 @@ export default {
       return date.format(this.post.date, 'long', 'de')
     },
     attachments () {
-      const count = Object.keys(this.post.attachments || {}).length
-      if (!count) return []
-      return Object.entries(this.post.attachments).reduce((res, [id, item]) => {
-        const { preview, full, original } = item.srcSet
-        const src = full || preview || original
-        res.push({ id, type: item.type, url: src.url, dimensions: src.dimensions, caption: item.caption })
-        return res
-      }, [])
+      return (this.post || {}).attachments || {}
     },
 
     content () {

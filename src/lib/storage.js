@@ -5,9 +5,9 @@ import simpleId from './simpleId'
 import ImageLib from './image'
 // import { FileData, ImageData, KnownAttachmentSizes } from './storage'
 
-const imageSizeTypes = {
+export const imageSizeTypes = {
   full: 2048,
-  preview: 512
+  preview: 800
 }
 
 const alwaysUploadOriginalImage = false
@@ -149,14 +149,10 @@ function put (path, dataToUpload, progressFn) {
 function filePath (userId, baseName, sizeStr, mimeType) {
   const parts = baseName.split('.')
   const suffix = parts.pop()
-  let extension
   if (parts.length && possibleExtensions.includes(suffix)) {
-    extension = suffix
     baseName = parts.join('.')
   }
-  if (!extension) {
-    extension = possibleExtensions.includes(mimeType) ? mimeType : mimeExtension[mimeType] || ''
-  }
+  let extension = possibleExtensions.includes(mimeType) ? mimeType : mimeExtension[mimeType] || ''
   extension = extension ? `.${extension}` : ''
   const sizeSuffix = sizeStr && sizeStr !== 'original' ? `-${sizeStr}` : ''
   return userId + '/' + baseName + sizeSuffix + extension
@@ -191,7 +187,14 @@ async function thingsToUploadForAttachment (attachment) {
       origData.dimensions = { w: attachment.image.naturalWidth, h: attachment.image.naturalHeight }
     }
     origData.rawAttachment = attachment
-    return Promise.resolve([origData])
+    if (mimeType === 'application/pdf') {
+      const sizes = await Promise.all(Object.keys(imageSizeTypes).map(sizeKey => {
+        return dataToUploadForImgSize(sizeKey, attachment, 'image/jpeg')
+      }))
+      return Promise.resolve([...sizes, origData])
+    } else {
+      return Promise.resolve([origData])
+    }
   }
 }
 
@@ -233,7 +236,6 @@ async function resizeForUpload (attachment, sizeType, mime) {
   /** @type Dimensions */
   let dimensions
   let image = attachment.image
-
   if (sizeType === 'original') {
     return { blob: attachment.file, dimensions: { w: image.naturalWidth, h: image.naturalHeight } }
   }
@@ -288,7 +290,7 @@ export function deleteAttachments (userId, attachmentsToDelete) {
  * @return {Promise<any | never>}
  */
 export function remove (userId, fileId, extension) {
-  return Promise.all(Object.keys(imageSizeTypes).map(sizeType => {
+  return Promise.all(Object.keys({ ...imageSizeTypes, original: '' }).map(sizeType => {
     return storage.ref(filePath(userId, fileId, sizeType, extension)).delete()
   }))
 }

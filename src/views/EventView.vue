@@ -27,22 +27,7 @@
           Make Reservation
         </button>
       </div>
-      <div v-for="item in attachments" :key="item.id" class="attachment mt-base mb-sm">
-        <div class="attachment-box relative">
-          <vimeo-player v-if="item.type === 'embed/vimeo'" :value="item" />
-          <div v-else-if="item.type === 'embed/mixcloud'" v-html="item.html"/>
-          <img
-            v-else
-            :src="item.url"
-            :alt="item.caption"
-            :width="(item.dimensions || {}).w"
-            :height="(item.dimensions || {}).h"
-            class="bg-gray-400"/>
-          <div v-if="item.caption" class="text-block text-sm">
-            {{item.caption}}
-          </div>
-        </div>
-      </div>
+      <attachments-view :attachments="(post || {}).attachments || {}"/>
       <div class="text-block mt-base" v-html="content" />
       <reservation-form-popover
         v-if="allowReservation"
@@ -72,11 +57,11 @@ import CreditsString from './components/CreditsString'
 import EventSidebar from './EventSidebar'
 import ReservationFormPopover from './components/forms/ReservationFormPopover'
 import ReservationConfirm from './components/forms/ReservationConfirm'
-import VimeoPlayer from './components/VimeoPlayer'
+import AttachmentsView from './components/AttachmentsView'
 
 export default {
   name: 'EventView',
-  components: { ReservationConfirm, ReservationFormPopover, EventSidebar, CreditsString, ContentWithSidebar, VimeoPlayer },
+  components: { AttachmentsView, ReservationConfirm, ReservationFormPopover, EventSidebar, CreditsString, ContentWithSidebar },
   props: {
     value: { type: Object, default: null }
   },
