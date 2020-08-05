@@ -9,12 +9,13 @@
 
 <script>
 import { gmapApi } from 'vue2-google-maps'
-import { abaMapStyle, defineABAMarkerClass, getMarkerHtml, markersBounds } from '../../../lib/map'
+import { abaMapStyle, defineABAMarkerClass, getMarkerHtml } from '../../../lib/map'
 
 export default {
   name: 'AbaMap',
   props: {
     center: { type: Object, default: () => ({ lat: 52.5220676, lng: 13.4121466 }) },
+    zoomRadius: { type: Number, default: 0.12 },
     zoom: { type: Number, default: 17 },
     markers: { type: Array, default: () => ([]) }
   },
@@ -51,7 +52,8 @@ export default {
   },
 
   watch: {
-    markers () { this.setupMarkers() }
+    markers () { this.setupMarkers() },
+    $route () { this.setupMarkers() }
   },
 
   methods: {
@@ -68,18 +70,24 @@ export default {
         this.map.setCenter(this.markerInstances[0].latLng)
         this.map.setZoom(this.zoom)
       } else {
-        const bounds = markersBounds(this.google, this.markerInstances)
+        // const bounds = markersBounds(this.google, this.markerInstances)
+        const bounds = {
+          north: this.center.lat - this.zoomRadius / 6,
+          south: this.center.lat + this.zoomRadius / 6,
+          west: this.center.lng - this.zoomRadius,
+          east: this.center.lng + this.zoomRadius
+        }
         this.map.fitBounds(bounds)
       }
     },
 
     async setupMarkers () {
+      this.clearMarkers()
       if (!this.markers.length) return
       if (!this.map) {
         await this.$nextTick()
         await this.init()
       }
-      this.markerInstances = []
       const markers = this.markers.sort((m1, m2) => parseFloat(m1.lat) - parseFloat(m2.lat))
       markers.forEach(mData => {
         const markerData = { ...mData } /* , active: true */
@@ -91,7 +99,13 @@ export default {
           this.markerInstances.push(m)
         }
       })
-      // this.zoomToMarkers()
+      this.zoomToMarkers()
+    },
+
+    clearMarkers () {
+      this.markerInstances.forEach(m => m.setMap(null))
+      this.markerInstances = []
+      this.markersStock = {}
     }
   }
 }

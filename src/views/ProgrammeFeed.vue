@@ -35,7 +35,7 @@ export default {
         if (lat && lng) {
           return { lat: parseFloat(lat), lng: parseFloat(lng), url: '', label: `#${post.countNumber}` }
         }
-      }).sort((a, b) => a.lat - b.lat)
+      }).filter(m => !!m).sort((a, b) => a.lat - b.lat)
     }
   },
 
@@ -101,6 +101,7 @@ export default {
       Object.values(this.unsubscribe).forEach(un => {
         if (typeof un === 'function') un()
       })
+      this.feed = {}
     }
   }
 }
