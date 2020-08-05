@@ -2,6 +2,11 @@ const baseSize = 3 // rem
 const textBlockWidth = 38 // rem
 module.exports = {
   important: '#app',
+  purge: [
+    './src/**/*.html',
+    './src/**/*.vue',
+    './src/**/*.jsx'
+  ],
   theme: {
     extend: {
       screens: {

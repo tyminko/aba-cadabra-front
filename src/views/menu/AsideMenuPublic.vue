@@ -1,5 +1,5 @@
 <template>
-  <div class="aside-menu">
+  <div class="aside-menu-p">
     <template v-for="(sectionList, id) in sections">
       <section v-if="sectionList.length" :key="id" :class="[id]">
         <div

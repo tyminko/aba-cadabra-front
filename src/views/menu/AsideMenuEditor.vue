@@ -45,28 +45,6 @@
           @open-editor="openEditor(item.type, item)"/>
       </section>
     </smooth-reflow>
-    <popper
-      v-if="adminOrEditor"
-      placement="right"
-      class="">
-      <template v-slot:reference="{show}">
-        <span
-          class="button w-2/3base h-2/3base text-gray-600 hover:text-aba-blue"
-          :class="{active:show}">
-          <i class="material-icons text-xxl cursor-pointer">add</i>
-        </span>
-      </template>
-      <template v-slot:default="{hide}">
-        <div class="post-editor-palette">
-          <section class="text-sm pb-3 border-b border-aba-blue-semi">
-            <a class="block min-h-full cursor-pointer" @click.prevent="openEditor('page')">Add Page</a>
-          </section>
-          <section class="text-sm pt-3">
-            <a class="block min-h-full cursor-pointer" @click.prevent="openEditor('programme')">Add Programme</a>
-          </section>
-        </div>
-      </template>
-    </popper>
   </div>
 </template>
 
@@ -74,13 +52,12 @@
 import { mapActions, mapState } from 'vuex'
 import { db } from '../../lib/firebase'
 import DraggableContent from '../components/UI/DraggableContent'
-import Popper from '../components/UI/Popper.js.vue'
 import AsideMenuEditorItem from './AsideMenuEditorItem'
 import SmoothReflow from '../components/UI/SmoothReflow'
 
 export default {
   name: 'AsideMenuEditor',
-  components: { SmoothReflow, AsideMenuEditorItem, Popper, DraggableContent },
+  components: { SmoothReflow, AsideMenuEditorItem, DraggableContent },
   props: {},
 
   data: () => ({
@@ -144,20 +121,20 @@ export default {
 
   methods: {
     ...mapActions(['showEditor', 'updateMenuSubscription']),
-    /**
-     * @param {string} type
-     * @param {object=} item
-     */
-    async openEditor (type, item) {
-      item = item ? await this.prepareItemForEditor(item) : null
-      this.showEditor({
-        type,
-        value: item,
-        onSaved: () => {
-          this.$emit('updated')
-        }
-      })
-    },
+    // /**
+    //  * @param {string} type
+    //  * @param {object=} item
+    //  */
+    // async openEditor (type, item) {
+    //   item = item ? await this.prepareItemForEditor(item) : null
+    //   this.showEditor({
+    //     type,
+    //     value: item,
+    //     onSaved: () => {
+    //       this.$emit('updated')
+    //     }
+    //   })
+    // },
 
     objectToOrderedList (obj) {
       return Object.values(obj).sort((a, b) => (a.order + 1 || 1000) - (b.order + 1 || 1000))

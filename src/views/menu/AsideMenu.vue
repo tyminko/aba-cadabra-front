@@ -1,6 +1,6 @@
 <template>
   <div class="aside-menu">
-    <smooth-reflow>
+    <smooth-reflow class="member-header">
       <header v-if="adminOrEditor" class="flex justify-end">
         <button :class="{compact:!editMenu}" @click="editMenu = !editMenu">
           <i v-if="!editMenu" class="material-icons text-base">edit</i>
@@ -8,22 +8,47 @@
         </button>
       </header>
     </smooth-reflow>
-    <smooth-reflow>
-      <aside-menu-editor v-if="editMenu && adminOrEditor" @updated="emitRefresh"/>
+    <smooth-reflow class="menu-container">
+      <aside-menu-editor ref="editor" v-if="editMenu && adminOrEditor" @updated="emitRefresh"/>
       <aside-menu-public v-else @updated="emitRefresh"/>
     </smooth-reflow>
+    <footer v-if="editMenu && adminOrEditor" class="flex-shrink-0 h-3/4base flex items-center">
+      <popper
+        v-if="adminOrEditor"
+        placement="right"
+        class="">
+        <template v-slot:reference="{show}">
+        <span
+          class="button w-2/3base h-2/3base text-gray-600 hover:text-aba-blue"
+          :class="{active:show}">
+          <i class="material-icons text-xxl cursor-pointer">add</i>
+        </span>
+        </template>
+        <template v-slot:default="{hide}">
+          <div class="post-editor-palette">
+            <section class="text-sm pb-3 border-b border-aba-blue-semi">
+              <a class="block min-h-full cursor-pointer" @click.prevent="openEditor('page')">Add Page</a>
+            </section>
+            <section class="text-sm pt-3">
+              <a class="block min-h-full cursor-pointer" @click.prevent="openEditor('programme')">Add Programme</a>
+            </section>
+          </div>
+        </template>
+      </popper>
+    </footer>
   </div>
 </template>
 
 <script>
-import { mapState } from 'vuex'
+import { mapActions, mapState } from 'vuex'
 import AsideMenuEditor from './AsideMenuEditor'
 import AsideMenuPublic from './AsideMenuPublic'
 import SmoothReflow from '../components/UI/SmoothReflow'
+import Popper from '../components/UI/Popper.js'
 
 export default {
   name: 'AsideMenu',
-  components: { SmoothReflow, AsideMenuPublic, AsideMenuEditor },
+  components: { Popper, SmoothReflow, AsideMenuPublic, AsideMenuEditor },
 
   data: () => ({
     editMenu: false
@@ -43,6 +68,22 @@ export default {
   },
 
   methods: {
+    ...mapActions(['showEditor']),
+    /**
+     * @param {string} type
+     * @param {object=} item
+     */
+    async openEditor (type, item) {
+      if (!this.$refs.editor) return
+      item = item ? await this.$refs.editor.prepareItemForEditor(item) : null
+      this.showEditor({
+        type,
+        value: item,
+        onSaved: () => {
+          this.emitRefresh()
+        }
+      })
+    },
     emitRefresh () { this.$nextTick(() => this.$emit('refresh')) }
   }
 }
@@ -50,12 +91,20 @@ export default {
 
 <!--suppress CssInvalidAtRule -->
 <style lang="scss">
+  @import "../../styles/vars";
   #app .aside-menu {
+    display: flex;
+    flex-flow: column;
+    max-height: calc(100vh - #{$base-size});
+
     .menu-item {
       @apply px-base;
       &.internal {
         @apply bg-gray-100;
       }
+    }
+    .menu-container {
+      overflow: auto;
     }
   }
 </style>
