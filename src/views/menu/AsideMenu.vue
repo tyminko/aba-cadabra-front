@@ -15,14 +15,13 @@
     <footer v-if="editMenu && adminOrEditor" class="flex-shrink-0 h-3/4base flex items-center">
       <popper
         v-if="adminOrEditor"
-        placement="right"
-        class="">
+        placement="right">
         <template v-slot:reference="{show}">
-        <span
-          class="button w-2/3base h-2/3base text-gray-600 hover:text-aba-blue"
-          :class="{active:show}">
-          <i class="material-icons text-xxl cursor-pointer">add</i>
-        </span>
+          <span
+            class="button w-2/3base h-2/3base text-gray-600 hover:text-aba-blue"
+            :class="{active:show}">
+            <i class="material-icons text-xxl cursor-pointer">add</i>
+          </span>
         </template>
         <template v-slot:default="{hide}">
           <div class="post-editor-palette">

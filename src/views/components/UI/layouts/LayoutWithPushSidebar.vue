@@ -206,7 +206,6 @@ export default {
         flex-shrink: 0;
         overflow: auto;
         .sidebar-content {
-          position: fixed;
           z-index: 100;
           transition: opacity $transition-time;
         }
