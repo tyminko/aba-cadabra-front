@@ -173,7 +173,7 @@ export default {
       &.left {
         margin-left: var(--push-margin-left);
         transition: margin-left $transition-time;
-        overflow-x: hidden;
+        /*overflow-x: hidden;*/
       }
       &.right {
         margin-right: var(--push-margin-right);
@@ -204,10 +204,11 @@ export default {
 
       .push-sidebar {
         flex-shrink: 0;
-        overflow: auto;
         .sidebar-content {
           z-index: 100;
           transition: opacity $transition-time;
+          position: sticky;
+          top: $base-size;
         }
       }
     }
