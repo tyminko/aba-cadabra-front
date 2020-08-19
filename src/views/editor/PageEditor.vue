@@ -63,7 +63,8 @@ export default {
     institutions: null,
     contentTemplates: {
       '--': 'Default',
-      'Residency': 'AIR'
+      'Residency': 'AIR',
+      'About': 'About'
     }
   }),
 

@@ -136,6 +136,7 @@ export default {
         attachments: '',
         participatedIn: '',
         abaPosition: '',
+        teamOrder: null,
         residencyStart: 0,
         residencyEnd: 0,
         supportedBy: [],
@@ -358,6 +359,9 @@ export default {
 
         const attachmentsData = await this.saveAttachments()
         this.$set(this.profileData, 'attachments', attachmentsData)
+        if (this.abaStatus === 'staff' && (this.profileData.teamOrder === null || typeof this.profileData.teamOrder === 'undefined')) {
+          this.profileData.teamOrder = 100
+        }
 
         const profileFields = this.profileFieldsToSave()
         if (Object.keys(profileFields).length) {

@@ -121,20 +121,20 @@ export default {
 
   methods: {
     ...mapActions(['showEditor', 'updateMenuSubscription']),
-    // /**
-    //  * @param {string} type
-    //  * @param {object=} item
-    //  */
-    // async openEditor (type, item) {
-    //   item = item ? await this.prepareItemForEditor(item) : null
-    //   this.showEditor({
-    //     type,
-    //     value: item,
-    //     onSaved: () => {
-    //       this.$emit('updated')
-    //     }
-    //   })
-    // },
+    /**
+     * @param {string} type
+     * @param {object=} item
+     */
+    async openEditor (type, item) {
+      item = item ? await this.prepareItemForEditor(item) : null
+      this.showEditor({
+        type,
+        value: item,
+        onSaved: () => {
+          this.$emit('updated')
+        }
+      })
+    },
 
     objectToOrderedList (obj) {
       return Object.values(obj).sort((a, b) => (a.order + 1 || 1000) - (b.order + 1 || 1000))

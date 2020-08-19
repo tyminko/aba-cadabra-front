@@ -28,7 +28,7 @@
       </template>
     </template>
     <template v-slot:sidebar>
-      <page-sidebar :post="postData"/>
+      <component :is="templateSidebar" :post="postData"/>
     </template>
   </content-with-sidebar>
 </template>
@@ -41,10 +41,12 @@ import ContentWithSidebar from './components/UI/layouts/ContentWithSidebar'
 import EditButtonBadge from './components/EditButtonBadge'
 import PageSidebar from './PageSidebar'
 import Residency from './components/page-templates/Residency'
+import About from './components/page-templates/About'
+import AboutSidebar from './components/page-templates/AboutSidebar'
 
 export default {
   name: 'PageView',
-  components: { PageSidebar, EditButtonBadge, ContentWithSidebar, Residency },
+  components: { PageSidebar, EditButtonBadge, ContentWithSidebar, Residency, About, AboutSidebar },
   mixins: [PostData],
   props: {},
 
@@ -58,8 +60,14 @@ export default {
     allowEdit () { return !!this.user && (this.user.role === 'admin' || this.user.role === 'editor') },
     template () {
       const t = this.postData.template
-      const components = ['Residency']
+      const components = ['Residency', 'About']
       return components.includes(t) ? t : null
+    },
+    templateSidebar () {
+      switch (this.template) {
+        case 'About': return 'AboutSidebar'
+        default: return 'PageSidebar'
+      }
     }
   },
 

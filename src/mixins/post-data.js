@@ -64,16 +64,13 @@ export default {
   watch: {
     user () {
       if (!this.user && this.postData && this.postData.status !== 'public') {
-        // !!! DEBUG !!!
-        console.log(`%c user() %c this.postData: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.postData)
-        // this.$router.push({ name: 'home' })
         this.unsubscribePost()
         this.subscribeToPost()
       }
     },
     $route () {
-      // this.unsubscribePost()
-      // this.subscribeToPost()
+      this.unsubscribePost()
+      this.subscribeToPost()
     }
   },
 
