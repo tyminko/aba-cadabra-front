@@ -5,6 +5,7 @@
     class="draggable-content"
     :filter="filter"
     :draggable="draggable"
+    :disabled="disabled"
     @start="dragging = true"
     @end="onEnd">
     <transition-group
@@ -26,6 +27,7 @@ export default {
     filter: String,
     draggable: { type: String, default: '>*' },
     containerClass: String,
+    disabled: Boolean,
     options: { type: Object, default: () => ({}) }
   },
 

@@ -1,4 +1,4 @@
-import { db, store } from './firebase'
+import { db } from './firebase'
 import base64 from './base64'
 
 /**
@@ -15,8 +15,8 @@ export default {
    * @return {Promise<Tag | never>}
    */
   get (id) {
-    return store.ref(`tag/${id}`).once('value').then(snapshot => {
-      return { ...snapshot.val(), id: snapshot.key }
+    return db.collection('tags').doc(id).get().then(snapshot => {
+      return { ...snapshot.data(), id: snapshot.id }
     })
   },
 

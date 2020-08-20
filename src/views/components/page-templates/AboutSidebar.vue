@@ -2,7 +2,7 @@
   <div class="page-sidebar">
     <section v-if="profiles.length">
       <h3>{{sections.profiles}}</h3>
-      <draggable-content v-model="orderedProfiles">
+      <draggable-content v-model="orderedProfiles" :disabled="!isAdmin">
         <profile-cell
           v-for="profile in orderedProfiles"
           :key="profile.id"
@@ -19,8 +19,9 @@
 </template>
 
 <script>
-import ProfileCell from '../../components/ProfileCell'
 import { db } from '../../../lib/firebase'
+import { mapState } from 'vuex'
+import ProfileCell from '../../components/ProfileCell'
 import PostCell from '../../components/PostCell'
 import DraggableContent from '../UI/DraggableContent'
 
@@ -41,16 +42,18 @@ export default {
   }),
 
   computed: {
+    ...mapState(['user']),
+    isAdmin () { return (this.user || {}).role === 'admin' },
     orderedProfiles: {
       get () {
         return [...this.profiles].sort((a, b) => a.teamOrder - b.teamOrder)
       },
       set (newValue) {
-        this.profiles = newValue
         const profilesRef = db.collection('profiles')
+        this.profiles = [...newValue]
         newValue.forEach((prof, i) => {
           this.$set(this.profiles[i], 'teamOrder', i)
-          profilesRef.doc(prof.id).update({ teamOrder: i })
+          if (this.isAdmin) profilesRef.doc(prof.id).update({ teamOrder: i })
         })
       }
     },
