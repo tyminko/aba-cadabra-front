@@ -3,6 +3,7 @@
     <h1 class="text-5xl text-aba-blue p-lg">
       {{programmeObj.title}}
     </h1>
+    <div class="px-lg" v-html="description"/>
     <aba-map :markers="markers" :zoom="12"/>
     <post-feed-grid :posts="posts" :processing="processing"/>
   </div>
@@ -10,6 +11,7 @@
 
 <script>
 import { db } from '../lib/firebase'
+import DOMPurify from 'dompurify'
 import PostFeedGrid from './components/PostFeedGrid'
 import AbaMap from './components/UI/AbaMap'
 
@@ -36,6 +38,12 @@ export default {
           return { lat: parseFloat(lat), lng: parseFloat(lng), url: '', label: `#${post.countNumber}` }
         }
       }).filter(m => !!m).sort((a, b) => a.lat - b.lat)
+    },
+    description () {
+      if ((this.programmeObj || {}).text) {
+        return DOMPurify.sanitize(this.programmeObj.text)
+      }
+      return ''
     }
   },
 
