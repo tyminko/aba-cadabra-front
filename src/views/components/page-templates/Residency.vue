@@ -2,7 +2,7 @@
   <div class="residency">
     <h1>Residents:</h1>
     <div class="grid pt-lg">
-      <profile-cell v-for="profile in profiles" :key="profile.id" :profile="profile"/>
+      <profile-cell v-for="profile in orderedProfiles" :key="profile.id" :profile="profile"/>
     </div>
   </div>
 </template>
@@ -25,13 +25,16 @@ export default {
     this.subscribeResidents()
   },
 
-  computed: {},
+  computed: {
+    orderedProfiles () {
+      return [...Object.values(this.profiles || {})].sort((a, b) => b.residencyStart - a.residencyStart)
+    }
+  },
 
   methods: {
     subscribeResidents () {
       this.unsubscribe = db.collection('profiles')
-        .where('residencyStart', '>', 0)
-        .orderBy('residencyStart', 'desc')
+        .where('abaPosition', '==', 'resident')
         .onSnapshot(
           querySnapshot => {
             querySnapshot.docChanges().forEach(docChange => {
