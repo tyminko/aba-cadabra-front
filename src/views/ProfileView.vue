@@ -51,7 +51,7 @@ export default {
       return DOMPurify.sanitize((this.profile || {}).text || (this.profile || {}).description || '')
     },
     attachments () {
-      return (this.profile || {}).attachments || {}
+      return Object.values((this.profile || {}).attachments || {}).sort((a, b) => a.order - b.order)
     }
   },
 

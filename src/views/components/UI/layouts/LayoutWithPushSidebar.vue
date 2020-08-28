@@ -41,7 +41,7 @@ export default {
   }),
 
   computed: {
-    ...mapState(['editorToOpen']),
+    ...mapState(['editorToOpen', 'contentLoaded']),
     flow () {
       return this.side === 'left' || this.side === 'right' ? 'row' : 'column'
     }
@@ -60,7 +60,7 @@ export default {
 
   mounted () {
     if (this.responsive) {
-      this.setSidebarCollapsible()
+      // this.setSidebarCollapsible()
       window.addEventListener('resize', this.setSidebarCollapsible)
     } else {
       // this.setPushMargin()
@@ -101,7 +101,7 @@ export default {
       const sidebarContent = this.$refs['sidebar-content']
       let size, margin
       if (this.side === 'left' || this.side === 'right') {
-        size = sidebarContent.getBoundingClientRect().width
+        size = sidebarContent.getBoundingClientRect().width || 300
         if (sidebar.getBoundingClientRect().width !== size) sidebar.style.width = `${size}px`
       } else {
         size = sidebarContent.getBoundingClientRect().height
@@ -205,6 +205,7 @@ export default {
       .push-sidebar {
         flex-shrink: 0;
         .sidebar-content {
+          width: min-content;
           z-index: 100;
           transition: opacity $transition-time;
           position: sticky;

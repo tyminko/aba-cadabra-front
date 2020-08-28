@@ -29,7 +29,8 @@ export default new Vuex.Store({
     editorToOpen: null, // could be {type:string, value?:object, onSaved?:function}
     postToOpen: null, // could be {type:string, value?:object|string}
     showDraftsInGrid: false,
-    viewCanToggleDrafts: false
+    viewCanToggleDrafts: false,
+    contentLoaded: false
   },
   mutations: {
     UPDATE_MENU (state, menu) {
@@ -61,6 +62,9 @@ export default new Vuex.Store({
     },
     SET_VIEW_CAN_TOGGLE_DRAFTS (state, val) {
       state.viewCanToggleDrafts = val
+    },
+    SET_CONTENT_LOADED (state, val) {
+      state.contentLoaded = val
     }
   },
   actions: {
@@ -116,6 +120,10 @@ export default new Vuex.Store({
 
     setViewCanToggleDrafts ({ commit }, val) {
       commit('SET_VIEW_CAN_TOGGLE_DRAFTS', val)
+    },
+
+    setContentLoaded ({ commit }) {
+      commit('SET_CONTENT_LOADED', true)
     },
 
     updateMenuSubscription: ({ commit, state }) => {

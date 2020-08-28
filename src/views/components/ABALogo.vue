@@ -13,10 +13,12 @@ export default { name: 'ABALogo' }
 <!--suppress CssInvalidAtRule -->
 <style lang="scss">
   .a-b-a-logo {
+    white-space: nowrap;
+    user-select: none;
     & > span {
       display: inline-block;
       text-align: center;
-      transition: transform 0.2s;
+      transition: transform 0.2s, font-weight 0.2s;
 
       &.a1{
         transform: rotate(-15deg) translateY(-2%);
@@ -41,6 +43,7 @@ export default { name: 'ABALogo' }
     font-size: 10vw;
     line-height: 0.7;
     margin-bottom: 3vw;
+    text-align: center;
     @apply text-aba-blue;
   }
 </style>

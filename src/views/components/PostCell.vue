@@ -1,8 +1,8 @@
 <template>
   <div
     class="post-cell cell break-words flex flex-col"
-    :class="[cellSize, post.status]">
-    <header class="flex-grow-0">
+    :class="[cellSize, post.status, post.type, (allowReservation ? 'upcoming' : '')]">
+    <header class="flex-grow-0 relative">
       <div class="flex items-center relative">
         <div class="badge">
           <router-link v-if="routerTypeLink" :to="routerTypeLink">{{typeLabel}}</router-link>
@@ -11,6 +11,7 @@
             {{post.status}}
           </div>
         </div>
+        <div v-if="upcoming" class="upcoming-label">Upcoming</div>
         <slot name="quick-edit-button" :cell-size="cellSize"/>
       </div>
     </header>
@@ -20,37 +21,65 @@
       <div>
         <h1 class="mt-1">{{title}}</h1>
         <h2 v-if="secondTittle" class="">{{secondTittle}}</h2>
-        <div class="my-xs" :class="{'h2':post.type==='event'}">{{formattedDate}}</div>
+        <div class="my-xs" :class="{'h2':post.type==='event', 'text-aba-blue':allowReservation }">{{formattedDate}}</div>
       </div>
       <div
         v-if="thumbnailUrl"
-        class="thumbnail-box flex-grow min-h-x2">
+        class="thumbnail-box flex-grow">
         <!--suppress HtmlUnknownTarget -->
-        <img :src="thumbnailUrl" :key="thumbnailUrl">
+        <img v-lazy="thumbnailUrl" :key="thumbnailUrl">
       </div>
       <div v-else class="patch flex-grow min-h-0 bg-gray-800"/>
       <div
         v-if="post.excerpt"
         ref="excerpt"
-        class="excerpt min-h-0 overflow-hidden mt-2 mb-4 min-h-line">
-        <div>{{post.excerpt}}</div>
+        class="excerpt min-h-0 overflow-hidden mt-2 mb-4 min-h-line"
+        :class="{short: post.type==='event'}">
+        <div v-if="post.type==='post'">{{post.excerpt}}</div>
+        <template v-else>
+          <credits-string v-if="hosts.length" no-link prefix="Hosted by" :persons="hosts" class="inline" />
+          <br v-if="hosts.length && participants.length">
+          <credits-string v-if="participants.length" no-link prefix="With" :persons="participants" class="inline" />
+        </template>
       </div>
     </router-link>
+    <button
+      v-if="allowReservation"
+      class="h-auto px-base py-sm text-aba-blue border-2 border-aba-blue self-end"
+      @click="openReservation=!openReservation">
+      Make Reservation
+    </button>
+    <reservation-form-popover
+      v-if="allowReservation"
+      :open="openReservation"
+      :event-data="eventData"
+      @close="openReservation=false"/>
+    <reservation-confirm
+      v-if="shouldConfirmReservation"
+      :event-id="eventId"
+      :data="{title,formattedDate,location}"
+      :confirmed="closeReservationConfirmedMessage"
+      @close="()=>{}"/>
   </div>
 </template>
 
 <script>
 import * as date from '../../lib/date'
 import Ftellipsis from 'ftellipsis'
+import CreditsString from './CreditsString'
+import ReservationFormPopover from './forms/ReservationFormPopover'
+import ReservationConfirm from './forms/ReservationConfirm'
 
 export default {
   name: 'PostCell',
-  components: { },
+  components: { ReservationConfirm, ReservationFormPopover, CreditsString },
   props: {
     post: { type: Object, required: true }
   },
 
-  data: () => ({}),
+  data: () => ({
+    openReservation: false
+  }),
 
   computed: {
     routerLink () {
@@ -67,6 +96,9 @@ export default {
         return { name: 'programme', params: { id: this.post.partOfProgramme.programmeId } }
       }
       return null
+    },
+    upcoming () {
+      return this.post.date > Date.now()
     },
     typeLabel () {
       if (!this.post) return null
@@ -93,7 +125,10 @@ export default {
       return ''
     },
     formattedDate () {
-      return date.format(this.post.date, this.post.type === 'event' ? 'long' : '', 'de')
+      return date.format(
+        this.post.date,
+        this.post.type === 'event' && this.allowReservation ? 'datetime' : '', 'de'
+      )
     },
     cellSize () {
       return (this.post || {}).cardSize || ''
@@ -120,6 +155,37 @@ export default {
       return post.cardSize
         ? (full || original || preview || {}).url
         : (preview || full || original || {}).url
+    },
+    hosts () {
+      if (!this.post || !this.post.participants) return []
+      return Object.values(this.post.participants || []).filter(p => p.star)
+    },
+
+    participants () {
+      if (!this.post || !this.post.participants) return []
+      return Object.values(this.post.participants || []).filter(p => !p.star)
+    },
+    allowReservation () {
+      return (this.post || {}).date && date.dateInFuture(this.post.date) && !this.$route.params.token
+    },
+
+    shouldConfirmReservation () {
+      const token = this.$route.params.token
+      return !!token && ((this.post || {}).reservationsPending || []).includes(token)
+    },
+    eventData () {
+      // !!! DEBUG !!!
+      console.log(`%c eventData() %c this.$router.resolve(this.routerLink).href: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.$router.resolve(this.routerLink).href)
+      return {
+        eventId: this.post.id,
+        eventUrl: window.location.origin + this.$router.resolve(this.routerLink).href,
+        eventInfo: {
+          title: this.title,
+          secondTittle: this.secondTittle,
+          dateString: this.formattedDate,
+          locationString: this.post.location.address
+        }
+      }
     }
   },
 
@@ -151,6 +217,13 @@ export default {
     border-bottom: 1px solid #000;
     hyphens: auto;
 
+    &.upcoming {
+      border-bottom: none;
+      .excerpt {
+        margin-bottom: $small-padding !important;
+      }
+    }
+
     &.internal {
       //
       //box-shadow: 0 0 0 $base-padding /3 $color-aba-blue;
@@ -178,7 +251,12 @@ export default {
     h1, h2, .h2 {
       font-size: $h3;
       margin: 0;
-      line-height: 1.1em;
+      line-height: 1.05em;
+    }
+    h2 {
+      font-size: $h4;
+      font-weight: 300;
+      opacity: 0.5;
     }
 
     a {
@@ -195,6 +273,19 @@ export default {
       @apply px-sm py-xs text-xs capitalize truncate bg-gray-200;
       border-radius: 1px;
       min-width: 0;
+    }
+
+    .upcoming-label {
+      position: relative;
+      z-index: 100;
+      padding: 0.1rem 0.4rem;
+      background: $color-aba-blue;
+      color: #fff;
+      font-size: 75%;
+      text-transform: uppercase;
+      left: -6px;
+      top: -4px;
+      transform: rotate(3deg);
     }
 
     .status {
@@ -226,6 +317,9 @@ export default {
 
     .excerpt {
       @include multi-line-truncate();
+      &.short {
+        @include multi-line-truncate(2);
+      }
     }
 
     &:hover {
@@ -269,6 +363,12 @@ export default {
       object-fit: cover;
       object-position: center;
       filter: saturate(0);
+
+      opacity: 0;
+      transition: opacity 0.5s;
+      &[lazy=loaded] {
+        opacity: 1;
+      }
     }
   }
 </style>

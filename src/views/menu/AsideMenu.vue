@@ -1,5 +1,5 @@
 <template>
-  <div class="aside-menu">
+  <div class="aside-menu" :class="{zero: loading}">
     <smooth-reflow class="member-header">
       <header v-if="adminOrEditor" class="flex justify-end">
         <button :class="{compact:!editMenu}" @click="editMenu = !editMenu">
@@ -50,17 +50,24 @@ export default {
   components: { Popper, SmoothReflow, AsideMenuPublic, AsideMenuEditor },
 
   data: () => ({
+    loading: true,
     editMenu: false
   }),
 
   computed: {
-    ...mapState(['requestToLogin', 'user', 'editorToOpen']),
+    ...mapState(['requestToLogin', 'user', 'editorToOpen', 'contentLoaded']),
     adminOrEditor () {
       return !!this.user && (this.user.role === 'admin' || this.user.role === 'editor')
     }
   },
 
   watch: {
+    contentLoaded () {
+      setTimeout(() => {
+        this.loading = false
+        this.$emit('refresh')
+      }, 1000)
+    },
     editMenu () {
       this.emitRefresh()
     }
@@ -95,6 +102,10 @@ export default {
     display: flex;
     flex-flow: column;
     max-height: calc(100vh - #{$base-size});
+
+    &.zero {
+      width: 0;
+    }
 
     .menu-item {
       @apply px-base;

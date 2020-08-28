@@ -1,5 +1,6 @@
 $base-size: 48rem / 16; // 48px (3rem) based on default font size 16px
 $base-padding: $base-size / 3;
+$small-padding: $base-size / 6;
 $input-margin: $base-size / 4;
 $border-thick-w: 5px;
 
@@ -32,6 +33,7 @@ $transition-time: 0.2s;
 $h1: $base-size;
 $h2: $base-size * 0.75;
 $h3: $base-size * 0.5;
+$h4: $base-size * 0.45;
 $font-size-caption: 12px;
 
 $font-family-sans-serif:

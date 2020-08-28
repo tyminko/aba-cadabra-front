@@ -2,7 +2,8 @@
   <div class="credits-string">
     <span v-if="prefix" class="font-light text-gray-700">{{`${prefix} `}}</span>
     <span v-for="(person, i) in persons" :key="person.id">
-      <router-link :to="{ name: 'profile', params: { id: person.id } }">{{person.displayName}}</router-link>
+      <span v-if="noLink">{{person.displayName}}</span>
+      <router-link v-else :to="{ name: 'profile', params: { id: person.id } }">{{person.displayName}}</router-link>
       <span
         v-if="i < persons.length - 1"
         class="font-light text-gray-700">{{useAND ? ' & ' : ', '}}</span>
@@ -15,7 +16,8 @@ export default {
   name: 'CreditsString',
   props: {
     prefix: String,
-    persons: { type: Array, required: true }
+    persons: { type: Array, required: true },
+    noLink: Boolean
   },
   computed: {
     useAND () {

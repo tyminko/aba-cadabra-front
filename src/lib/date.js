@@ -38,6 +38,8 @@ export function format (timestamp, format = 'numeric', locale) {
       return dt.setLocale(locale).toLocaleString(DateTime.DATE_FULL)
     case 'full':
       return dt.setLocale(locale).toLocaleString({ ...DateTime.DATETIME_MED, ...{ month: 'long' } })
+    case 'datetime':
+      return dt.setLocale(locale).toLocaleString({ ...DateTime.DATETIME_MED, ...{ month: 'numeric' } })
     default:
       return dt.setLocale(locale).toLocaleString(DateTime.DATE_SHORT)
   }

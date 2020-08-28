@@ -63,8 +63,14 @@ export default {
     }
   },
 
+  watch: {
+    processing () {
+      if (!this.processing) this.setContentLoaded()
+    }
+  },
+
   methods: {
-    ...mapActions(['showEditor', 'openPost']),
+    ...mapActions(['showEditor', 'openPost', 'setContentLoaded']),
     openEditor (post) {
       this.showEditor({
         type: post.type,

@@ -32,7 +32,7 @@ export default {
     },
 
     processing () {
-      return Object.values(this.processingStatuses).find(v => v)
+      return Object.values(this.processingStatuses).find(v => v === true)
     }
   },
 
@@ -80,7 +80,7 @@ export default {
 
       statuses.forEach(status => {
         if (typeof this.unsubscribe[status] === 'function') return
-        this.processingStatuses[status] = true
+        this.$set(this.processingStatuses, status, true)
         if (status === 'draft' && !this.adminOrEditor && !options.authorId) {
           options.authorId = this.user.uid
         }
@@ -88,7 +88,7 @@ export default {
           { ...options, status },
           (id, post) => this.$set(this.feed, id, post),
           id => this.$delete(this.feed, id),
-          () => { this.processingStatuses[status] = false }
+          () => { this.$set(this.processingStatuses, status, false) }
         )
       })
     },

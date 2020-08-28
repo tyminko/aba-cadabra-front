@@ -34,6 +34,7 @@ export default {
         .map(([id, item]) => ({ ...item, id, status: 'internal' }))
         .sort((a, b) => a.order - b.order)
     },
+
     publicList () {
       return Object.entries(this.menu.public || {})
         .map(([id, item]) => ({ ...item, id }))
