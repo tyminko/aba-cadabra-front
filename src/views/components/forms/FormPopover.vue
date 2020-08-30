@@ -21,7 +21,7 @@
         <slot name="footer" />
         <template v-if="!processing">
           <button v-if="buttons.close" class="ml-auto" @click.prevent="close">{{buttons.close}}</button>
-          <button v-if="buttons.submit"  :disabled="!valid" type="submit">{{buttons.submit}}</button>
+          <button v-if="buttons.submit" :disabled="!valid" type="submit">{{buttons.submit}}</button>
         </template>
 <!--        <span v-else>Processing...</span>-->
       </footer>

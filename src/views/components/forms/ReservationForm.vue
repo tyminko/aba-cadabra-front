@@ -74,7 +74,7 @@ please also check your <span class="italic font-medium">Spam/Junk</span> folder.
   },
 
   created () {
-    this.$emit('update-buttons', null)
+    this.$emit('update-buttons', undefined)
   },
 
   beforeDestroy () {
