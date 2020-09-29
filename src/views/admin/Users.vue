@@ -101,7 +101,13 @@ export default {
           if (!data.displayName) return
           const index = this.users.findIndex(u => u.uid === uid)
           if (index > -1) {
-            this.$set(this.users, index, { ...user, displayName: data.displayName, email: data.email, role: data.role })
+            this.$set(this.users, index, {
+              ...user,
+              displayName: data.displayName,
+              email: data.email,
+              role: data.role,
+              position: data.abaPosition && data.abaPosition !== 'guest' ? data.abaPosition : ''
+            })
           }
         }
       })

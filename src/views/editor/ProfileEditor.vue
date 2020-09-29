@@ -192,7 +192,10 @@ export default {
           default: return 'staff'
         }
       },
-      set (newValue) { this.status = newValue }
+      set (newValue) {
+        this.status = newValue
+        this.$set(this.profileData, 'abaPosition', newValue !== 'staff' ? newValue : 'Team member')
+      }
     },
 
     displayName: {
