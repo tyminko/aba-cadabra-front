@@ -16,7 +16,12 @@ export default {
       return !!this.user && (this.user.role === 'admin' || this.user.role === 'editor')
     },
 
-    authorId () { return this.$route.params.authorId },
+    authorId () {
+      if (this.$route.params.filter === 'my') {
+        return this.user.uid
+      }
+      return this.$route.params.authorId
+    },
 
     availableSubscriptionStatuses () {
       const statuses = ['public']
@@ -45,6 +50,11 @@ export default {
     user () { this.updateSubscriptions() },
     $route () {
       this.setViewCanToggleDrafts(true)
+      this.updateSubscriptions()
+    },
+    authorId () {
+      this.setViewCanToggleDrafts(true)
+      this.unsubscribeFeed()
       this.updateSubscriptions()
     },
     showDraftsInGrid () { this.updateSubscriptions() }
@@ -77,7 +87,8 @@ export default {
       const options = {}
       if (this.subscriptionPostType) options.type = this.subscriptionPostType
       if (this.authorId) options.authorId = this.authorId
-
+      // !!! DEBUG !!!
+      console.log(`%c subscribeFeed() %c options: `, 'background:#ffbb00;color:#000', 'color:#00aaff', options)
       statuses.forEach(status => {
         if (typeof this.unsubscribe[status] === 'function') return
         this.$set(this.processingStatuses, status, true)

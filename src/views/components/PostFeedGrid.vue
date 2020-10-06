@@ -13,7 +13,7 @@
         :post="post">
         <template v-slot:quick-edit-button="{cellSize}">
           <popper
-            v-if="adminOrEditor"
+            v-if="adminOrEditor || post.author.uid === user.uid"
             placement="right"
             class="ml-auto">
             <template v-slot:reference="{show}">
@@ -106,7 +106,6 @@ export default {
     closeEditor () {
       this.postToEdit = null
     }
-
   }
 }
 </script>

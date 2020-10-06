@@ -36,7 +36,7 @@ const router = new Router({
     {
       path: '/in/:filter',
       name: 'home-filtered',
-      meta: { restricted: true },
+      meta: { authorisation: true },
       component: Home
     },
     {
