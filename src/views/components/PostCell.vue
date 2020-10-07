@@ -183,7 +183,7 @@ export default {
           title: this.title,
           secondTittle: this.secondTittle,
           dateString: this.formattedDate,
-          locationString: this.post.location.address
+          locationString: (this.post.location || {}).address
         }
       }
     }
@@ -214,11 +214,25 @@ export default {
   @import "../../styles/mixins";
   .post-cell {
     position: relative;
-    border-bottom: 1px solid #000;
+    /*border-bottom: 1px solid #000;*/
     hyphens: auto;
+
+    &:after {
+      content: "";
+      position: absolute;
+      height: 0;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      border-bottom: 1px solid #000;
+      width: calc(100% + #{$base-size} / 2);
+    }
 
     &.upcoming {
       border-bottom: none;
+      &:after {
+        content: none;
+      }
       .excerpt {
         margin-bottom: $small-padding !important;
       }

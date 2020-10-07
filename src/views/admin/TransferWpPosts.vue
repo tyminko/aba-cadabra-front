@@ -10,7 +10,7 @@
     </div>
     <div class="main-section">
       <section v-for="(posts, type) in convertedPosts" :key="type">
-        <h3>{{postTypeMap[type]}}</h3>
+        <h3>{{postTypeMap[type] || type}}</h3>
         <div class="posts">
           <div
             v-for="(item, id, i) in posts"
@@ -39,7 +39,7 @@
             </template>
             <div class="attachments">
               <div
-                v-for="attach in [...(item.attachmnets||[]), ...(item.gallery||[])]"
+                v-for="attach in [...(item.attachments||[]), ...(item.gallery||[])]"
                 :key="attach.wpID"
                 :class="{file:!attach.mime.startsWith('image/')}"
                 class="attach-box">
@@ -60,7 +60,10 @@
 
 <script>
 import { mapState } from 'vuex'
-import WP from '../../ABA-Data.json'
+// import axios from 'axios'
+// import jsonpAdapter from 'axios-jsonp'
+// import WP from '../../ABA-Data.json'
+import WP from '../../ABA-Data-2.json'
 import { db, storage } from '../../lib/firebase'
 // import { transferFile } from '../../lib/image-transfer'
 import imgLib from '../../lib/image'
@@ -76,12 +79,14 @@ export default {
     transfered: [],
     profiles: [],
     savedPosts: {},
+    programmes: [],
     totalProgress: 0,
     processing: false,
     postTypeMap: {
       'post': 'Posts',
       'diary_post': 'Diary Posts',
       'salons': 'Salons',
+      'event': 'Events',
       'programme': 'Programmes',
       'lab': 'Lab',
       'publications': 'Publications'
@@ -94,6 +99,7 @@ export default {
     uploadedFiles: [],
     errorFiles: [],
     errorPosts: []
+    // WP: null
   }),
 
   computed: {
@@ -125,6 +131,7 @@ export default {
       if (!this.user || this.user.role !== 'admin') return []
       return Object.entries(WP).reduce((res, [key, posts]) => {
         if (key === 'attachment' || key === 'users' || key === 'page') return res
+        // const type = key === 'programme' || key === 'salons' ? 'event' : key
         res[key] = posts
         return res
       }, {})
@@ -134,9 +141,28 @@ export default {
       return Object.keys(this.postTypeMap)
     },
 
+    wpUsers () {
+      if (!this.user || this.user.role !== 'admin') return []
+      return WP.users
+    },
+
     convertedPosts () {
       return Object.entries(this.postsByType).reduce((res, [type, posts]) => {
+        // let postType = ''
+        // switch (type) {
+        //   case 'salons':
+        //   case 'lab':
+        //   case 'programme':
+        //     postType = 'event'
+        //     break
+        //   case 'diary_post':
+        //     postType = 'post'
+        //     break
+        //   default:
+        //     postType = type
+        // }
         res[type] = posts.reduce((postsOfType, postRawData) => {
+          if (this.savedPosts[`wp${postRawData.post.ID}`]) return postsOfType
           const post = {
             status: 'public',
             wpID: parseInt(postRawData.post.ID),
@@ -219,7 +245,9 @@ export default {
               }
             })
           }
-
+          if (!post.date) {
+            post.date = post.created
+          }
           postsOfType[post.wpID] = post
           return postsOfType
         }, {})
@@ -297,10 +325,15 @@ export default {
   },
 
   async created () {
-    // this.unsubscribe = db.collection('profiles')
-    //   .onSnapshot(snapshot => {
-    //     this.profiles = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }))
-    //   })
+    const snapshot = await db.collection('programmes').get()
+    this.programmes = snapshot.docs.reduce((res, doc) => {
+      res[doc.id] = doc.data()
+      return res
+    }, {})
+    this.unsubscribe = db.collection('profiles')
+      .onSnapshot(snapshot => {
+        this.profiles = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }))
+      })
     this.unsubscribePosts = []
     this.unsubscribePosts.push(db.collection('posts')
       .onSnapshot(snapshot => {
@@ -312,9 +345,6 @@ export default {
         this.updateProgressOnSavedPosts()
       })
     )
-    //
-    // this.uploadedAttachments = await this.getUploadedAttachments()
-    // this.uploadedAttachmentNames = await this.getUploadedAttachmentNames()
   },
 
   destroyed () {
@@ -342,6 +372,51 @@ export default {
         console.log(`%c () %c programmeData: `, 'background:#ffbb00;color:#000', 'color:#00aaff', programmeData)
         return db.collection('programmes').doc(id).set(programmeData)
       }))
+    },
+
+    upgradePost (type, post) {
+      const updatedPost = { ...post }
+      switch (type) {
+        case 'salons':
+        case 'lab':
+          updatedPost.type = 'event'
+          updatedPost.partOfProgramme = {
+            programmeId: type,
+            singlePostLabel: this.programmes[type].singlePostLabel
+          }
+          break
+        case 'programme':
+          updatedPost.type = 'event'
+          const match = post.title.match(/(.*)#\s?(\d+)/)
+          if (match) {
+            let programmeId = ''
+            switch (match[1].trim()) {
+              case 'World of Noon':
+                programmeId = 'won'
+                break
+              case 'Field School':
+                programmeId = 'fieldSchool'
+                break
+              default:
+                programmeId = 'salons'
+            }
+            if (programmeId) {
+              updatedPost.partOfProgramme = {
+                programmeId,
+                singlePostLabel: this.programmes[programmeId].singlePostLabel
+              }
+            }
+            updatedPost.countNumber = match[2]
+          }
+          break
+        case 'diaryPost':
+        case 'diary_post':
+          updatedPost.type = 'post'
+      }
+      if (!post.date) {
+        updatedPost.date = post.created
+      }
+      return updatedPost
     },
 
     async upgradePosts () {
@@ -618,7 +693,7 @@ export default {
           website,
           country
         } = post
-        const postData = { wpID, author, content, created, modified, status }
+        let postData = { wpID, author, content, created, modified, status }
         postData.excerpt = excerpt || string.makeExcerpt(content, 30)
         if (title) postData.title = title
         if (translations) postData.translations = translations
@@ -665,6 +740,7 @@ export default {
         })
 
         postData.type = string.toCamel(postType)
+        postData = this.upgradePost(postType, postData)
         const pId = `wp${wpID}`
         // !!! DEBUG !!!
         console.log(`%c transferPost() %c postData: `, 'background:#ffbb00;color:#000', 'color:#00aaff', postData)

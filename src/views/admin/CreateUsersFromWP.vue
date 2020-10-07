@@ -28,7 +28,7 @@
 import { mapState } from 'vuex'
 import * as users from '../../lib/users'
 import { db } from '../../lib/firebase'
-import ABADb from '../../ABA-Data.json'
+import ABADb from '../../ABA-Data-2.json'
 import ProgressBar from '../components/UI/ProgressBar'
 
 export default {

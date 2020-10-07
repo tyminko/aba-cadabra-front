@@ -1,12 +1,14 @@
 <template>
-  <div class="post-feed">
-    <post-feed-grid :posts="posts" :processing="processing" />
+  <div class="post-feed flex-col">
+      <button v-if="Object.keys(feed).length" class="self-end" @click="emptyTrash">Empty Trash</button>
+      <post-feed-grid :posts="posts" :processing="processing" />
   </div>
 </template>
 
 <script>
 import { mapState } from 'vuex'
 import { subscribeToPosts } from '../lib/posts-feed'
+import { db } from '../lib/firebase'
 import PostFeedGrid from './components/PostFeedGrid'
 
 export default {
@@ -64,6 +66,15 @@ export default {
         this.unsubscribe = null
         this.feed = {}
       }
+    },
+
+    emptyTrash () {
+      db.collection('posts')
+        .where('status', '==', 'trash')
+        .get()
+        .then(snap => {
+          snap.forEach(doc => doc.ref.delete())
+        })
     }
   },
   beforeDestroy () {

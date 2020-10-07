@@ -18,7 +18,7 @@ export default {
 
     authorId () {
       if (this.$route.params.filter === 'my') {
-        return this.user.uid
+        return (this.user || {}).uid
       }
       return this.$route.params.authorId
     },
@@ -29,7 +29,7 @@ export default {
         statuses.push('internal')
 
         if (this.showDraftsInGrid &&
-          (this.adminOrEditor || !this.authorId || this.authorId === this.user.uid)) {
+          (this.adminOrEditor || !this.authorId || this.authorId === (this.user || {}).uid)) {
           statuses.push('draft')
         }
       }
@@ -42,18 +42,18 @@ export default {
   },
 
   created () {
-    this.setViewCanToggleDrafts(true)
+    this.setViewCanToggleDrafts(!!this.user)
     this.subscribeFeed()
   },
 
   watch: {
     user () { this.updateSubscriptions() },
     $route () {
-      this.setViewCanToggleDrafts(true)
+      this.setViewCanToggleDrafts(!!this.user)
       this.updateSubscriptions()
     },
     authorId () {
-      this.setViewCanToggleDrafts(true)
+      this.setViewCanToggleDrafts(!!this.user)
       this.unsubscribeFeed()
       this.updateSubscriptions()
     },

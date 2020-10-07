@@ -92,7 +92,7 @@ export default {
   },
 
   created () {
-    this.setViewCanToggleDrafts(true)
+    this.setViewCanToggleDrafts(!!this.user)
     let options = {
       root: null,
       rootMargin: '0px',
