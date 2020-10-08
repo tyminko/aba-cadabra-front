@@ -224,7 +224,7 @@ export default {
       bottom: 0;
       left: 50%;
       transform: translateX(-50%);
-      border-bottom: 1px solid #000;
+      border-bottom: 1px solid $color-aba-blue;
       width: calc(100% + #{$base-size} / 2);
     }
 
@@ -244,7 +244,10 @@ export default {
       border-bottom: 1px solid $color-aba-blue;
     }
     &.draft {
-      border-bottom: 1px dashed $color-aba-red;
+      &:after {
+        border-style: dashed;
+        border-color: $color-aba-red;
+      }
       /*& > * {opacity: 0.5;}*/
       & img {opacity: 0.5;}
       & * {

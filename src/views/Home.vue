@@ -2,14 +2,13 @@
   <div class="post-feed flex-col">
     <div ref="logo-box" class="logo-wrap" :class="{big: processing}">
       <a-b-a-logo class="main block" :class="{big: processing}"/>
-      <h2 class="text-center mb-base text-gray-600 px-base">
+      <div class="text-center mb-base text-gray-600 px-base">
         AIR Berlin Alexanderplatz, an artist-run initiative.
-      </h2>
+      </div>
     </div>
     <post-feed-grid
       :posts="posts"
-      :processing="processing"
-      class="mt-xxl"/>
+      :processing="processing"/>
   </div>
 </template>
 
@@ -46,12 +45,16 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+  @import "../styles/vars";
+
   #app .a-b-a-logo.main {
     position: relative;
     left: 0;
     transition: font-size 0.5s 0.1s, left 0.5s 0.1s;
   }
   #app .logo-wrap {
+    border-bottom: 1px solid $color-aba-blue;
+    width: calc(100% - #{$base-size / 2});
     &.big {
       height: calc(50vw + 48px);
     }

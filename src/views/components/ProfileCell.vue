@@ -1,6 +1,6 @@
 <template>
   <div class="profile-cell">
-    <router-link :to="{name: 'profile', params: {id: this.profile.id}}">
+    <router-link :to="{name: 'profile', params: {id: (this.profile||{}).id}}">
       <header class="flex">
         <div class="avatar flex-shrink-0 flex-grow-0 w-base h-base rounded-full overflow-hidden bg-gray-200 mr-sm">
           <img

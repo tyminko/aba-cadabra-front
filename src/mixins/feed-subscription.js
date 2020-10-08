@@ -47,7 +47,10 @@ export default {
   },
 
   watch: {
-    user () { this.updateSubscriptions() },
+    user () {
+      this.updateSubscriptions()
+      this.setViewCanToggleDrafts(!!this.user)
+    },
     $route () {
       this.setViewCanToggleDrafts(!!this.user)
       this.updateSubscriptions()

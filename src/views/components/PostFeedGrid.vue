@@ -112,13 +112,19 @@ export default {
 
 <!--suppress CssInvalidAtRule -->
 <style lang="scss">
+  @import "../../styles/vars";
+  @import "../../styles/mixins";
+
   .post-feed-grid {
+    $min-col-w: 200px;
+    $gap-w: 24px;
+
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax($min-col-w, 1fr));
     grid-auto-rows: 320px;
     grid-auto-flow: dense;
-
-    @apply gap-lg p-lg;
+    grid-gap: $gap-w;
+    @apply p-lg;
     max-width: 100%;
   }
 </style>

@@ -42,7 +42,7 @@ export default { name: 'ABALogo' }
   #app .a-b-a-logo.main.text-2xl {
     font-size: 10vw;
     line-height: 0.7;
-    margin-bottom: 3vw;
+    margin-bottom: 2vw;
     text-align: center;
     @apply text-aba-blue;
   }

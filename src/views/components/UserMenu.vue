@@ -45,6 +45,12 @@
           <router-link v-if="admin" :to="{name: 'users'}" class="menu-cell nav-item">
             Users
           </router-link>
+<!--          <router-link v-if="admin" :to="{name: 'wp-users'}" class="menu-cell nav-item">-->
+<!--            Import WP Users-->
+<!--          </router-link>-->
+<!--          <router-link v-if="admin" :to="{name: 'wp-posts'}" class="menu-cell nav-item">-->
+<!--            Import WP Posts-->
+<!--          </router-link>-->
           <router-link :to="{name: 'internal'}" class="menu-cell nav-item">
             <span>Internal Posts</span>
           </router-link>

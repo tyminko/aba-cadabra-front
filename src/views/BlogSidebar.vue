@@ -1,10 +1,10 @@
 <template>
   <div class="blog-sidebar">
     <section>
-      <div class="desc">Author</div>
-      <h2 class="mb-base">{{authorName}}</h2>
-      <img v-if="thumbnailUrl" :src="thumbnailUrl" class="mb-sm">
-      <div class="excerpt">{{description}}...</div>
+      <div class="desc mb-base">Author</div>
+      <profile-cell
+        :profile="authorProfile"
+        class="mb-base"/>
     </section>
     <section v-if="authorEvents.length">
       <div v-for="event in authorEvents" :key="event.id" class="mt-base">
@@ -25,10 +25,11 @@ import { db } from '../lib/firebase'
 import { makeExcerpt } from '../lib/string'
 import PostCell from './components/PostCell'
 import SmoothReflow from './components/UI/SmoothReflow'
+import ProfileCell from './components/ProfileCell'
 
 export default {
   name: 'BlogSidebar',
-  components: { SmoothReflow, PostCell },
+  components: { ProfileCell, SmoothReflow, PostCell },
   props: {
     author: { type: Object, default: () => ({}) },
     post: { type: Object, default: () => ({}) }
