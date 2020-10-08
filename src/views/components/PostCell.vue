@@ -66,12 +66,14 @@
 <script>
 import * as date from '../../lib/date'
 import Ftellipsis from 'ftellipsis'
+import ReservationMixin from '../../mixins/reservation'
 import CreditsString from './CreditsString'
 import ReservationFormPopover from './forms/ReservationFormPopover'
 import ReservationConfirm from './forms/ReservationConfirm'
 
 export default {
   name: 'PostCell',
+  mixins: [ReservationMixin],
   components: { ReservationConfirm, ReservationFormPopover, CreditsString },
   props: {
     post: { type: Object, required: true }
@@ -96,23 +98,6 @@ export default {
         return { name: 'programme', params: { id: this.post.partOfProgramme.programmeId } }
       }
       return null
-    },
-
-    dateDiff () {
-      const postDate = (this.post || {}).date
-      if (!postDate) return -10
-      return date.dateInFuture(postDate)
-    },
-
-    upcoming () {
-      if ((this.post || {}).type !== 'event') return false
-      return this.dateDiff > -1
-    },
-
-    upcomingLabel () {
-      if (this.dateDiff >= 0) return 'Upcoming'
-      if (this.dateDiff > -1) return 'Today'
-      return ''
     },
 
     typeLabel () {
@@ -180,19 +165,7 @@ export default {
       if (!this.post || !this.post.participants) return []
       return Object.values(this.post.participants || []).filter(p => !p.star)
     },
-    allowReservation () {
-      if ((this.post || {}).type !== 'event' || this.dateDiff <= -1 || this.$route.params.token) {
-        return false
-      }
-      const deadlineHours = -1
-      const diffHours = this.dateDiff * 24
-      return diffHours > deadlineHours
-    },
 
-    shouldConfirmReservation () {
-      const token = this.$route.params.token
-      return !!token && ((this.post || {}).reservationsPending || []).includes(token)
-    },
     eventData () {
       return {
         eventId: this.post.id,

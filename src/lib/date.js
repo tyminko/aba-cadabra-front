@@ -13,8 +13,7 @@ function makeShortFormat (locale) {
 
 export function dateInFuture (timestamp) {
   const dt = timestamp instanceof DateTime ? timestamp : DateTime.fromMillis(timestamp)
-  const day = dt.startOf('day')
-  return day.diffNow('days').days
+  return dt.diffNow('days').days
 }
 
 export function getShortFormatForLocale (locale) {

@@ -54,6 +54,7 @@
 import { mapState, mapActions } from 'vuex'
 import { db } from '../lib/firebase'
 import * as date from '../lib/date'
+import ReservationMixin from '../mixins/reservation'
 import DOMPurify from 'dompurify'
 import ContentWithSidebar from './components/UI/layouts/ContentWithSidebar'
 import CreditsString from './components/CreditsString'
@@ -64,6 +65,7 @@ import AttachmentsView from './components/AttachmentsView'
 
 export default {
   name: 'EventView',
+  mixins: [ReservationMixin],
   components: { AttachmentsView, ReservationConfirm, ReservationFormPopover, EventSidebar, CreditsString, ContentWithSidebar },
   props: {
     value: { type: Object, default: null }
@@ -169,33 +171,6 @@ export default {
         return DOMPurify.sanitize(this.post.content)
       }
       return ''
-    },
-
-    dateDiff () {
-      const postDate = (this.post || {}).date
-      if (!postDate) return -10
-      return date.dateInFuture(postDate)
-    },
-
-    allowReservation () {
-      if (this.dateDiff <= -1 || this.$route.params.token) {
-        return false
-      }
-      const deadlineHours = -1
-      const diffHours = this.dateDiff * 24
-      return diffHours > deadlineHours
-    },
-
-    shouldConfirmReservation () {
-      const token = this.$route.params.token
-      return !!token && ((this.post || {}).reservationsPending || []).includes(token)
-    },
-
-    showReservationConfirmedMessage () {
-      const token = this.$route.params.token
-      return !!token &&
-        !this.closeReservationConfirmedMessage &&
-        ((this.post || {}).reservationsConfirmed || []).includes(token)
     }
   },
 
