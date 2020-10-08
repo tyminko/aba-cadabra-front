@@ -4,6 +4,9 @@
       <div class="text-block relative">
         <h1 class="text-5xl mt-sm">{{displayName}}</h1>
         <h2 v-if="positionStr" class="mt-sm">{{positionStr}}</h2>
+        <div v-if="partners.length" class="partners my-base">
+          <credits-string prefix="Supported by" :persons="partners" no-link/>
+        </div>
       </div>
       <attachments-view :attachments="attachments" />
       <div class="text-block mt-base" v-html="text" />
@@ -21,10 +24,11 @@ import DOMPurify from 'dompurify'
 import ContentWithSidebar from './components/UI/layouts/ContentWithSidebar'
 import ProfileSidebar from './ProfileSidebar'
 import AttachmentsView from './components/AttachmentsView'
+import CreditsString from './components/CreditsString'
 
 export default {
   name: 'ProfileView',
-  components: { AttachmentsView, ProfileSidebar, ContentWithSidebar },
+  components: { CreditsString, AttachmentsView, ProfileSidebar, ContentWithSidebar },
   props: {},
 
   data: () => ({
@@ -52,6 +56,9 @@ export default {
     },
     attachments () {
       return Object.values((this.profile || {}).attachments || {}).sort((a, b) => a.order - b.order)
+    },
+    partners () {
+      return [...(this.profile || {}).supportedBy || []].map(p => ({ id: p.id, displayName: p.title || p.name }))
     }
   },
 

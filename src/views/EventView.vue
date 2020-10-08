@@ -20,6 +20,9 @@
           <credits-string v-if="hosts.length" prefix="Hosted by" :persons="hosts" />
           <credits-string v-if="participants.length" prefix="With" :persons="participants" />
         </div>
+        <div v-if="partners.length" class="partners my-base">
+          <credits-string prefix="Supported by" :persons="partners" no-link/>
+        </div>
         <button
           v-if="allowReservation"
           class="h-auto px-base py-sm text-aba-blue border-2 border-aba-blue"
@@ -125,6 +128,10 @@ export default {
       return ((this.post || {}).location || {}).address || ''
     },
 
+    partners () {
+      return [...(this.post || {}).supportedBy || []].map(p => ({ id: p.id, displayName: p.title || p.name }))
+    },
+
     attachments () {
       const count = Object.keys((this.post || {}).attachments || {}).length
       if (!count) return []
@@ -164,8 +171,19 @@ export default {
       return ''
     },
 
+    dateDiff () {
+      const postDate = (this.post || {}).date
+      if (!postDate) return -10
+      return date.dateInFuture(postDate)
+    },
+
     allowReservation () {
-      return (this.post || {}).date && date.dateInFuture(this.post.date) && !this.$route.params.token
+      if (this.dateDiff <= -1 || this.$route.params.token) {
+        return false
+      }
+      const deadlineHours = -1
+      const diffHours = this.dateDiff * 24
+      return diffHours > deadlineHours
     },
 
     shouldConfirmReservation () {

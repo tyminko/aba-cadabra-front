@@ -11,7 +11,7 @@
             {{post.status}}
           </div>
         </div>
-        <div v-if="upcoming" class="upcoming-label">Upcoming</div>
+        <div v-if="upcoming" class="upcoming-label">{{upcomingLabel}}</div>
         <slot name="quick-edit-button" :cell-size="cellSize"/>
       </div>
     </header>
@@ -21,7 +21,7 @@
       <div>
         <h1 class="mt-1">{{title}}</h1>
         <h2 v-if="secondTittle" class="">{{secondTittle}}</h2>
-        <div class="my-xs" :class="{'h2':post.type==='event', 'text-aba-blue':allowReservation }">{{formattedDate}}</div>
+        <div class="my-xs" :class="{'h2':post.type==='event', 'text-aba-blue':upcoming }">{{formattedDate}}</div>
       </div>
       <div
         v-if="thumbnailUrl"
@@ -97,9 +97,24 @@ export default {
       }
       return null
     },
-    upcoming () {
-      return this.post.date > Date.now()
+
+    dateDiff () {
+      const postDate = (this.post || {}).date
+      if (!postDate) return -10
+      return date.dateInFuture(postDate)
     },
+
+    upcoming () {
+      if ((this.post || {}).type !== 'event') return false
+      return this.dateDiff > -1
+    },
+
+    upcomingLabel () {
+      if (this.dateDiff >= 0) return 'Upcoming'
+      if (this.dateDiff > -1) return 'Today'
+      return ''
+    },
+
     typeLabel () {
       if (!this.post) return null
       if (this.post.partOfProgramme) {
@@ -127,7 +142,7 @@ export default {
     formattedDate () {
       return date.format(
         this.post.date,
-        this.post.type === 'event' && this.allowReservation ? 'datetime' : '', 'de'
+        this.post.type === 'event' && this.upcoming ? 'datetime' : '', 'de'
       )
     },
     cellSize () {
@@ -166,7 +181,12 @@ export default {
       return Object.values(this.post.participants || []).filter(p => !p.star)
     },
     allowReservation () {
-      return (this.post || {}).date && date.dateInFuture(this.post.date) && !this.$route.params.token
+      if ((this.post || {}).type !== 'event' || this.dateDiff <= -1 || this.$route.params.token) {
+        return false
+      }
+      const deadlineHours = -1
+      const diffHours = this.dateDiff * 24
+      return diffHours > deadlineHours
     },
 
     shouldConfirmReservation () {
@@ -174,8 +194,6 @@ export default {
       return !!token && ((this.post || {}).reservationsPending || []).includes(token)
     },
     eventData () {
-      // !!! DEBUG !!!
-      console.log(`%c eventData() %c this.$router.resolve(this.routerLink).href: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.$router.resolve(this.routerLink).href)
       return {
         eventId: this.post.id,
         eventUrl: window.location.origin + this.$router.resolve(this.routerLink).href,
