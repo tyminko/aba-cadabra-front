@@ -51,15 +51,15 @@ export default {
       this.updateSubscriptions()
       this.setViewCanToggleDrafts(!!this.user)
     },
-    $route () {
-      this.setViewCanToggleDrafts(!!this.user)
-      this.updateSubscriptions()
-    },
-    authorId () {
-      this.setViewCanToggleDrafts(!!this.user)
-      this.unsubscribeFeed()
-      this.updateSubscriptions()
-    },
+    // $route () {
+    //   // this.setViewCanToggleDrafts(!!this.user)
+    //   // this.updateSubscriptions()
+    // },
+    // authorId () {
+    //   // this.setViewCanToggleDrafts(!!this.user)
+    //   // this.unsubscribeFeed()
+    //   // this.updateSubscriptions()
+    // },
     showDraftsInGrid () { this.updateSubscriptions() }
   },
 
@@ -90,8 +90,6 @@ export default {
       const options = {}
       if (this.subscriptionPostType) options.type = this.subscriptionPostType
       if (this.authorId) options.authorId = this.authorId
-      // !!! DEBUG !!!
-      console.log(`%c subscribeFeed() %c options: `, 'background:#ffbb00;color:#000', 'color:#00aaff', options)
       statuses.forEach(status => {
         if (typeof this.unsubscribe[status] === 'function') return
         this.$set(this.processingStatuses, status, true)

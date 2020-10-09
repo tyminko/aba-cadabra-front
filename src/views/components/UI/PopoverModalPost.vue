@@ -110,7 +110,8 @@ export default {
     .content-box {
       position: relative;
       height: calc(100vh - (#{$base-padding} - #{$border-thick-w}) * 2);
-      border: $border-thick-w solid #888888;
+      padding: $base-padding;
+      // border: $border-thick-w solid #888888;
 
       & > header {
         position: absolute;
@@ -124,7 +125,7 @@ export default {
       }
     }
     .modal-shadow {
-      background: rgba(215, 215, 215, 0.5);
+      background: rgba(215, 215, 215, 0.8);
     }
   }
 </style>

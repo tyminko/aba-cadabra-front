@@ -163,6 +163,9 @@ export default {
     },
 
     async addAttachmentFromUrl () {
+      if (!this.urlToInsert) {
+        return
+      }
       const attachment = await this.makeAttachmentFromUrl(this.urlToInsert)
       if (attachment) {
         this.showUrlInput = false

@@ -117,8 +117,6 @@ export default {
   methods: {
     async onPostsLoaded () {
       await this.$nextTick()
-      // !!! DEBUG !!!
-      console.log(`%c onPostsLoaded() %c this.$refs.posts: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.$refs.posts)
       if (this.IntersectionObserver) this.IntersectionObserver.disconnect()
       ;(this.$refs.posts || []).forEach(p => {
         this.IntersectionObserver.observe(p.$el)
@@ -127,20 +125,14 @@ export default {
       const box = this.$refs.posts.find(p => p.post.id === postId)
       if (!box) return
       const focusBox = box.$el // document.getElementById(postId)
-      // !!! DEBUG !!!
-      console.log(`%c onPostsLoaded() %c focusBox: `, 'background:#ffbb00;color:#000', 'color:#00aaff', focusBox)
       if (focusBox) {
         this.activePostId = postId
-        // !!! DEBUG !!!
-        console.log(`%c onPostsLoaded() %c this.activePostId: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.activePostId)
         focusBox.scrollIntoView(true)
       }
     },
     scrollToNext () {
       if (this.nextPostIndex !== null) {
         const box = this.$refs.posts[this.nextPostIndex]
-        // !!! DEBUG !!!
-        console.log(`%c scrollToNext() %c box: `, 'background:#ffbb00;color:#000', 'color:#00aaff', box)
         if ((box || {}).$el) {
           this.activePostId = box.post.id
           box.$el.scrollIntoView({ behavior: 'smooth' })
@@ -150,8 +142,6 @@ export default {
     scrollToPrevious () {
       if (this.previousPostIndex !== null) {
         const box = this.$refs.posts[this.previousPostIndex]
-        // !!! DEBUG !!!
-        console.log(`%c scrollToPrevious() %c box: `, 'background:#ffbb00;color:#000', 'color:#00aaff', box)
         if ((box || {}).$el) {
           this.activePostId = box.post.id
           box.$el.scrollIntoView({ behavior: 'smooth' })

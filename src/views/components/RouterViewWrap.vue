@@ -34,11 +34,9 @@ export default {
         // the  "$createElement", use original function as is.
         return origCreateElementFunc(componentType, data)
       }
-
       if (componentType) {
         setRootPath(this.$route.fullPath)
       }
-
       // Find a parent router wrapper
       let parentRouterViewWrap = this.$parent
       while (parentRouterViewWrap) {

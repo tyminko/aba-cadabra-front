@@ -221,6 +221,9 @@ export default {
 
     &.upcoming {
       border-bottom: none;
+      & > * {
+        color: $color-aba-blue
+      }
       &:after {
         content: none;
       }
@@ -230,16 +233,13 @@ export default {
     }
 
     &.internal {
-      //
-      //box-shadow: 0 0 0 $base-padding /3 $color-aba-blue;
-      border-bottom: 1px solid $color-aba-blue;
+      // border-bottom: 1px solid $color-aba-blue;
     }
     &.draft {
       &:after {
         border-style: dashed;
         border-color: $color-aba-red;
       }
-      /*& > * {opacity: 0.5;}*/
       & img {opacity: 0.5;}
       & * {
         font-style: italic !important;

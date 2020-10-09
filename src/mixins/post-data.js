@@ -69,8 +69,8 @@ export default {
       }
     },
     $route () {
-      this.unsubscribePost()
-      this.subscribeToPost()
+      // this.unsubscribePost()
+      // this.subscribeToPost()
     }
   },
 

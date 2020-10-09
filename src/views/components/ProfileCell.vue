@@ -1,6 +1,6 @@
 <template>
-  <div class="profile-cell">
-    <router-link :to="{name: 'profile', params: {id: (this.profile||{}).id}}">
+  <div class="profile-cell post-cell pb-base">
+    <router-link :to="{name: 'profile', params: {id: (this.profile||{}).id || 0}}">
       <header class="flex">
         <div class="avatar flex-shrink-0 flex-grow-0 w-base h-base rounded-full overflow-hidden bg-gray-200 mr-sm">
           <img
@@ -71,7 +71,7 @@ export default {
     },
 
     description () {
-      return makeExcerpt((this.profile || {}).text || (this.profile || {}).description)
+      return makeExcerpt((this.profile || {}).text || (this.profile || {}).description || '')
     }
   },
 
@@ -82,6 +82,11 @@ export default {
 <style lang="scss">
   @import "../../styles/mixins";
   .profile-cell {
+    position: relative;
+    h2 {
+      opacity: 1;
+      font-weight: 400;
+    }
     .excerpt {
       @include multi-line-truncate(3);
     }

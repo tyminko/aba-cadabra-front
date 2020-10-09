@@ -37,6 +37,7 @@ export default {
     }
     .main-box {
       flex-shrink: 1;
+      flex-grow: 1;
       min-width: 0;
       .text-block {
         padding: 0 $base-padding;

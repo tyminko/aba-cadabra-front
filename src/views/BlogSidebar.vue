@@ -102,7 +102,7 @@ export default {
       }
       this.profileUnsubscribe = db.collection('profiles').doc(this.author.uid)
         .onSnapshot(doc => {
-          this.authorProfile = { ...doc.data() }
+          this.authorProfile = { ...doc.data(), id: doc.id }
         })
     },
     getAuthorEvents () {

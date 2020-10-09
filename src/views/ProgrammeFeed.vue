@@ -55,6 +55,10 @@ export default {
 
   watch: {
     $route () {
+      if (this.$route.name !== 'programme' || this.programmeId === this.$route.params.id) {
+        // if rooter is changed by popup ... getting in or out of the popup
+        return
+      }
       this.programmeId = this.$route.params.id
       this.unsubscribeAll()
       this.subscribeProgrammeRecord()
