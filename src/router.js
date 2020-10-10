@@ -78,7 +78,7 @@ const router = new Router({
     {
       path: '/partners',
       name: 'partners',
-      component: () => import(/* webpackChunkName: "institutions" */ './views/Institutions')
+      component: () => import(/* webpackChunkName: "institutions" */ './views/components/page-templates/Partners')
     },
     {
       path: '/admin',

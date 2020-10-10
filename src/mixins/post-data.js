@@ -7,7 +7,8 @@ export default {
     return {
       unsubscribe: null,
       collectionRef: null,
-      postData: {}
+      postData: {},
+      processing: true
     }
   },
 
@@ -68,6 +69,9 @@ export default {
         this.subscribeToPost()
       }
     },
+    processing () {
+      if (!this.processing) this.setContentLoaded()
+    },
     $route () {
       // this.unsubscribePost()
       // this.subscribeToPost()
@@ -79,7 +83,7 @@ export default {
   },
 
   methods: {
-    ...mapActions(['showEditor']),
+    ...mapActions(['showEditor', 'setContentLoaded']),
     openEditor () {
       if (this.postData) this.showEditor({ value: this.postData })
     },
@@ -95,6 +99,7 @@ export default {
       this.unsubscribe = this.collectionRef.doc(this.postId)
         .onSnapshot(doc => {
           this.postData = { ...doc.data(), id: doc.id }
+          this.processing = false
         }, err => {
           if (err.code === 'permission-denied') {
             if (!this.user) {
@@ -103,6 +108,7 @@ export default {
               this.$router.push({ name: 'home' })
             }
           }
+          this.processing = false
           console.error(`SUBSCRIBE TO POST Error code: ${err.code}`, err)
         })
     },

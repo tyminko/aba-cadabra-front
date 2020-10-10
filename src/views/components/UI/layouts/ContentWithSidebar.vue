@@ -4,7 +4,7 @@
       <slot name="main" />
     </div>
     <div class="sidebar-box">
-      <slot name="sidebar" />
+      <slot name="sidebar"/>
     </div>
   </div>
 </template>

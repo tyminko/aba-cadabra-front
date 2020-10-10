@@ -1,16 +1,15 @@
 <template>
   <div class="institutions">
-    <h1>Partners</h1>
     <div class="grid">
       <div
         v-for="institute in institutions"
         :key="institute.id"
         class="partner-box relative">
-        <div class="logo-box p-sm">
-          <img v-if="institute.logo" :src="logoUrl(institute)"/>
-        </div>
-        <div class="">
-          <a class="block text-sm leading-tight" :href="institute.url">{{institute.title}}, {{institute.country}}</a>
+        <a :href="institute.url" target="_blank" class="logo-box p-sm">
+          <img v-if="institute.logo" :src="logoUrl(institute)" class="h-base" alt="partner logo"/>
+        </a>
+        <div class="my-base">
+          <a :href="institute.url" target="_blank" class="block text-sm leading-tight" >{{institute.title}}, {{institute.country}}</a>
         </div>
         <button
           v-if="adminOrEditor"
@@ -30,8 +29,8 @@
 
 <script>
 import { mapState } from 'vuex'
-import Institutions from '../mixins/institutions'
-import InstitutionEditor from './editor/InstitutionEditor'
+import Institutions from '../../../mixins/institutions'
+import InstitutionEditor from '../../editor/InstitutionEditor'
 
 export default {
   name: 'Institutions',

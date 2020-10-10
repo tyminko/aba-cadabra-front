@@ -17,7 +17,7 @@
 </template>
 
 <script>
-import Institutions from '../Institutions'
+import Institutions from '../components/page-templates/Partners'
 import DraggableContent from '../components/UI/DraggableContent'
 export default {
   name: 'InstitutionsEditor',

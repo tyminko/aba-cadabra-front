@@ -285,7 +285,7 @@ export default {
 
     .upcoming-label {
       position: relative;
-      z-index: 100;
+      z-index: 10;
       padding: 0.1rem 0.4rem;
       background: $color-aba-blue;
       color: #fff;

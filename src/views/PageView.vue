@@ -7,7 +7,7 @@
         class="text-block absolute top-0 right-0"
         @open-editor="openEditor" />
       <div class="text-block relative">
-        <h1 class="relative text-5xl mt-sm">{{title}}</h1>
+        <h1 class="relative text-3xl mt-sm capitalize">{{title}}</h1>
       </div>
       <div v-for="item in attachments" :key="item.id" class="attachment mt-base mb-sm">
         <div class="attachment-box relative">
@@ -28,7 +28,7 @@
       </template>
     </template>
     <template v-slot:sidebar>
-      <component :is="templateSidebar" :post="postData"/>
+      <component v-if="templateSidebar" :is="templateSidebar" :post="postData"/>
     </template>
   </content-with-sidebar>
 </template>
@@ -41,12 +41,13 @@ import ContentWithSidebar from './components/UI/layouts/ContentWithSidebar'
 import EditButtonBadge from './components/EditButtonBadge'
 import PageSidebar from './PageSidebar'
 import Residency from './components/page-templates/Residency'
+import Partners from './components/page-templates/Partners'
 import About from './components/page-templates/About'
 import AboutSidebar from './components/page-templates/AboutSidebar'
 
 export default {
   name: 'PageView',
-  components: { PageSidebar, EditButtonBadge, ContentWithSidebar, Residency, About, AboutSidebar },
+  components: { PageSidebar, EditButtonBadge, ContentWithSidebar, Residency, About, AboutSidebar, Partners },
   mixins: [PostData],
   props: {},
 
@@ -60,18 +61,27 @@ export default {
     allowEdit () { return !!this.user && (this.user.role === 'admin' || this.user.role === 'editor') },
     template () {
       const t = this.postData.template
-      const components = ['Residency', 'About']
+      const components = ['Residency', 'About', 'Partners']
       return components.includes(t) ? t : null
     },
     templateSidebar () {
       switch (this.template) {
         case 'About': return 'AboutSidebar'
+        case 'Partners': return ''
         default: return 'PageSidebar'
       }
     }
   },
-
-  created () {},
+  watch: {
+    $route () {
+      if (this.$route.name !== 'page' || this.postData.id === this.$route.params.id) {
+        // if rooter is changed by popup ... getting in or out of the popup
+        return
+      }
+      this.unsubscribePost()
+      this.subscribeToPost()
+    }
+  },
 
   methods: {
     ...mapActions(['showEditor']),

@@ -4,6 +4,12 @@
       <router-link :to="{name: 'home'}" class="nav-item flex justify-center">
         <a-b-a-logo />
       </router-link>
+      <router-link
+        v-if="aboutPageRouterTo"
+        :to="aboutPageRouterTo"
+        class="nav-item flex justify-center">
+        About
+      </router-link>
       <template v-if="showPostFilters">
       </template>
       <user-menu class="user-menu" />
@@ -12,7 +18,7 @@
 </template>
 
 <script>
-import { mapState, mapActions } from 'vuex'
+import { mapState, mapActions, mapGetters } from 'vuex'
 import UserMenu from './UserMenu'
 import ABALogo from './ABALogo'
 
@@ -22,7 +28,8 @@ export default {
   data: () => ({}),
 
   computed: {
-    ...mapState(['user', 'showDraftsInGrid']),
+    ...mapState(['user', 'showDraftsInGrid', 'menu']),
+    ...mapGetters(['pageRouteByTitle']),
     adminOrEditor () {
       return !!this.user && (this.user.role === 'admin' || this.user.role === 'editor')
     },
@@ -34,6 +41,10 @@ export default {
     },
     showDraftsMessage () {
       return this.showDraftsInGrid ? 'Hide Drafts' : `Show ${!this.adminOrEditor ? 'Mine ' : ''}Drafts`
+    },
+
+    aboutPageRouterTo () {
+      return this.pageRouteByTitle('about')
     }
   },
 

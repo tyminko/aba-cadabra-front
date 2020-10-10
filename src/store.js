@@ -67,6 +67,18 @@ export default new Vuex.Store({
       state.contentLoaded = val
     }
   },
+  getters: {
+    pageRouteByTitle: state => title => {
+      if (typeof title !== 'string') return null
+      const titleLC = title.toLowerCase()
+      const menuItem = Object.values((state.menu || {}).public || {})
+        .find(v => {
+          return v.type === 'page' && (v.title || '').toLowerCase() === titleLC
+        })
+      if (!menuItem) return null
+      return { name: 'page', params: { id: menuItem.id } }
+    }
+  },
   actions: {
     updateWorks ({ commit }, works) {
       commit('UPDATE_WORKS', works)

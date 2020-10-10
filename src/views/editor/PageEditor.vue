@@ -64,6 +64,7 @@ export default {
     contentTemplates: {
       '--': 'Default',
       'Residency': 'AIR',
+      'Partners': 'Partners',
       'About': 'About'
     }
   }),
