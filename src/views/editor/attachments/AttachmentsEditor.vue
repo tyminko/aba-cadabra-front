@@ -35,7 +35,7 @@
           :key="'n-a'"
           ref="new-attachment-cell"
           draggable="false"
-          class="new-attachment-cell no-move flex flex-col items-center justify-center bg-gray-100 border border-aba-blue border-dashed"
+          class="new-attachment-cell no-move flex flex-col items-center justify-center bg-gray-100"
           @drop="addFiles">
           <p class="italic capitalize font-light text-gray-400">{{dropzoneMessage}}</p>
           <div class="flex items-center">

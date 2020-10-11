@@ -5,7 +5,7 @@
         <div
           v-for="item in sectionList"
           :key="item.id"
-          class="menu-item flex items-center text-lg h-base bg-white px-base"
+          class="menu-item flex items-center text-lg h-base px-base"
           :class="[item.status]">
           <router-link
             :to="{name: item.type, params: {id: item.id}}"

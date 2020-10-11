@@ -6,7 +6,7 @@
       class="ml-auto nav-item select-none text-xs cursor-pointer">
       <span>{{messageToggleDrafts}}</span>
     </a>
-    <sliding-panel v-if="user"  ref="menu" class="user-menu">
+    <sliding-panel v-if="user" ref="menu" class="user-menu">
       <template v-slot:trigger="{on, open}">
         <button class="user-menu-button mr-0" @click="on">
           <i class="material-icons dimmed">add</i>
@@ -36,12 +36,12 @@
       <div class="user-actions-wrapper">
         <login-form v-if="!user" />
         <div v-else class="user-actions">
-          <div class="menu-cell">
-            <a @click.prevent="openMyProfileEditor" class="cursor-pointer">
+<!--          <div class="menu-cell">-->
+            <a @click.prevent="openMyProfileEditor" class="menu-cell block cursor-pointer">
               <span class="block">{{user.displayName}}</span>
-              Profile
+              <span class="block">Profile</span>
             </a>
-          </div>
+<!--          </div>-->
           <router-link v-if="admin" :to="{name: 'users'}" class="menu-cell nav-item">
             Users
           </router-link>
@@ -156,7 +156,8 @@ export default {
     }
     .sliding-panel {
       width: 100%;
-      border: $border-thick-w solid $color-aba-blue;
+
+      //border: $border-thick-w solid $color-aba-blue;
       @include wider-then-phone {
         width: auto;
         margin-right: $base-padding / 2;
@@ -164,7 +165,10 @@ export default {
     }
     .user-actions-wrapper {
       padding-top: calc(#{$base-size} - #{$border-thick-w});
-      background: $color-bg;
+      /*background: rgba(32, 58, 214, 0.95);*/
+      /*background: rgba(130, 130, 130, 0.95);*/
+      background: rgba(70, 82, 130, 0.95);
+      font-weight: 300;
       overflow: hidden;
 
       .user-actions {
@@ -175,8 +179,16 @@ export default {
           align-items: center;
           min-height: $base-size;
           padding: $base-padding / 2 $base-padding;
+          color: #fff;
+          background: transparent;
+          min-width: 175px;
+
           &:not(:last-child) {
-            border-bottom: 1px #0000ff7e solid;
+            border-bottom: 1px #d2d2d261 solid;
+            /*border-bottom: 1px #0000ff7e solid;*/
+          }
+          & a {
+            color: #fff;
           }
         }
 

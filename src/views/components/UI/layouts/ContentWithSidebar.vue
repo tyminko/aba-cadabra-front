@@ -56,6 +56,7 @@ export default {
           overflow-y: auto;
           //max-width: calc(#{$max-width-text-block} + #{$base-padding} * 2);
           padding: 0 $base-padding * 2;
+          border-right: 1px solid $color-aba-blue;
         }
         .sidebar-box {
           overflow-y: auto;

@@ -204,6 +204,7 @@ export default {
 
       .push-sidebar {
         flex-shrink: 0;
+        border-right: 1px solid $color-aba-blue;
         .sidebar-content {
           width: min-content;
           z-index: 100;

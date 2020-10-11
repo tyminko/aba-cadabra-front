@@ -1,5 +1,5 @@
 <template>
-  <article class="blog-article py-xl border-b">
+  <article class="blog-article post-cell py-xl">
     <div class="mb-base text-block">{{formattedDate}}</div>
     <h2 class="mb-base text-block">{{post.title}}</h2>
     <div class="gallery flex flex-wrap">

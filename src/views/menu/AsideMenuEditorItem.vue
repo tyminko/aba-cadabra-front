@@ -1,5 +1,5 @@
 <template>
-  <div class="menu-item flex items-center text-lg h-base bg-white pr-base">
+  <div class="menu-item flex items-center text-lg h-base pr-base">
     <div
       class="handle flex items-center"
       :class="{'opacity-0': status==='draft'}">
