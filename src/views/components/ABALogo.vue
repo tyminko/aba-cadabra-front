@@ -12,6 +12,7 @@ export default { name: 'ABALogo' }
 
 <!--suppress CssInvalidAtRule -->
 <style lang="scss">
+  @import "../../styles/vars";
   .a-b-a-logo {
     white-space: nowrap;
     user-select: none;
@@ -40,10 +41,8 @@ export default { name: 'ABALogo' }
     }
   }
   #app .a-b-a-logo.main.text-2xl {
-    font-size: 10vw;
     line-height: 0.7;
-    margin-bottom: 2vw;
-    text-align: center;
-    @apply text-aba-blue;
+    margin: $small-padding 0 0.19428em;
+    color: $color-aba-blue;
   }
 </style>

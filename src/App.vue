@@ -63,7 +63,7 @@ export default {
   @import "./styles/vars";
 
   #app {
-    margin-top: $base-size;
+    //  margin-top: $base-size;
   }
 
   .post-feed {

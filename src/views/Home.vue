@@ -1,11 +1,10 @@
 <template>
   <div class="post-feed flex-col">
-    <div ref="logo-box" class="logo-wrap" :class="{big: processing}">
-      <a-b-a-logo class="main block" :class="{big: processing}"/>
-      <div class="text-center mb-base text-gray-600 px-base">
+    <transition>
+      <div v-if="!processing" class="site-caption text-xs leading-none text-gray-600">
         AIR Berlin Alexanderplatz, an artist-run initiative.
       </div>
-    </div>
+    </transition>
     <post-feed-grid
       :posts="posts"
       :processing="processing"/>
@@ -15,12 +14,11 @@
 <script>
 import FeedSubscription from '../mixins/feed-subscription'
 import PostFeedGrid from './components/PostFeedGrid'
-import ABALogo from './components/ABALogo'
 
 export default {
   name: 'Home',
   mixins: [FeedSubscription],
-  components: { ABALogo, PostFeedGrid },
+  components: { PostFeedGrid },
 
   data: () => ({
     feed: {},
@@ -46,6 +44,12 @@ export default {
 
 <style lang="scss" scoped>
   @import "../styles/vars";
+
+  .site-caption {
+    width: calc(100% - #{$base-size / 2});
+    border-top: 1px solid $color-aba-blue;
+    padding: $small-padding $small-padding $small-padding $base-size - $base-size / 4;
+  }
 
   #app .a-b-a-logo.main {
     position: relative;

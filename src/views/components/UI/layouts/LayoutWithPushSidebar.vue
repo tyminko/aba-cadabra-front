@@ -1,6 +1,6 @@
 <template>
   <div class="layout-wrap">
-    <header>
+    <header ref="header">
       <div class="toggle-wrap">
         <button v-if="collapsible" class="secondary" @click.stop="toggle">
           <i class="material-icons dimmed">{{open?'chevron_left':'menu'}}</i>
@@ -10,7 +10,7 @@
         <slot name="header"/>
       </div>
     </header>
-    <div class="push-box" :class="side">
+    <div ref="main" class="push-box" :class="side">
       <div ref="sidebar" v-click-outside="pushOut" class="push-sidebar" :class="{collapsible}">
         <div ref="sidebar-content" class="sidebar-content" :class="{'opacity-0':!open}">
           <slot name="sidebar" :refresh="setPushMargin"/>
@@ -37,7 +37,8 @@ export default {
   data: () => ({
     collapsible: true,
     open: false,
-    contentMinWidth: 550
+    contentMinWidth: 550,
+    headerH: 0
   }),
 
   computed: {
@@ -59,6 +60,8 @@ export default {
   },
 
   mounted () {
+    // window.addEventListener('resize', this.setTopMarginToHeaderHeight)
+    this.setTopMarginToHeaderHeight()
     if (this.responsive) {
       // this.setSidebarCollapsible()
       window.addEventListener('resize', this.setSidebarCollapsible)
@@ -99,7 +102,7 @@ export default {
     setPushMargin () {
       const sidebar = this.$refs.sidebar
       const sidebarContent = this.$refs['sidebar-content']
-      let size, margin
+      let size
       if (this.side === 'left' || this.side === 'right') {
         size = sidebarContent.getBoundingClientRect().width || 300
         if (sidebar.getBoundingClientRect().width !== size) sidebar.style.width = `${size}px`
@@ -107,8 +110,19 @@ export default {
         size = sidebarContent.getBoundingClientRect().height
         if (sidebar.getBoundingClientRect().height !== size) sidebar.style.height = `${size}px`
       }
-      margin = this.open ? 0 : -size
+      const margin = this.open ? 0 : -size
+      const marginHeader = this.open ? size - 48 : 0
       document.documentElement.style.setProperty(`--push-margin-${this.side}`, `${margin}px`)
+      document.documentElement.style.setProperty(`--push-margin-header-${this.side}`, `${marginHeader}px`)
+    },
+
+    setTopMarginToHeaderHeight (e) {
+      if (!this.$refs.header || !this.$refs.main) return
+      const h = this.$refs.header.getBoundingClientRect().height
+      if (h !== this.headerH) {
+        this.$refs.main.style.marginTop = `${h}px`
+        this.headerH = h
+      }
     }
   }
 }
@@ -122,13 +136,23 @@ export default {
   .layout-wrap {
     & > header {
       display: flex;
-      height: $base-size;
+      //height: $base-size;
       width: 100vw;
-      align-items: center;
+      align-items: flex-end;
       position: fixed;
       top: 0;
       left: 0;
       z-index: $z-index-header;
+
+      &:after {
+        /*content: "";
+        height: 0;
+        width: calc(100% - #{$base-size / 2});
+        border-bottom: 1px solid $color-aba-blue;
+        position: absolute;
+        bottom: 0;
+        left: $base-size / 4;*/
+      }
 
       .toggle-wrap {
         width: $base-size;
@@ -136,6 +160,18 @@ export default {
         display: flex;
         align-items: center;
         justify-content: center;
+        position: relative;
+        &:after {
+          content: "";
+          position: absolute;
+          width: 100%;
+          height: 2.25rem;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: $color-bg-semitransparent;
+          z-index: -1;
+        }
       }
       button {
         position: relative;
@@ -160,9 +196,11 @@ export default {
       }
       .header-content-wrap {
         flex-grow: 1;
+        position: relative;
+        left: calc(var(--push-margin-header-left) - 1px);
+        transition: left $transition-time;
       }
     }
-
     .push-box {
       height: 100%;
       display: flex;

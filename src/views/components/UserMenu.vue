@@ -3,7 +3,7 @@
     <a
       v-if="viewCanToggleDrafts"
       @click.prevent="toggleDraftsInGrid"
-      class="ml-auto nav-item select-none text-xs cursor-pointer">
+      class="ml-auto select-none text-xs leading-none cursor-pointer">
       <span>{{messageToggleDrafts}}</span>
     </a>
     <sliding-panel v-if="user" ref="menu" class="user-menu">
