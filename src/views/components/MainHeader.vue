@@ -1,15 +1,15 @@
 <template>
-  <div class="main-header">
+  <div ref="header" class="main-header">
     <div ref="logo-box" class="logo-wrap">
-      <router-link :to="{name: 'home'}" class="nav-item">
-        <a-b-a-logo class="main block" />
+      <router-link :to="{name: 'home'}" class="nav-item logo-link">
+        <a-b-a-logo ref="logo" class="main block" />
       </router-link>
     </div>
     <nav>
       <router-link
         v-if="aboutPageRouterTo"
         :to="aboutPageRouterTo"
-        class="nav-item flex justify-center">
+        class="nav-item secondary-item flex justify-center">
         About
       </router-link>
       <template v-if="showPostFilters">
@@ -27,7 +27,9 @@ import ABALogo from './ABALogo'
 export default {
   name: 'MainHeader',
   components: { ABALogo, UserMenu },
-  data: () => ({}),
+  data: () => ({
+    logoIsSmall: false
+  }),
 
   computed: {
     ...mapState(['user', 'showDraftsInGrid', 'menu']),
@@ -52,17 +54,45 @@ export default {
 
   created () {
     window.addEventListener('scroll', this.setLogoSize)
+    window.addEventListener('resize', this.setLogoSize)
   },
 
   methods: {
     ...mapActions(['logOut', 'toggleDraftsInGrid']),
     setLogoSize () {
-      if (!this.$refs['logo-box']) return
-      if (window.scrollY > 48) {
-        this.$refs['logo-box'].classList.add('small')
-      } else {
-        this.$refs['logo-box'].classList.remove('small')
-      }
+      requestAnimationFrame(() => {
+        if (!this.$refs['logo-box'] || !this.$refs.logo) return
+        const s = window.scrollY
+        const rem = 16 // px
+        const style = getComputedStyle(document.documentElement)
+        const curScale = style.getPropertyValue('--logo-current-scale')
+        const mainH = style.getPropertyValue('--logo-main-height')
+        const startH = parseFloat(mainH) * rem
+        const endH = 3 * rem
+        const t = s / (startH - endH)
+        let scale = 1
+        if (t < 1) {
+          const curH = startH * (1 - t) + endH * t
+          scale = curH / startH
+        } else {
+          scale = endH / startH
+        }
+        if (curScale !== `${scale}`) {
+          document.documentElement.style.setProperty('--logo-current-scale', `${scale}`)
+        }
+
+        if (t > 0.5) {
+          if (!this.logoIsSmall) {
+            this.$refs['logo-box'].classList.add('small')
+            this.logoIsSmall = true
+          }
+        } else {
+          if (this.logoIsSmall) {
+            this.$refs['logo-box'].classList.remove('small')
+            this.logoIsSmall = false
+          }
+        }
+      })
     }
   }
 }
@@ -70,11 +100,19 @@ export default {
 
 <style lang='scss'>
   @import "../../styles/vars";
-
+  @import "../../styles/mixins";
+  :root {
+    --logo-current-scale: 1;
+    --logo-main-height: 4.5rem;
+    @include wider-then( 310px ) {
+      --logo-main-height: 5.6rem;
+    }
+    @include wider-then-phone {
+      --logo-main-height: 8rem;
+    }
+  }
   #app {
     .main-header{
-      // height: $base-size;
-
       display: flex;
       align-items: flex-end;
       padding: 0;
@@ -83,35 +121,39 @@ export default {
 
       .logo-wrap {
         align-self: stretch;
-        background: radial-gradient(closest-side, #4b4b4b, $color-bg-semitransparent);
-        border: solid $color-aba-blue;
-        border-width: 0 1px;
-        padding: 0 1rem 0 0.6rem;
-        margin: 0.5rem 0;
+        display: flex;
+        align-items: center;
+        height: calc(var(--logo-main-height) * var(--logo-current-scale));
         pointer-events: all;
         transition: background 0.2s;
         a {
           text-decoration: none;
         }
-        .a-b-a-logo.main.text-2xl {
+        .logo-link {
           display: flex;
+          height: calc(var(--logo-main-height) * var(--logo-current-scale) * 0.75);
           justify-content: center;
-          $f-size: 6rem;
-          font-size: $f-size;
-          line-height: 0.7;
-          margin: $small-padding 0 calc(0.19428em - 0.5rem);
+          background: radial-gradient(closest-side, #4b4b4b, $color-bg-semitransparent);
+          border: solid $color-aba-blue;
+          border-width: 0 1px;
+          padding: 0 0.5rem;
           color: $color-aba-blue;
-          transition: font-size 0.2s;
-        }
-        &.small {
-          height: 2.25rem;
-          margin: 0;
-          align-self: center;
-          background: radial-gradient(closest-side, #fff, $color-bg-semitransparent);
 
-          .a-b-a-logo.main.text-2xl {
-            @apply text-2xl;
+          transition: background 0.2s, height 0.2s;
+
+          &:hover {
+            background: radial-gradient(closest-side, #b9b9b9, $color-bg-semitransparent);
           }
+
+          & > span {
+            font-size: calc(var(--logo-main-height) * var(--logo-current-scale) * 0.75 * 0.95);
+            height: calc(var(--logo-main-height) * var(--logo-current-scale) * 0.75);
+            width: calc(var(--logo-main-height) * var(--logo-current-scale) * 0.75 * #{$logo-ratio});
+            transition: font-size 0.2s, height 0.2s, width 0.2s;
+          }
+        }
+        &.small .logo-link {
+          background: radial-gradient(closest-side, #fff, $color-bg-semitransparent);
         }
       }
       nav {
@@ -129,6 +171,12 @@ export default {
             padding: $base-padding /2 $base-padding;
           }
         }
+        .nav-item.secondary-item {
+          display: none;
+          @include wider-then-phone {
+            display: flex;
+          }
+        }
       }
 
       .login {
@@ -141,7 +189,6 @@ export default {
 
     .user-actions {
       padding: $base-padding / 2;
-      //background: $color-bg;
     }
   }
 </style>

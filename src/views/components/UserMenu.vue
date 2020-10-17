@@ -3,7 +3,7 @@
     <a
       v-if="viewCanToggleDrafts"
       @click.prevent="toggleDraftsInGrid"
-      class="ml-auto select-none text-xs leading-none cursor-pointer">
+      class="nav-item secondary-item ml-auto select-none text-xs leading-none cursor-pointer">
       <span>{{messageToggleDrafts}}</span>
     </a>
     <sliding-panel v-if="user" ref="menu" class="user-menu">
@@ -36,12 +36,10 @@
       <div class="user-actions-wrapper">
         <login-form v-if="!user" />
         <div v-else class="user-actions">
-<!--          <div class="menu-cell">-->
-            <a @click.prevent="openMyProfileEditor" class="menu-cell block cursor-pointer">
-              <span class="block">{{user.displayName}}</span>
-              <span class="block">Profile</span>
-            </a>
-<!--          </div>-->
+          <a @click.prevent="openMyProfileEditor" class="menu-cell block cursor-pointer">
+            <span class="block">{{user.displayName}}</span>
+            <span class="block">Profile</span>
+          </a>
           <router-link v-if="admin" :to="{name: 'users'}" class="menu-cell nav-item">
             Users
           </router-link>

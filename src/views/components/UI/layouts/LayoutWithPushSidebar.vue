@@ -117,12 +117,12 @@ export default {
     },
 
     setTopMarginToHeaderHeight (e) {
-      if (!this.$refs.header || !this.$refs.main) return
-      const h = this.$refs.header.getBoundingClientRect().height
-      if (h !== this.headerH) {
-        this.$refs.main.style.marginTop = `${h}px`
-        this.headerH = h
-      }
+      // if (!this.$refs.header || !this.$refs.main) return
+      // const h = this.$refs.header.getBoundingClientRect().height
+      // if (h !== this.headerH) {
+      //   this.$refs.main.style.marginTop = `${h}px`
+      //   this.headerH = h
+      // }
     }
   }
 }
@@ -199,10 +199,12 @@ export default {
         position: relative;
         left: calc(var(--push-margin-header-left) - 1px);
         transition: left $transition-time;
+        width: calc(100% - #{$base-size});
       }
     }
     .push-box {
       height: 100%;
+      margin-top: var(--logo-main-height);
       display: flex;
 
       &.top, &.bottom {
