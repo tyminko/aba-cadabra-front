@@ -60,13 +60,27 @@ export default {
   methods: {
     ...mapActions(['logOut', 'toggleDraftsInGrid']),
     setLogoSize () {
+      if (!this.$refs['logo-box']) return
+      const style = getComputedStyle(document.documentElement)
+      const mainH = style.getPropertyValue('--logo-main-height')
+      const rem = 16 // px
+      const mainHpx = parseFloat(mainH) * rem
+      if (window.scrollY > mainHpx / 4) {
+        if (!this.logoIsSmall) {
+          this.$refs['logo-box'].classList.add('small')
+          this.logoIsSmall = true
+        }
+      } else {
+        if (this.logoIsSmall) {
+          this.$refs['logo-box'].classList.remove('small')
+          this.logoIsSmall = false
+        }
+      }
+      if (this.logoIsSmall) return
       requestAnimationFrame(() => {
         if (!this.$refs['logo-box'] || !this.$refs.logo) return
         const s = window.scrollY
-        const rem = 16 // px
-        const style = getComputedStyle(document.documentElement)
         const curScale = style.getPropertyValue('--logo-current-scale')
-        const mainH = style.getPropertyValue('--logo-main-height')
         const startH = parseFloat(mainH) * rem
         const endH = 3 * rem
         const t = s / (startH - endH)
@@ -79,18 +93,6 @@ export default {
         }
         if (curScale !== `${scale}`) {
           document.documentElement.style.setProperty('--logo-current-scale', `${scale}`)
-        }
-
-        if (t > 0.5) {
-          if (!this.logoIsSmall) {
-            this.$refs['logo-box'].classList.add('small')
-            this.logoIsSmall = true
-          }
-        } else {
-          if (this.logoIsSmall) {
-            this.$refs['logo-box'].classList.remove('small')
-            this.logoIsSmall = false
-          }
         }
       })
     }
@@ -125,7 +127,7 @@ export default {
         align-items: center;
         height: calc(var(--logo-main-height) * var(--logo-current-scale));
         pointer-events: all;
-        transition: background 0.2s;
+        transition: background 0.2s, height 0.2s;
         a {
           text-decoration: none;
         }
@@ -152,8 +154,18 @@ export default {
             transition: font-size 0.2s, height 0.2s, width 0.2s;
           }
         }
-        &.small .logo-link {
-          background: radial-gradient(closest-side, #fff, $color-bg-semitransparent);
+        &.small {
+          height: $base-size;
+          .logo-link {
+            height: calc(#{$base-size} * 0.75);
+            background: radial-gradient(closest-side, #fff, $color-bg-semitransparent);
+            & > span {
+              font-size: 2rem;
+              height: 100%;
+              width: calc(#{$base-size} * 0.75 * #{$logo-ratio});
+              transition: font-size 0.2s, height 0.2s, width 0.2s;
+            }
+          }
         }
       }
       nav {
