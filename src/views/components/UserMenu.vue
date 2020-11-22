@@ -20,6 +20,9 @@
           <li v-if="adminOrEditor" class="menu-cell nav-item cursor-pointer">
             <a @click.prevent="openEditor('event')">Add Event</a>
           </li>
+          <li v-if="adminOrEditor" class="menu-cell nav-item cursor-pointer">
+            <a @click.prevent="openEditor('partner')">Add Partner</a>
+          </li>
           <li v-if="admin" class="menu-cell nav-item cursor-pointer">
             <a @click.prevent="openEditor('profile')">Add User</a>
           </li>

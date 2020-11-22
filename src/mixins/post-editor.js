@@ -5,7 +5,8 @@ import * as string from '../lib/string'
 
 export default {
   props: {
-    value: { type: Object, default: () => ({}) }
+    value: { type: Object, default: () => ({}) },
+    collectionName: { type: String, default: 'posts' }
   },
 
   data: function () {
@@ -106,7 +107,7 @@ export default {
   },
 
   created () {
-    this.collectionRef = db.collection('posts')
+    this.collectionRef = db.collection(this.collectionName)
     this.setPostData()
   },
 

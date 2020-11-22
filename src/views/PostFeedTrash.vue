@@ -1,7 +1,7 @@
 <template>
   <div class="post-feed flex-col">
       <button v-if="Object.keys(feed).length" class="self-end" @click="emptyTrash">Empty Trash</button>
-      <post-feed-grid :posts="posts" :processing="processing" />
+      <post-feed-grid :posts="posts" :processing="processing" without-quick-edit/>
   </div>
 </template>
 
@@ -12,14 +12,19 @@ import { db } from '../lib/firebase'
 import PostFeedGrid from './components/PostFeedGrid'
 
 export default {
-  name: 'PostFeedInternal',
+  name: 'PostFeedTrash',
   components: { PostFeedGrid },
   props: {},
 
   data: () => ({
-    feed: {},
-    unsubscribe: null,
-    processing: true
+    feed: {
+      posts: {},
+      pages: {},
+      institutions: {}
+    },
+    unsubscribe: {},
+    processing: true,
+    types: ['posts', 'pages', 'institutions']
   }),
 
   computed: {
@@ -28,7 +33,9 @@ export default {
       return !!this.user && (this.user.role === 'admin' || this.user.role === 'editor')
     },
     posts () {
-      return Object.values(this.feed).sort((a, b) => b.date - a.date)
+      return Object.values(this.feed)
+        .reduce((res, feed) => [...res, ...Object.values(feed)], [])
+        .sort((a, b) => b.date - a.date)
     }
   },
 
@@ -46,35 +53,56 @@ export default {
   async created () {
     if (this.user) this.subscribeFeed()
   },
+  destroyed () {
+    this.unsubscribeFeed()
+  },
 
   methods: {
     subscribeFeed () {
       this.unsubscribeFeed()
       const options = { status: 'trash' }
-      if (!this.adminOrEditor) options.authorId = this.user.uid
-      this.unsubscribe = subscribeToPosts(
-        options,
-        (id, post) => this.$set(this.feed, id, post),
-        id => this.$delete(this.feed, id),
-        () => { this.processing = false }
-      )
+      if (!this.adminOrEditor) options.authorId = (this.user || {}).uid
+      this.types.forEach(collectionName => {
+        this.unsubscribe[collectionName] = subscribeToPosts(
+          { ...options, collectionName },
+          (id, post) => {
+            this.$set(this.feed[collectionName], id, collectionName === 'posts' ? post : {
+              ...post,
+              type: this.collectionNameToType(collectionName)
+            })
+          },
+          id => this.$delete(this.feed[collectionName], id),
+          () => { this.processing = false }
+        )
+      })
     },
 
     unsubscribeFeed () {
-      if (typeof this.unsubscribe === 'function') {
-        this.unsubscribe()
-        this.unsubscribe = null
-        this.feed = {}
-      }
+      Object.entries(this.unsubscribe).forEach(([unsub, type]) => {
+        if (typeof unsub === 'function') {
+          unsub()
+          this.unsubscribe[type] = null
+          this.feed[type] = {}
+        }
+      })
     },
 
     emptyTrash () {
-      db.collection('posts')
-        .where('status', '==', 'trash')
-        .get()
-        .then(snap => {
-          snap.forEach(doc => doc.ref.delete())
-        })
+      this.types.forEach(collName => {
+        db.collection(collName)
+          .where('status', '==', 'trash')
+          .get()
+          .then(snap => {
+            snap.forEach(doc => doc.ref.delete())
+          })
+      })
+    },
+
+    collectionNameToType (collectionName) {
+      switch (collectionName) {
+        case 'institutions': return 'partner'
+        case 'pages': return 'page'
+      }
     }
   },
   beforeDestroy () {

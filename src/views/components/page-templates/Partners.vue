@@ -2,66 +2,82 @@
   <div class="institutions">
     <div class="grid">
       <div
-        v-for="institute in institutions"
+        v-for="institute in posts"
         :key="institute.id"
         class="partner-box relative">
         <a :href="institute.url" target="_blank" class="logo-box p-sm">
-          <img v-if="institute.logo" :src="logoUrl(institute)" class="h-base" alt="partner logo"/>
+          <img
+            v-if="hasLogo(institute)"
+            :src="logoUrl(institute)"
+            class="h-base"
+            alt="partner logo"/>
         </a>
         <div class="my-base">
           <a :href="institute.url" target="_blank" class="block text-sm leading-tight" >{{institute.title}}, {{institute.country}}</a>
         </div>
         <button
           v-if="adminOrEditor"
-          class="absolute top-0 right-0 compact w-2/3base h-2/3base text-gray-600 hover:text-aba-blue"
+          class="edit-button absolute top-0 right-0 compact w-2/3base h-2/3base text-gray-600 hover:text-aba-blue"
           @click="openEditor(institute)">
           <i class="material-icons text-base cursor-pointer">edit</i>
         </button>
       </div>
     </div>
-    <institution-editor
-      v-if="!!postToEdit"
-      :open="!!postToEdit"
-      :value="postToEdit"
-      @close="postToEdit=null"/>
   </div>
 </template>
 
 <script>
-import { mapState } from 'vuex'
-import Institutions from '../../../mixins/institutions'
-import InstitutionEditor from '../../editor/InstitutionEditor'
+import { mapActions, mapState } from 'vuex'
+import FeedSubscription from '../../../mixins/feed-subscription'
 
 export default {
-  name: 'Institutions',
-  components: { InstitutionEditor },
-  mixins: [Institutions],
+  name: 'Partners',
+  mixins: [FeedSubscription],
   props: {},
 
   data: () => ({
-    postToEdit: null
+    postToEdit: null,
+    collectionName: 'institutions',
+    orderBy: { field: '' }
   }),
 
   computed: {
     ...mapState(['user']),
     adminOrEditor () {
       return this.user && (this.user.role === 'admin' || this.user.role === 'editor')
+    },
+    posts () {
+      return Object.values(this.feed).sort((a, b) => {
+        if (a.title < b.title) return -1
+        if (a.title > b.title) return 1
+        return 0
+      })
     }
   },
 
   methods: {
+    ...mapActions(['showEditor']),
     openEditor (post) {
-      this.postToEdit = post
+      this.showEditor({
+        type: 'partner',
+        value: post
+      })
     },
 
     closeEditor () {
       this.postToEdit = null
     },
 
+    hasLogo (post) {
+      return post.logo || Object.values((post.attachments || {})).length
+    },
+
     logoUrl (post) {
       let src = null
       if (post.logo) {
         src = post.logo.srcSet
+      } else {
+        src = (Object.values(post.attachments)[0] || {}).srcSet
       }
       if (!src) return ''
       const { full, preview, original } = src
@@ -99,6 +115,13 @@ export default {
           object-fit: scale-down;
           filter: saturate(0);
         }
+      }
+      .edit-button {
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      &:hover{
+        .edit-button {opacity: 1;}
       }
     }
   }

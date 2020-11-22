@@ -12,27 +12,34 @@
         :key="post.id"
         :post="post">
         <template v-slot:quick-edit-button="{cellSize}">
-          <popper
-            v-if="adminOrEditor || post.author.uid === (user || {}).uid"
-            placement="right"
-            class="ml-auto">
-            <template v-slot:reference="{show}">
+          <template v-if="withoutQuickEdit">
+            <a class="button edit-button compact w-2/3base h-2/3base text-gray-600 hover:text-aba-blue ml-auto" @click.prevent="openEditor(post)">
+              <i class="material-icons text-base cursor-pointer">edit</i>
+            </a>
+          </template>
+          <template v-else>
+            <popper
+              v-if="adminOrEditor || post.author.uid === (user || {}).uid"
+              placement="right"
+              class="ml-auto">
+              <template v-slot:reference="{show}">
               <span
                 class="button edit-button compact w-2/3base h-2/3base text-gray-600 hover:text-aba-blue"
                 :class="{active:show}">
                 <i class="material-icons text-base cursor-pointer">edit</i>
               </span>
-            </template>
-            <template v-slot:default="{hide}">
-              <post-editor-palette
-                :current="cellSize"
-                @close="hide"
-                @set-size="setCellSize(post.id, $event)"
-                @open-editor="openEditor(post)"
-                @hide-post="hidePost(post)"
-                @remove-post="removePost(post)"/>
-            </template>
-          </popper>
+              </template>
+              <template v-slot:default="{hide}">
+                <post-editor-palette
+                  :current="cellSize"
+                  @close="hide"
+                  @set-size="setCellSize(post.id, $event)"
+                  @open-editor="openEditor(post)"
+                  @hide-post="hidePost(post)"
+                  @remove-post="removePost(post)"/>
+              </template>
+            </popper>
+          </template>
         </template>
       </post-cell>
     </template>
@@ -51,6 +58,7 @@ export default {
   components: { PostEditorPalette, Popper, PostCell },
   props: {
     posts: { type: Array, default: () => [] },
+    withoutQuickEdit: { type: Boolean, default: false },
     processing: Boolean
   },
 

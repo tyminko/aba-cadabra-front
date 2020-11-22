@@ -1,10 +1,10 @@
 <template>
-  <editor-popover
-    :open="open"
-    :processing="processing"
-    @close="$emit('close')"
-    @esc="$emit('close')"
-    @save="save">
+  <div>
+    <dropdown-select
+      v-model="postStatus"
+      label="Publication Status"
+      :options="postStatusList"
+      class="mr-base"/>
     <attachments-editor
       ref="attachments-editor"
       :value="logo"
@@ -14,28 +14,37 @@
       no-crop
       dropzone-message="Drop Logo Image Here"/>
     <px-input
+      ref="title"
       v-model="postData.title"
+      :required="true"
       :placeholder="`Partner name`"
+      @validated="validateForm"
       class="xl"/>
     <px-input
+      ref="country"
       v-model="postData.country"
+      :required="true"
+      @validated="validateForm"
       placeholder="Country"/>
     <px-input
+      ref="url"
       v-model="postData.url"
+      :required="true"
+      @validated="validateForm"
       placeholder="Link"/>
-  </editor-popover>
+  </div>
 </template>
 
 <script>
-import EditorPopover from './EditorPopover'
 import PxInput from '../components/UI/inputs/PxInput'
 import postEditor from '../../mixins/post-editor'
 import AttachmentsEditor from './attachments/AttachmentsEditor'
-import { db } from '../../lib/firebase'
+import DropdownSelect from '../components/UI/DropdownSelect'
+// import { db } from '../../lib/firebase'
 
 export default {
   name: 'InstitutionEditor',
-  components: { AttachmentsEditor, PxInput, EditorPopover },
+  components: { DropdownSelect, AttachmentsEditor, PxInput },
   mixins: [postEditor],
   props: {
     open: Boolean
@@ -52,25 +61,21 @@ export default {
   }),
 
   computed: {
-    logo () { return this.postData.logo ? [this.postData.logo] : [] }
+    attachments () { return Object.values(this.postData.attachments || {}) },
+    logo () {
+      return this.postData.logo
+        ? [this.postData.logo]
+        : this.attachments.length
+          ? [this.attachments[0]]
+          : []
+    }
   },
 
   methods: {
-    async save (e) {
-      this.processing = true
-      const attachmentsEditor = this.$refs['attachments-editor']
-      if (!attachmentsEditor) return
-      try {
-        const attachmentsData = await attachmentsEditor.processAttachments()
-        this.postData.logo = attachmentsData[0]
-
-        await db.collection('institutions').doc(this.postData.id).update(this.postData)
-        this.processing = false
-        this.$emit('close')
-      } catch (e) {
-        this.processing = false
-        console.error(`%c savePost() %c e: `, 'background:#ff00AA;color:#000', 'color:#00aaff', e)
-      }
+    validateForm () {
+      const fields = ['title', 'country', 'url']
+      const errorField = fields.find(ref => (this.$refs[ref] || {}).isValid !== true)
+      this.$emit('validated', !errorField)
     }
   }
 }

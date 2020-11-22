@@ -1,7 +1,13 @@
 import { db } from './firebase'
 
 /**
- * @typedef {{status: string, authorId?: string, type?: string}} QueryOptions
+ * @typedef {{
+ *  status: string,
+ *  authorId?: string,
+ *  type?: string,
+ *  collectionName?:string,
+ *  orderBy?: {field:string, direction:'desc' | 'asc'}
+*  }} QueryOptions
  */
 /**
  * @param {QueryOptions|null} options
@@ -14,7 +20,7 @@ import { db } from './firebase'
  */
 export function subscribeToPosts (options, onPostUpdate, onPostRemove, onComplete, onError) {
   const status = (options || {}).status || 'public'
-  let query = db.collection('posts')
+  let query = db.collection((options || {}).collectionName || 'posts')
     .where('status', '==', status)
 
   if ((options || {}).authorId) {
@@ -23,8 +29,13 @@ export function subscribeToPosts (options, onPostUpdate, onPostRemove, onComplet
   if ((options || {}).type) {
     query = query.where('type', '==', options.type)
   }
-  query = query.orderBy('date', 'desc')
-
+  if ((options || {}).orderBy) {
+    if (options.orderBy.field) {
+      query = query.orderBy(options.orderBy.field, options.orderBy.direction || 'desc')
+    }
+  } else {
+    query = query.orderBy('date', 'desc')
+  }
   return query.onSnapshot({
     next: querySnapshot => {
       querySnapshot.docChanges().forEach(docChange => {

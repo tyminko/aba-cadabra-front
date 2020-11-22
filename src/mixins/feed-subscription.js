@@ -6,7 +6,9 @@ export default {
     feed: {},
     unsubscribe: {},
     processingStatuses: {},
-    subscriptionPostType: null
+    subscriptionPostType: null,
+    collectionName: null,
+    orderBy: null
   }),
 
   computed: {
@@ -51,15 +53,6 @@ export default {
       this.updateSubscriptions()
       this.setViewCanToggleDrafts(!!this.user)
     },
-    // $route () {
-    //   // this.setViewCanToggleDrafts(!!this.user)
-    //   // this.updateSubscriptions()
-    // },
-    // authorId () {
-    //   // this.setViewCanToggleDrafts(!!this.user)
-    //   // this.unsubscribeFeed()
-    //   // this.updateSubscriptions()
-    // },
     showDraftsInGrid () { this.updateSubscriptions() }
   },
 
@@ -89,7 +82,9 @@ export default {
       const statuses = status ? [status] : this.availableSubscriptionStatuses
       const options = {}
       if (this.subscriptionPostType) options.type = this.subscriptionPostType
+      if (this.collectionName) options.collectionName = this.collectionName
       if (this.authorId) options.authorId = this.authorId
+      if (this.orderBy) options.orderBy = { ...this.orderBy }
       statuses.forEach(status => {
         if (typeof this.unsubscribe[status] === 'function') return
         this.$set(this.processingStatuses, status, true)

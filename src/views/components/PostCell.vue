@@ -108,9 +108,9 @@ export default {
         switch (this.post.type) {
           case 'post': return `Blog ${this.post.author.displayName}`
           case 'event': return 'Event'
+          default: return this.post.type
         }
       }
-      return ''
     },
     title () {
       if (this.post.partOfProgramme && this.post.countNumber) {

@@ -23,6 +23,7 @@
       ref="editor"
       :open="open"
       :value="value"
+      :collectionName="dbCollectionName"
       @validated="isValid = $event"
       @set-header="header = $event"
       @setProcessing="processing = $event"
@@ -51,10 +52,11 @@ import EditorPopover from './EditorPopover'
 import Spinner from '../components/UI/Spinner'
 import ProgrammeEditor from './ProgrammeEditor'
 import PageEditor from './PageEditor'
+import InstitutionEditor from './InstitutionEditor'
 
 export default {
   name: 'Editor',
-  components: { Spinner, EditorPopover, EventEditor, PostEditor, ProfileEditor, ProgrammeEditor, PageEditor },
+  components: { Spinner, EditorPopover, EventEditor, PostEditor, ProfileEditor, ProgrammeEditor, PageEditor, InstitutionEditor },
   props: {
     open: Boolean,
     value: { type: Object, default: null },
@@ -80,8 +82,12 @@ export default {
         case 'profile': return 'ProfileEditor'
         case 'programme': return 'ProgrammeEditor'
         case 'page': return 'PageEditor'
+        case 'partner': return 'InstitutionEditor'
         default: return 'PostEditor'
       }
+    },
+    dbCollectionName () {
+      return this.component === 'InstitutionEditor' ? 'institutions' : 'posts'
     },
     headerTitle () {
       return this.header || (this.$refs.editor || {}).headerTitle || ''
