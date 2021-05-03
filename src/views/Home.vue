@@ -2,7 +2,7 @@
   <div class="post-feed flex-col">
     <transition>
       <div v-if="!processing" class="site-caption text-xs leading-none text-aba-blue">
-        AIR Berlin Alexanderplatz, an artist-run initiative.
+        Artistic research and residency program Air Berlin Alexanderplatz
       </div>
     </transition>
     <transition>

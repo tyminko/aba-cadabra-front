@@ -1,5 +1,8 @@
 <template>
   <div class="location">
+    <search-input :query="queryLocation">
+
+    </search-input>
     <px-input
       v-model.lazy="address"
       label="Location"
@@ -21,15 +24,17 @@
 import { gmapApi } from 'vue2-google-maps'
 import PxInput from './PxInput'
 import { abaMapStyle, defineABAMarkerClass, getMarkerHtml } from '../../../../lib/map'
+import SearchInput from './SearchInput'
 
 export default {
   name: 'Location',
-  components: { PxInput },
+  components: { SearchInput, PxInput },
   props: {
     value: { type: Object, default: () => ({}) }
   },
 
   data: () => ({
+    locationObj: null,
     geocoder: null,
     tmpAddress: '',
     tmpLatLng: null,
@@ -161,6 +166,8 @@ export default {
         this.markerInstance.setMap(this.map)
       }
     },
+
+    queryLocation () {},
 
     round (n) {
       return Math.round(n * 1000) / 1000

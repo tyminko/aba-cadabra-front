@@ -104,11 +104,11 @@ please also check your <span class="italic font-medium">Spam/Junk</span> folder.
       try {
         this.$emit('processing', true)
         const makeReservation = functions.httpsCallable('reservation-make')
-        const reservationId = await makeReservation(reservationData)
+        const reservationId = (await makeReservation(reservationData)).data
         if (reservationId) {
           this.$emit('update-processing-message', 'Sending Email...')
           this.unsubscribeMail = db.collection('mail')
-            .doc(this.user.uid)
+            .doc(reservationId)
             .onSnapshot(doc => {
               this.emailDoc = doc.data()
               if ((this.emailDoc || {}).delivery) {

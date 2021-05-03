@@ -19,6 +19,7 @@ export default {
   methods: {
     subscribe () {
       this.unsubscribeFunc = db.collection('institutions')
+        .where('status', '==', 'public')
         .onSnapshot({
           next: querySnapshot => {
             querySnapshot.docChanges().forEach(docChange => {

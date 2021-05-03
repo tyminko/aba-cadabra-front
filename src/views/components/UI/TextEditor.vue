@@ -60,7 +60,10 @@
 
 <script>
 import { Editor, EditorContent, EditorMenuBar } from 'tiptap'
-import { Bold, Italic, Link, History, Placeholder } from 'tiptap-extensions'
+import {
+  Bold, Italic, Link, History, Placeholder,
+  Blockquote, OrderedList,
+  BulletList } from 'tiptap-extensions'
 import simpleID from '../../../lib/simpleId'
 import InputFlex from './inputs/InputFlex'
 import inputAutoWidth from 'vue-input-autowidth'
@@ -114,7 +117,10 @@ export default {
           emptyNodeText: node => {
             return 'Write something'
           }
-        })
+        }),
+        new Blockquote(),
+        new OrderedList(),
+        new BulletList()
       ]
     })
 

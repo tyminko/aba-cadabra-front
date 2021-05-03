@@ -10,8 +10,6 @@ export default {
     if (!url || !(typeof url === 'string' || url instanceof String)) {
       return false
     }
-    // !!! DEBUG !!!
-    console.log(`%c isVimeoVideoUrl() %c url: `, 'background:#ffbb00;color:#000', 'color:#00aaff', url)
     return /https:\/\/vimeo.com\/(\d+)(?=\b|\/)/.test(url)
   },
   /**
