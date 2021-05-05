@@ -20,6 +20,37 @@
             <i class="material-icons">format_italic</i>
           </button>
 
+          <!-- <button
+            type="button"
+            class="menubar__button"
+            :class="{ 'is-active': isActive.heading({ level: 2 }) }"
+            @click="commands.heading({ level: 2 })">
+            H2
+          </button>
+          <button
+            type="button"
+            class="menubar__button"
+            :class="{ 'is-active': isActive.bullet_list() }"
+            @click="commands.bullet_list">
+            <i class="material-icons">format_list_bulleted</i>
+          </button>
+
+          <button
+            type="button"
+            class="menubar__button"
+            :class="{ 'is-active': isActive.ordered_list() }"
+            @click="commands.ordered_list">
+            <i class="material-icons">format_list_numbered</i>
+          </button>
+
+          <button
+            type="button"
+            class="menubar__button"
+            :class="{ 'is-active': isActive.blockquote() }"
+            @click="commands.blockquote">
+            <i class="material-icons">format_quote</i>
+          </button> -->
+
           <form
             v-if="linkMenuIsActive"
             class="flex items-center pl-sm overflow-hidden bg-milk"
@@ -62,8 +93,12 @@
 import { Editor, EditorContent, EditorMenuBar } from 'tiptap'
 import {
   Bold, Italic, Link, History, Placeholder,
-  Blockquote, OrderedList,
-  BulletList } from 'tiptap-extensions'
+  Blockquote,
+  ListItem,
+  OrderedList,
+  BulletList,
+  Heading
+} from 'tiptap-extensions'
 import simpleID from '../../../lib/simpleId'
 import InputFlex from './inputs/InputFlex'
 import inputAutoWidth from 'vue-input-autowidth'
@@ -119,8 +154,10 @@ export default {
           }
         }),
         new Blockquote(),
+        new ListItem(),
         new OrderedList(),
-        new BulletList()
+        new BulletList(),
+        new Heading({ levels: [2] })
       ]
     })
 
