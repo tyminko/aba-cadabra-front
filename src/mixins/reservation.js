@@ -10,12 +10,13 @@ export default {
 
     upcoming () {
       if ((this.post || {}).type !== 'event') return false
-      return this.dateDiff > -1
+      return this.dateDiff > 1 / 24 * -2
     },
 
     upcomingLabel () {
-      if (this.dateDiff >= 0) return 'Upcoming'
-      if (this.dateDiff > -1) return 'Today'
+      const hour = 1 / 24
+      if (this.dateDiff >= hour * 10) return 'Upcoming'
+      if (this.dateDiff < hour * 10 && this.dateDiff > hour * -2) return 'Today'
       return ''
     },
 
