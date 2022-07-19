@@ -76,6 +76,11 @@ const router = new Router({
       component: () => import(/* webpackChunkName: "about" */ './views/About.vue')
     },
     {
+      path: '/subscribe',
+      name: 'subscribe',
+      component: () => import(/* webpackChunkName: "about" */ './views/components/MailchimpForm.vue')
+    },
+    {
       path: '/partners',
       name: 'partners',
       component: () => import(/* webpackChunkName: "institutions" */ './views/components/page-templates/Partners')

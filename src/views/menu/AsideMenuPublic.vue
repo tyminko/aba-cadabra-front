@@ -36,9 +36,14 @@ export default {
     },
 
     publicList () {
-      return Object.entries(this.menu.public || {})
+      const menu = Object.entries(this.menu.public || {})
         .map(([id, item]) => ({ ...item, id }))
         .sort((a, b) => a.order - b.order)
+      return [...menu, {
+        type: 'subscribe',
+        id: 'subscribe',
+        title: 'Subscribe'
+      }]
     }
   },
 

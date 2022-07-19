@@ -4,6 +4,7 @@
       <router-link :to="{name: 'home'}" class="nav-item logo-link">
         <a-b-a-logo ref="logo" class="main block" />
       </router-link>
+      <anti-war-coalition-banner />
     </div>
     <nav>
       <router-link
@@ -23,10 +24,11 @@
 import { mapState, mapActions, mapGetters } from 'vuex'
 import UserMenu from './UserMenu'
 import ABALogo from './ABALogo'
+import AntiWarCoalitionBanner from './AntiWarCoalitionBanner.vue'
 
 export default {
   name: 'MainHeader',
-  components: { ABALogo, UserMenu },
+  components: { ABALogo, UserMenu, AntiWarCoalitionBanner },
   data: () => ({
     logoIsSmall: false
   }),
@@ -52,7 +54,7 @@ export default {
     }
   },
 
-  created () {
+  mounted () {
     window.addEventListener('scroll', this.setLogoSize)
     window.addEventListener('resize', this.setLogoSize)
   },
@@ -131,6 +133,11 @@ export default {
         a {
           text-decoration: none;
         }
+        .anti-war-coalition-banner {
+          height: calc(var(--logo-main-height) * var(--logo-current-scale) * 0.55);
+          padding-left: calc(0.75rem * var(--logo-current-scale));
+          transition: height 0.2s, width 0.2s;
+        }
         .logo-link {
           display: flex;
           height: calc(var(--logo-main-height) * var(--logo-current-scale) * 0.75);
@@ -166,12 +173,19 @@ export default {
               transition: font-size 0.2s, height 0.2s, width 0.2s;
             }
           }
+          .anti-war-coalition-banner {
+            height: calc(#{$base-size} * 0.75);
+            padding-left: calc(0.75rem * var(--logo-current-scale));
+            transition: height 0.2s, width 0.2s;
+            background: $color-bg-semitransparent;
+          }
         }
       }
       nav {
         display: flex;
         align-items: center;
-        width: 100%;
+        margin-left: auto;
+        // width: 100%;
         pointer-events: all;
 
         a {
