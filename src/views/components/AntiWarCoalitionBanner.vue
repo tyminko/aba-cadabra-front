@@ -1,5 +1,5 @@
 <template>
-    <div class="anti-war-coalition-banner">
+    <a class="anti-war-coalition-banner" href="https://antiwarcoalition.art" target="_blank">
         <svg
             class="awc-banner-full"
             width="100%"
@@ -156,7 +156,7 @@
                 </g>
             </g>
         </svg>
-    </div>
+    </a>
 </template>
 
 <script>
@@ -166,6 +166,7 @@ export default {
 </script>
 <style lang="scss" scoped>
 .anti-war-coalition-banner {
+    display: block;
     .awc-banner-full {
         display: none;
     }

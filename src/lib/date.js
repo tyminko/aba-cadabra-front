@@ -51,8 +51,8 @@ export function formatTime (date, locale) {
 }
 
 export function formatPeriod (timestampStart, timestampEnd, locale) {
-  const startDT = timestampStart instanceof DateTime ? timestampStart : DateTime.fromMillis(timestampStart)
-  const endDT = timestampEnd instanceof DateTime ? timestampEnd : DateTime.fromMillis(timestampEnd)
+  const startDT = timestampStart instanceof DateTime ? timestampStart : DateTime.fromMillis(parseInt(timestampStart))
+  const endDT = timestampEnd instanceof DateTime ? timestampEnd : DateTime.fromMillis(parseInt(timestampEnd))
   const startFormat = startDT.year === endDT.year ? 'LLL' : 'LLL y'
   return `${startDT.toFormat(startFormat, { locale })}-${endDT.toFormat('LLL y', { locale })}`
 }

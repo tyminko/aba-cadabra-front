@@ -27,7 +27,9 @@ export default {
 
   computed: {
     orderedProfiles () {
-      return [...Object.values(this.profiles || {})].sort((a, b) => b.residencyStart - a.residencyStart)
+      return [...Object.values(this.profiles || {})].sort((a, b) => {
+        return parseInt(b.residencyStart || 0) - parseInt(a.residencyStart || 0)
+      })
     }
   },
 
