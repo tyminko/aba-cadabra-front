@@ -17,7 +17,7 @@
     "firebase": "^7.15.4",
     "ftellipsis": "^0.2.3",
     "lodash.findlastindex": "^4.6.0",
-    "luxon": "^1.22.0",
+    "luxon": "^2.5.2",
     "pdfjs-dist": "^2.4.456",
     "pica": "^5.1.0",
     "slugify": "^1.4.0",
