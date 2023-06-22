@@ -278,9 +278,20 @@ export default {
       text-transform: capitalize;
     }
     .badge {
-      @apply px-sm py-xs text-xs capitalize truncate bg-gray-200;
-      border-radius: 1px;
+      @apply px-sm py-sm text-xs capitalize truncate;
+      position: relative;
       min-width: 0;
+      margin-left: -0.5rem;
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(closest-side, #c6c6c6, transparent);
+        z-index: -1;
+      }
+      &:has(a):hover::after {
+        background: radial-gradient(closest-side, rgb(167, 167, 255), transparent);
+      }
     }
 
     .upcoming-label {
