@@ -1,14 +1,15 @@
 # aba-cadabra-front
 
-## Node version 10
-
-[install nvm](https://github.com/nvm-sh/nvm)
+## Node version manager using N
+```
+npm install -g n
+```
 
 ## Project deploy
 
 ```
-nvm i
+sudo n 10
 npm run build
-nvm use system
+sudo n lts
 npm run deploy
 ```
