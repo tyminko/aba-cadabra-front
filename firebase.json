@@ -12,9 +12,6 @@
         "destination": "/index.html"
       }
     ],
-    "predeploy": [
-      "npm run build"
-    ],
     "cleanUrls": true,
     "trailingSlash": false
   }
