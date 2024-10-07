@@ -1,5 +1,5 @@
 <template>
-    <a class="anti-war-coalition-banner" href="https://antiwarcoalition.art" target="_blank">
+    <a class="anti-war-coalition-banner" href="https://safety.antiwarcoalition.art" target="_blank">
         <svg
             class="awc-banner-full"
             width="100%"
