@@ -22,12 +22,12 @@ export default {
 
     allowReservation () {
       return false
-      if ((this.post || {}).type !== 'event' || this.dateDiff <= -1 || this.$route.params.token) {
-        return false
-      }
-      const deadlineHours = -1
-      const diffHours = this.dateDiff * 24
-      return diffHours > deadlineHours
+      // if ((this.post || {}).type !== 'event' || this.dateDiff <= -1 || this.$route.params.token) {
+      //   return false
+      // }
+      // const deadlineHours = -1
+      // const diffHours = this.dateDiff * 24
+      // return diffHours > deadlineHours
     },
 
     shouldConfirmReservation () {
