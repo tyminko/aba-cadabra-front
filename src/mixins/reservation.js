@@ -21,7 +21,7 @@ export default {
     },
 
     allowReservation () {
-      // return false
+      return false
       if ((this.post || {}).type !== 'event' || this.dateDiff <= -1 || this.$route.params.token) {
         return false
       }
