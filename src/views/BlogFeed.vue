@@ -52,7 +52,9 @@ export default {
       return !!this.user && (this.user.role === 'admin' || this.user.role === 'editor')
     },
 
-    authorId () { return this.$route.params.authorId },
+    authorId () {
+      return this.$route.params.authorId
+    },
 
     posts () {
       return Object.values(this.feed).sort((a, b) => b.date - a.date)
@@ -63,24 +65,29 @@ export default {
       if (!firstPost) return null
       return firstPost.author
     },
+
     authorName () {
       return (this.author || {}).displayName
     },
+
     activePostIndex () {
       if (this.activePostId) {
         return this.$refs.posts.findIndex(p => p.post.id === this.activePostId)
       }
       return null
     },
+
     activePost () {
       return this.activePostId ? (this.feed || {})[this.activePostId] : null
     },
+
     previousPostIndex () {
       if (this.activePostIndex !== null) {
         return this.activePostIndex > 0 ? this.activePostIndex - 1 : null
       }
       return null
     },
+
     nextPostIndex () {
       if (this.activePostIndex !== null) {
         return this.activePostIndex < this.$refs.posts.length - 1
@@ -93,7 +100,7 @@ export default {
 
   created () {
     this.setViewCanToggleDrafts(!!this.user)
-    let options = {
+    const options = {
       root: null,
       rootMargin: '0px',
       threshold: [0, 0.5, 1]
@@ -112,7 +119,9 @@ export default {
     }
   },
 
-  beforeDestroy () { this.setViewCanToggleDrafts(false) },
+  beforeUnmount () {
+    this.setViewCanToggleDrafts(false)
+  },
 
   methods: {
     async onPostsLoaded () {
@@ -124,12 +133,13 @@ export default {
       const postId = this.$route.params.postId
       const box = this.$refs.posts.find(p => p.post.id === postId)
       if (!box) return
-      const focusBox = box.$el // document.getElementById(postId)
+      const focusBox = box.$el
       if (focusBox) {
         this.activePostId = postId
         focusBox.scrollIntoView(true)
       }
     },
+
     scrollToNext () {
       if (this.nextPostIndex !== null) {
         const box = this.$refs.posts[this.nextPostIndex]
@@ -139,6 +149,7 @@ export default {
         }
       }
     },
+
     scrollToPrevious () {
       if (this.previousPostIndex !== null) {
         const box = this.$refs.posts[this.previousPostIndex]
@@ -148,6 +159,7 @@ export default {
         }
       }
     },
+
     getFirstPost () {
       const postId = this.$route.params.postId
       if (postId) {

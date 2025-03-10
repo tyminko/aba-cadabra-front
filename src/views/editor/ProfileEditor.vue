@@ -27,7 +27,7 @@
         v-if="abaStatus==='staff'"
         v-model="profileData.abaPosition"
         label="Team Position" />
-      <template v-else-if="abaStatus==='resident'">
+      <template v-else-if ="abaStatus==='resident'">
       <div class="flex flex-row flex-wrap">
         <date-time-picker
           v-model="profileData.residencyStart"
@@ -146,7 +146,7 @@ export default {
       roles: ['visitor', 'contributor', 'editor', 'admin'],
       role: '',
       status: '',
-      statuses: { 'resident': 'Resident', 'staff': 'Team member', 'guest': 'Guest' },
+      statuses: { resident: 'Resident', staff: 'Team member', guest: 'Guest' },
       institutions: null,
       password: '',
       changePassword: false,
@@ -192,7 +192,7 @@ export default {
           default: return 'staff'
         }
       },
-      set (newValue) {
+      set(newValue) {
         this.status = newValue
         this.$set(this.profileData, 'abaPosition', newValue !== 'staff' ? newValue : 'Team member')
       }
@@ -200,7 +200,7 @@ export default {
 
     displayName: {
       get () { return this.profileData.displayName || (this.userData || {}).displayName || '' },
-      set (newValue) {
+      set(newValue) {
         this.$set(this.profileData, 'displayName', newValue)
         this.$emit('set-header', this.editorTitle)
       }
@@ -208,17 +208,17 @@ export default {
 
     userEmail: {
       get () { return this.email || (this.userData || {}).email || '' },
-      set (newValue) { this.email = newValue }
+      set(newValue) { this.email = newValue }
     },
 
     accessLevel: {
       get () { return this.role || (this.userData || {}).role || 'visitor' },
-      set (newValue) { this.role = newValue }
+      set(newValue) { this.role = newValue }
     },
 
     text: {
       get () { return this.profileData.text || this.profileData.description || '' },
-      set (newValue) { this.$set(this.profileData, 'text', newValue) }
+      set(newValue) { this.$set(this.profileData, 'text', newValue) }
     },
 
     attachments () {
@@ -227,7 +227,7 @@ export default {
 
     supportedBy: {
       get () { return this.profileData.supportedBy || [] },
-      set (newValue) { this.$set(this.profileData, 'supportedBy', newValue) }
+      set(newValue) { this.$set(this.profileData, 'supportedBy', newValue) }
     },
 
     roleDesc () {
@@ -256,17 +256,17 @@ export default {
       this.profileData = { ...this.defaultProfileData }
     },
     user () {
-      this.setProfileData()
+      this.setProfileData ()
     }
   },
 
   created () {
-    this.setProfileData()
+    this.setProfileData ()
     this.$emit('set-header', this.editorTitle)
   },
 
   mounted () {
-    this.validateForm()
+    this.validateForm ()
   },
 
   methods: {
@@ -283,11 +283,11 @@ export default {
       if (!profileId) return null
       this.profileData = await db.collection('profiles')
         .doc(profileId)
-        .get()
+        .get ()
         .then(doc => {
-          return doc.data()
+          return doc.data ()
         })
-        .catch(err => {
+        .catch (err => {
           console.error('Profile Data:', err)
           this.profileData = { ...this.defaultProfileData }
         })
@@ -297,11 +297,11 @@ export default {
     async togglePassword () {
       this.changePassword = !this.changePassword
       this.password = ''
-      await this.$nextTick()
-      if (this.$refs.password) this.$refs.password.focus()
+      await this.$nextTick ()
+      if (this.$refs.password) this.$refs.password.focus ()
     },
 
-    fieldVisited (field) {
+    fieldVisited(field) {
       this.$set(this.visitedFields, field, true)
     },
 
@@ -348,25 +348,25 @@ export default {
     saveAttachments () {
       const attachmentsEditor = this.$refs['attachments-editor']
       if (attachmentsEditor) {
-        return attachmentsEditor.processAttachments()
+        return attachmentsEditor.processAttachments ()
       }
     },
 
     async save () {
-      if (!this.validateForm()) return
+      if (!this.validateForm ()) return
 
       try {
         this.$emit('setProcessing', true)
-        let userData = (this.userData || {}).uid ? await this.saveUserData() : await this.createUser()
+        const userData = (this.userData || {}).uid ? await this.saveUserData () : await this.createUser ()
         if (!userData || !userData.uid) return
 
-        const attachmentsData = await this.saveAttachments()
+        const attachmentsData = await this.saveAttachments ()
         this.$set(this.profileData, 'attachments', attachmentsData)
         if (this.abaStatus === 'staff' && (this.profileData.teamOrder === null || typeof this.profileData.teamOrder === 'undefined')) {
           this.profileData.teamOrder = 100
         }
 
-        const profileFields = this.profileFieldsToSave()
+        const profileFields = this.profileFieldsToSave ()
         if (Object.keys(profileFields).length) {
           await db.collection('profiles').doc(userData.uid).update(profileFields)
           this.$emit('setProcessing', false)
@@ -376,7 +376,7 @@ export default {
           this.$emit('setProcessing', false)
         }
       } catch (e) {
-        console.error(`%c save() %c e: `, 'background:#ff0000;color:#000', 'color:#00aaff', e)
+        console.error('%c save () %c e: ', 'background:#ff0000;color:#000', 'color:#00aaff', e)
         this.$emit('setProcessing', false)
       }
     },
@@ -399,34 +399,34 @@ export default {
     },
 
     updateAuthorInPostsByUser () {
-      const batch = db.batch()
+      const batch = db.batch ()
       db.collection('posts').where('author.uid', '==', this.userData.uid)
-        .get()
+        .get ()
         .then(snapshot => {
           snapshot.forEach(doc => {
             batch.update(db.collection('posts').doc(doc.id), { displayName: this.userData.displayName })
           })
         })
-      return batch.commit()
+      return batch.commit ()
     },
 
-    async institutionsQuery (str) {
+    async institutionsQuery(str) {
       if (!this.institutions) {
         this.institutions = await db.collection('institutions')
-          .get()
+          .get ()
           .then(snapshot => {
             return snapshot.docs.map(doc => {
-              const { title } = doc.data()
+              const { title } = doc.data ()
               return { id: doc.id, title }
             })
           })
       }
-      return this.institutions.filter(i => i.title.toLowerCase().includes(str.toLowerCase()))
+      return this.institutions.filter(i => i.title.toLowerCase ().includes(str.toLowerCase ()))
     },
 
     generatePasswordIfEmpty () {
       if (!this.password) {
-        this.password = generatePassword()
+        this.password = generatePassword ()
       }
     },
 

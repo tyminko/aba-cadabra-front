@@ -1,43 +1,59 @@
 <template>
-  <transition><div v-if="show" class="spinner" /></transition>
+  <Transition>
+    <div
+      v-if="show"
+      class="spinner"
+      role="status"
+      aria-label="Loading"
+      :aria-busy="show">
+      <span class="sr-only">Loading...</span>
+    </div>
+  </Transition>
 </template>
 
-<script>
-export default {
-  name: 'Spinner',
-  props: { show: Boolean }
+<script setup lang="ts">
+defineOptions({
+  name: 'LoadingSpinner'
+})
+
+interface Props {
+  show?: boolean
 }
+
+withDefault(defineProps<Props>(), {
+  show: true
+})
 </script>
 
-<!--suppress CssInvalidAtRule -->
-<style lang="scss">
-  .spinner {
-    @apply block relative;
+<style lang="scss" scoped>
+.spinner {
+  display: inline-block;
+  width: var(--spinner-size, 1.5rem);
+  height: var(--spinner-size, 1.5rem);
+  border: 2px solid var(--color-aba-blue, #4f46e5);
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
 
-    &.centered {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%,-50%);
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
     }
-
-    &:before {
-      content: '';
-      @apply absolute box-border top-0 left-0 w-full h-full rounded-1/2 border-1/2base;
-      border-color: white blue;
-      top: 50%;
-      left: 50%;
-      animation: spinner 1.1s infinite linear;
-      transition: opacity .1s;
-    }
-
-    &.small:before {
-      @apply border-1/2base;
-    }
-
-    @keyframes spinner {
-      0% { transform: translate(-50%,-50%) rotate(0deg);}
-      100% {transform: translate(-50%,-50%) rotate(360deg);}
+    to {
+      transform: rotate(360deg);
     }
   }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 </style>

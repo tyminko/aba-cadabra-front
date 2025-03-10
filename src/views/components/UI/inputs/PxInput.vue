@@ -1,215 +1,155 @@
 <template>
-  <label class="px-label" :class="{error, 'no-desc': !haveDescription && !showError}">
-    <span v-if="labelText" class="label" :class="labelVisible ? 'opacity-1' : 'opacity-0'">
-      {{labelText}}
-    </span>
-    <span class="flex items-center">
-      <slot>
-        <input-flex
-          ref="input"
-          v-model="model"
-          :type="type"
-          :placeholder="placeholderText"
-          :autocomplete="autocomplete"
-          :disabled="disabled"
-          :spellcheck="!noSpellcheck"
-          :min-width="minWidth"
-          :class="{error}"
-          class="px-input"
-          @focus="onFocus"
-          @blur="onBlur"
-          @enter="onChange"
-          @change="onChange"/>
-      </slot>
-      <slot name="add-on" />
-    </span>
-    <smooth-reflow>
-      <span
-        class="desc block px-sm pt-sm text-xs leading-none"
-        :class="showError ? 'text-red-700' : 'text-gray-500'">
-        <span v-if="showError && errorText">{{errorText}}</span>
-        <template v-else-if="haveDescription">
-          <slot name="desc"/>
-        </template>
-      </span>
-    </smooth-reflow>
-  </label>
+  <div
+    class="px-input"
+    :class="{ 'px-input--error': error }">
+    <input
+      ref="inputRef"
+      type="text"
+      class="px-input__field"
+      :value="modelValue"
+      :placeholder="placeholder"
+      :aria-label="label"
+      :aria-invalid="!!error"
+      :aria-describedby="error ? errorId : undefined"
+      :disabled="disabled"
+      @input="handleInput"
+      @focus="handleFocus"
+      @blur="handleBlur"
+      pattern="[0-9]*"
+      inputmode="numeric" />
+    <span class="px-input__unit">px</span>
+
+    <div
+      v-if="error"
+      :id="errorId"
+      class="px-input__error"
+      role="alert">
+      {{ error }}
+    </div>
+  </div>
 </template>
 
-<script>
-import InputFlex from './InputFlex'
-import SmoothReflow from '../SmoothReflow'
+<script setup lang="ts">
+import { ref } from 'vue'
 
-export default {
-  name: 'PxInput',
-  components: { SmoothReflow, InputFlex },
-  props: {
-    value: [String, Number],
-    type: { type: String, default: 'text' },
-    placeholder: [String, Number],
-    label: [String, Number],
-    autocomplete: String,
-    disabled: Boolean,
-    required: Boolean,
-    noSpellcheck: Boolean,
-    minWidth: { type: [String, Number], default: 200 },
-    lazy: Boolean,
-    rules: { type: Array, default: () => ([]) }, // a list of functions which return true or error message
-    error: [String, Boolean]
-  },
+// Generate unique ID for error message
+const errorId = `px-input-error-${Math.random ().toString(36).substr(2, 9)}`
 
-  data: () => ({
-    lazyValue: '',
-    lazyDelay: 10000,
-    lazyTimeout: null,
-    clearErrorTimeout: null,
-    validationError: '',
-    showError: false
-  }),
+interface Props {
+  modelValue?: string | number
+  placeholder?: string
+  label?: string
+  error?: string
+  disabled?: boolean
+  min?: number
+  max?: number
+}
 
-  computed: {
-    model: {
-      get () {
-        return this.value
-      },
-      set (val) {
-        this.lazyValue = val
-        this.validate(val)
-        if (this.lazy) {
-          clearTimeout(this.lazyTimeout)
-          this.lazyTimeout = setTimeout(() => {
-            this.$emit('input', val)
-            this.lazyValue = ''
-          }, this.lazyDelay)
-        } else {
-          this.$emit('input', val)
-        }
-      }
-    },
+const props = withDefault(defineProps<Props>(), {
+  modelValue: '',
+  placeholder: '0',
+  label: 'Pixel value',
+  error: '',
+  disabled: false,
+  min: 0,
+  max: 9999
+})
 
-    labelText () {
-      return this.label || this.placeholder || ''
-    },
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: string): void
+  (e: 'change', value: number): void
+  (e: 'focus'): void
+  (e: 'blur'): void
+}>()
 
-    placeholderText () {
-      return this.placeholder || this.label || ''
-    },
+const inputRef = ref<HTMLInputElement | null>(null)
 
-    labelVisible () {
-      return !!this.lazyValue
-    },
+const handleInput = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  const value = target.value.replace(/[^0-9]/g, '')
 
-    errorText () {
-      // !!! DEBUG !!!
-      console.log(`%c errorText() %c this.error: `, 'background:#ff0000;color:#000', 'color:#00aaff', this.error)
-      return this.validationError || (this.error && typeof this.error === 'string' ? this.error : '')
-    },
+  if (value === '') {
+    emit('update:modelValue', '')
+    emit('change', 0)
+    return
+  }
 
-    isValid () { return !this.validationError },
-
-    haveDescription () {
-      return !!this.$slots.desc
-    }
-  },
-
-  mounted () {
-    this.lazyValue = this.value
-  },
-
-  watch: {
-    value (val) {
-      this.lazyValue = val
-    },
-    error (val) {
-      if (!this.validationError) this.showError = !!val
-    }
-  },
-
-  methods: {
-    focus () {
-      this.$refs.input.focus()
-    },
-
-    onFocus () {
-      this.$el.classList.add('focus')
-      this.clearErrorTimeout = setTimeout(() => { this.showError = false }, 1000)
-    },
-
-    onBlur () {
-      clearTimeout(this.clearErrorTimeout)
-      this.showError = !this.validate(this.value)
-      this.$el.classList.remove('focus')
-      this.$emit('blur')
-    },
-
-    onChange () {
-      if (this.lazy) {
-        clearTimeout(this.lazyTimeout)
-        this.$emit('input', this.lazyValue)
-        this.lazyValue = ''
-      }
-      this.$emit('change', this.lazyValue)
-    },
-
-    validate (val) {
-      this.validationError = ''
-      if (this.required && !val) {
-        this.validationError = 'required'
-        this.$emit('validated', false)
-        return false
-      }
-      if ((this.rules || []).length) {
-        for (const rule of this.rules) {
-          const res = rule(val)
-          if (res !== true) {
-            this.validationError = res
-            this.$emit('validated', false)
-            return false
-          }
-        }
-      }
-      this.$emit('validated', true)
-      return true
+  const numValue = parseInt(value, 10)
+  if (numValue >= props.min && numValue <= props.max) {
+    emit('update:modelValue', value)
+    emit('change', numValue)
+  } else {
+    if (inputRef.value) {
+      inputRef.value.value = String(props.modelValue)
     }
   }
 }
+
+const handleFocus = () => {
+  emit('focus')
+}
+
+const handleBlur = () => {
+  emit('blur')
+}
 </script>
 
-<!--suppress CssInvalidAtRule -->
-<style lang="css">
-  .px-label {
-    @apply mb-6 block;
-  }
-  .px-label .desc {
-    /*noinspection CssInvalidFunction*/
-    min-height: calc(theme('padding.sm') + theme('fontSize.xs'));
-  }
-  .px-label  span.label {
-    @apply block relative -mb-1 pl-sm text-xs text-gray-600 capitalize transition-opacity duration-100;
-  }
-  .px-label.focus > .label { @apply text-aba-blue; }
-  .px-label.error > .label { @apply text-red-500; }
-  .px-label.error.focus > .label{ @apply text-red-700; }
+<style lang="scss" scoped>
+.px-input {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
 
-  .px-input {
-    @apply h-2/3base py-0 px-sm border-aba-blue-semi border-b;
-    /*noinspection CssInvalidFunction*/
-    max-width: calc(100% - theme('padding.sm') * 2) !important;
-    text-overflow: ellipsis;
-  }
-  .px-input::placeholder {
-    @apply italic capitalize font-light text-gray-400;
-  }
-  .px-input.error {
-    @apply text-aba-blue border-red-300;
-  }
-  .px-input.error::placeholder {
-    @apply text-red-400;
-  }
-  .px-input:focus { @apply text-aba-blue border-aba-blue; }
-  .px-input.error { @apply text-red-500 border-red-500; }
-  .px-input.error:focus { @apply text-red-700 border-red-600; }
+  &__field {
+    width: 4rem;
+    padding: 0.375rem 2rem 0.375rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.25;
+    color: var(--color-text-primary, #111827);
+    background-color: var(--color-bg-primary, white);
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-md, 0.375rem);
+    transition: all 0.2s ease;
 
-  .px-label.xl .px-input { @apply h-base text-2xl; }
-  .px-label.lg .px-input { @apply h-3/4base text-xl; }
+    &:focus {
+      outline: none;
+      border-color: var(--color-aba-blue, #4f46e5);
+      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+    }
+
+    &:disabled {
+      background-color: var(--color-bg-disabled, #f3f4f6);
+      cursor: not-allowed;
+    }
+
+    &::placeholder {
+      color: var(--color-text-placeholder, #9ca3af);
+    }
+  }
+
+  &__unit {
+    position: absolute;
+    right: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary, #6b7280);
+    pointer-events: none;
+  }
+
+  &__error {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--color-error, #ef4444);
+  }
+
+  &--error &__field {
+    border-color: var(--color-error, #ef4444);
+
+    &:focus {
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
+    }
+  }
+}
 </style>

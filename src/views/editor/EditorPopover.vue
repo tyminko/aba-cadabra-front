@@ -3,7 +3,7 @@
     ref="popover"
     :open="open"
     class="editor max-w-text w-full"
-    @esc="$emit('esc')"
+    @esc="emit('esc')"
     @close="close">
     <template v-slot:header>
       <slot name="header">
@@ -12,10 +12,9 @@
     </template>
     <form
       class="post-editor pb-base"
-      @submit.prevent="$emit('save')"
+      @submit.prevent="emit('save')"
       @keyup.enter.prevent="() => false">
       <div
-        ref=""
         class="form-body px-base pb-base overflow-auto"
         :class="buttons.delete ? 'opacity-25':''">
         <slot />
@@ -27,7 +26,7 @@
           <button v-if="buttons.submit" :disabled="!valid" type="submit">{{buttons.submit}}</button>
           <button v-if="buttons.delete"
                   class="text-red-600"
-                  @click.prevent="$emit('remove')">
+                  @click.prevent="emit('remove')">
             {{buttons.delete}}
           </button>
         </template>
@@ -36,29 +35,47 @@
   </popover-modal>
 </template>
 
-<script>
-import PopoverModal from '../components/UI/PopoverModal'
+<script setup lang="ts">
+import { ref } from 'vue'
+import PopoverModal from '../components/UI/PopoverModal.vue'
 
-export default {
-  name: 'EditorPopover',
-  components: { PopoverModal },
-  props: {
-    open: Boolean,
-    valid: Boolean,
-    processing: Boolean,
-    type: { type: String },
-    buttons: { type: Object, default: () => ({ close: 'Cancel', submit: 'Save' }) }
-  },
+defineOptions({
+  name: 'EditorPopover'
+})
 
-  data: () => ({}),
+interface Props {
+  open?: boolean
+  valid?: boolean
+  processing?: boolean
+  type?: string
+  buttons?: {
+    close?: string
+    submit?: string
+    delete?: string
+  }
+}
 
-  methods: {
-    close () {
-      this.$emit('close')
-      if (this.$refs.popover) {
-        this.$refs.popover.releaseBgScroll()
-      }
-    }
+const props = withDefaults(defineProps<Props>(), {
+  open: false,
+  valid: false,
+  processing: false,
+  type: '',
+  buttons: () => ({ close: 'Cancel', submit: 'Save' })
+})
+
+const emit = defineEmits<{
+  (e: 'close'): void
+  (e: 'save'): void
+  (e: 'remove'): void
+  (e: 'esc'): void
+}>()
+
+const popover = ref<InstanceType<typeof PopoverModal> | null>(null)
+
+const close = () => {
+  emit('close')
+  if (popover.value && 'releaseBgScroll' in popover.value) {
+    (popover.value as any).releaseBgScroll ()
   }
 }
 </script>
@@ -69,7 +86,7 @@ export default {
     max-height: calc(100vh - theme('padding.base') * 3 - theme('spacing.base') * 2);
   }
   .form-body .px-label.mb-0 {
-    @apply mb-0;
+    margin-bottom: 0;
   }
   .form-body > :first-child { @apply mt-base }
 </style>

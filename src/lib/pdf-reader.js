@@ -35,7 +35,7 @@ export function imageFromPdf (url) {
         const canvas = imageLib.createCanvas({ w, h })
         const renderTask = pdfPage.render({
           canvasContext: canvas.getContext('2d'),
-          viewport: viewport
+          viewport
         })
         return renderTask.promise
           .then(() => {
@@ -44,6 +44,6 @@ export function imageFromPdf (url) {
       })
     })
     .catch(reason => {
-      console.error(`%c imageFromPdf ERROR %c: `, 'background:#ff0000;color:#000', 'color:#00aaff', reason)
+      console.error('%c imageFromPdf ERROR %c: ', 'background:#ff0000;color:#000', 'color:#00aaff', reason)
     })
 }

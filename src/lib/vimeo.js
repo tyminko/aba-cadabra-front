@@ -1,5 +1,5 @@
 import axios from 'axios'
-import simpleId from './simpleId'
+import { useId } from '../composables/useId'
 
 export default {
   /**
@@ -45,7 +45,7 @@ export default {
    */
   castEmbedToAttachment (url, vimeoEmbed) {
     return {
-      id: simpleId(),
+      id: useId('vimeo'),
       name: vimeoEmbed.video_id,
       type: 'embed/vimeo',
       duration: vimeoEmbed.duration,

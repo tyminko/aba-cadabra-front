@@ -1,114 +1,122 @@
 <template>
   <gmap-map
-    ref="map"
+    ref="mapRef"
     :center="latLng"
     :zoom="zoom"
     :options="mapOptions"
     class="aba-map h-x3" />
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import { gmapApi } from 'vue2-google-maps'
 import { abaMapStyle, defineABAMarkerClass, getMarkerHtml } from '../../../lib/map'
 
-export default {
-  name: 'AbaMap',
-  props: {
-    center: { type: Object, default: () => ({ lat: 52.5220676, lng: 13.4121466 }) },
-    zoomRadius: { type: Number, default: 0.12 },
-    zoom: { type: Number, default: 17 },
-    markers: { type: Array, default: () => ([]) }
-  },
+interface Props {
+  center: { lat: number; lng: number }
+  zoomRadius?: number
+  zoom?: number
+  markers?: Array<{ lat: number; lng: number; [key: string]: any }>
+}
 
-  data: () => ({
-    mapOptions: {
-      disableDefaultUI: true,
-      backgroundColor: '#fff',
-      styles: [...abaMapStyle.basic]
-    },
-    MarkerClass: null,
-    markersStock: {},
-    markerInstances: [],
-    markerEl: null,
-    markerInstance: null,
-    map: null
-  }),
+defineOptions({
+  name: 'AbaMapView'
+})
 
-  computed: {
-    google: gmapApi,
+const props = withDefaults(defineProps<Props>(), {
+  center: () => ({ lat: 52.5220676, lng: 13.4121466 }),
+  zoomRadius: 0.12,
+  zoom: 17,
+  markers: () => []
+})
 
-    latLng () {
-      return this.center
+const route = useRoute()
+const mapRef = ref<any>(null)
+const mapOptions = ref({
+  disableDefaultUI: true,
+  backgroundColor: '#fff',
+  styles: [...abaMapStyle.basic]
+})
+let CustomMarkerClass: any = null
+const markersStock = ref<Record<string, any>>({})
+const markerInstances = ref<any[]>([])
+const map = ref<any>(null)
+
+const google = computed(() => gmapApi())
+const latLng = computed(() => props.center)
+
+const init = async () => {
+  if (!mapRef.value) return
+  return mapRef.value.$mapPromise.then((mapInstance: any) => {
+    map.value = mapInstance
+    CustomMarkerClass = defineABAMarkerClass(google.value)
+  })
+}
+
+const zoomToMarkers = () => {
+  if (!markerInstances.value.length) return
+  if (markerInstances.value.length === 1) {
+    map.value.setCenter(markerInstances.value[0].latLng)
+    map.value.setZoom(props.zoom)
+  } else {
+    const bounds = {
+      north: props.center.lat - props.zoomRadius / 6,
+      south: props.center.lat + props.zoomRadius / 6,
+      west: props.center.lng - props.zoomRadius,
+      east: props.center.lng + props.zoomRadius
     }
-  },
-
-  async mounted () {
-    if (this.$refs.map) {
-      await this.init()
-      if (this.markers.length) {
-        this.setupMarkers()
-      }
-    }
-  },
-
-  watch: {
-    markers () { this.setupMarkers() },
-    $route () { this.setupMarkers() }
-  },
-
-  methods: {
-    init () {
-      return this.$refs.map.$mapPromise.then(map => {
-        this.map = map
-        this.MarkerClass = defineABAMarkerClass(this.google)
-      })
-    },
-
-    zoomToMarkers () {
-      if (!this.markerInstances.length) return
-      if (this.markerInstances.length === 1) {
-        this.map.setCenter(this.markerInstances[0].latLng)
-        this.map.setZoom(this.zoom)
-      } else {
-        // const bounds = markersBounds(this.google, this.markerInstances)
-        const bounds = {
-          north: this.center.lat - this.zoomRadius / 6,
-          south: this.center.lat + this.zoomRadius / 6,
-          west: this.center.lng - this.zoomRadius,
-          east: this.center.lng + this.zoomRadius
-        }
-        this.map.fitBounds(bounds)
-      }
-    },
-
-    async setupMarkers () {
-      this.clearMarkers()
-      if (!this.markers.length) return
-      if (!this.map) {
-        await this.$nextTick()
-        await this.init()
-      }
-      const markers = this.markers.sort((m1, m2) => parseFloat(m1.lat) - parseFloat(m2.lat))
-      markers.forEach(mData => {
-        const markerData = { ...mData } /* , active: true */
-        const markerEl = getMarkerHtml(markerData, this.$refs.map.$el, this.markersStock)
-        if (markerEl && this.MarkerClass && this.map) {
-          const { lat, lng } = mData
-          const m = new this.MarkerClass({ lat, lng }, markerEl)
-          m.setMap(this.map)
-          this.markerInstances.push(m)
-        }
-      })
-      this.zoomToMarkers()
-    },
-
-    clearMarkers () {
-      this.markerInstances.forEach(m => m.setMap(null))
-      this.markerInstances = []
-      this.markersStock = {}
-    }
+    map.value.fitBounds(bounds)
   }
 }
+
+const clearMarkers = () => {
+  markerInstances.value.forEach(m => m.setMap(null))
+  markerInstances.value = []
+  markersStock.value = {}
+}
+
+const setupMarkers = async () => {
+  clearMarkers()
+  if (!props.markers.length) return
+  if (!map.value) {
+    await nextTick()
+    await init()
+  }
+  const sortedMarkers = [...props.markers].sort((m1, m2) => {
+    const lat1 = typeof m1.lat === 'string' ? parseFloat(m1.lat) : m1.lat
+    const lat2 = typeof m2.lat === 'string' ? parseFloat(m2.lat) : m2.lat
+    return lat1 - lat2
+  })
+  sortedMarkers.forEach(mData => {
+    const markerData = { ...mData }
+    const markerElement = getMarkerHtml(markerData, mapRef.value.$el, markersStock.value)
+    if (markerElement && CustomMarkerClass && map.value) {
+      const { lat, lng } = mData
+      const marker = new CustomMarkerClass({ lat, lng }, markerElement)
+      marker.setMap(map.value)
+      markerInstances.value.push(marker)
+    }
+  })
+  zoomToMarkers()
+}
+
+onMounted(async () => {
+  if (mapRef.value) {
+    await init()
+    if (props.markers.length) {
+      setupMarkers()
+    }
+  }
+})
+
+watch(() => props.markers, () => {
+  setupMarkers()
+})
+
+watch(() => route.path, () => {
+  setupMarkers()
+})
 </script>
 
 <style lang="scss">

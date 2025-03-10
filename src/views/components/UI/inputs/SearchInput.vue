@@ -1,274 +1,263 @@
 <template>
-  <div class="search-input-root">
-    <popper
-      ref="popper"
-      placement="bottom-start"
-      trigger="none"
-      no-arrow
-      class="suggestions">
-      <template v-slot:reference>
-        <!--suppress HtmlFormInputWithoutLabel -->
-        <input-flex
-          ref="input"
-          class="px-input bg-white"
-          type="text"
-          :placeholder="placeholder"
-          :title="placeholder"
-          :value="inputValue"
-          @input="onInput"
-          @keydown.tab.prevent="onTab"
-          @focus="onFocus"
-          @blur="onBlur"
-          @arrow-down="nextSuggestion"
-          @arrow-up="prevSuggestion"
-          @enter="completeTyping"
-          @keyup="getSuggestions"
-          @esc="onEsc" />
-      </template>
-      <ul v-show="inputValue && suggestions.length" class="">
-        <li v-for="(suggestion, index) in suggestions"
-            :key="index"
-            :class="{highlighted: index === selectedIndex}"
-            class="capitalize"
-            @click.prevent="selectSuggestion(suggestion)"
-            @mouseover="selectedIndex = index">
-          {{ suggestion.title||suggestion.displayName }}
-        </li>
-      </ul>
-    </popper>
+  <div
+    class="search-input"
+    :class="{ 'search-input--focused': isFocused }">
+    <div class="search-input__field-wrap">
+      <i class="material-icons search-input__icon">search</i>
+      <input
+        ref="inputRef"
+        type="search"
+        class="search-input__field"
+        :value="modelValue"
+        :placeholder="placeholder"
+        :aria-label="label"
+        :disabled="disabled"
+        @input="handleInput"
+        @focus="handleFocus"
+        @blur="handleBlur"
+        @keydown.esc="handleClear"
+        @keydown.down.prevent="handleArrowDown"
+        @keydown.up.prevent="handleArrowUp"
+        @keydown.enter.prevent="handleEnter" />
+      <button
+        v-if="modelValue"
+        class="search-input__clear"
+        type="button"
+        :aria-label="clearLabel"
+        @click="handleClear">
+        <i class="material-icons">close</i>
+      </button>
+    </div>
+
+    <div
+      v-if="showResults && results.length > 0"
+      class="search-input__results"
+      role="listbox"
+      :aria-label="`${label} results`">
+      <div
+        v-for="(result, index) in results"
+        :key="result.id"
+        class="search-input__result"
+        :class="{ 'search-input__result--active': activeIndex === index }"
+        role="option"
+        :aria-selected="activeIndex === index"
+        @click="handleSelect(result)"
+        @mouseenter="activeIndex = index">
+        <slot
+          name="result"
+          :result="result"
+          :active="activeIndex === index">
+          {{ result.label }}
+        </slot>
+      </div>
+    </div>
   </div>
 </template>
 
-<script>
-import Popper from '../Popper.js.vue'
-import simpleId from '../../../../lib/simpleId'
-import InputFlex from './InputFlex'
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+import type { Ref } from 'vue'
 
-export default {
-  name: 'SearchInput',
-  components: { InputFlex, Popper },
-  props: {
-    value: { type: String, default: '' },
-    query: { type: Function, required: true },
-    sortFunc: {
-      type: Function,
-      default: (a, b) => {
-        const strA = (a.title || a.displayName).toLowerCase()
-        const strB = (b.title || b.displayName).toLowerCase()
-        if (strA < strB) return -1
-        if (strA > strB) return 1
-        return 0
-      }
-    },
-    placeholder: { type: String, default: '' },
-    focusOnLoad: Boolean,
-    suggestionActivationThreshold: { type: Number, default: 1 },
-    maxSuggestionsNumber: { type: Number, default: 0 }
-  },
+interface SearchResult {
+  id: string | number
+  label: string
+  [key: string]: any
+}
 
-  data: () => ({
-    inputValue: '',
-    oldInputValue: '',
-    suggestions: [],
-    selectedIndex: -1
-  }),
+interface Props {
+  modelValue: string
+  results?: SearchResult[]
+  placeholder?: string
+  label?: string
+  clearLabel?: string
+  disabled?: boolean
+  minChars?: number
+}
 
-  computed: {
-    searchResult () {
-      if (!this.suggestions.length) return null
-      return this.selectedIndex >= 0
-        ? this.suggestions[this.selectedIndex]
-        : this.suggestions
-    },
+const props = withDefault(defineProps<Props>(), {
+  modelValue: '',
+  results: () => [],
+  placeholder: 'Search...',
+  label: 'Search',
+  clearLabel: 'Clear search',
+  disabled: false,
+  minChars: 2
+})
 
-    output () {
-      return this.inputValue ? { search: this.inputValue, result: this.searchResult } : null
-    },
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: string): void
+  (e: 'search', value: string): void
+  (e: 'select', result: SearchResult): void
+  (e: 'clear'): void
+}>()
 
-    inputId () {
-      return simpleId()
-    },
+const inputRef = ref<HTMLInputElement | null>(null)
+const isFocused = ref(false)
+const activeIndex = ref(-1)
+const showResults = ref(false)
 
-    showSuggestions () {
-      return this.suggestions && this.suggestions.length > 0
+const handleInput = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  const value = target.value
+  emit('update:modelValue', value)
+
+  if (value.length >= props.minChars) {
+    emit('search', value)
+    showResults.value = true
+  } else {
+    showResults.value = false
+  }
+}
+
+const handleFocus = () => {
+  isFocused.value = true
+  if (props.modelValue.length >= props.minChars) {
+    showResults.value = true
+  }
+}
+
+const handleBlur = () => {
+  // Delay hiding results to allow click events to fire
+  setTimeout(() => {
+    isFocused.value = false
+    showResults.value = false
+    activeIndex.value = -1
+  }, 200)
+}
+
+const handleClear = () => {
+  emit('update:modelValue', '')
+  emit('clear')
+  showResults.value = false
+  activeIndex.value = -1
+  inputRef.value?.focu ()
+}
+
+const handleArrowDown = () => {
+  if (showResults.value && props.results.length > 0) {
+    activeIndex.value = (activeIndex.value + 1) % props.results.length
+  }
+}
+
+const handleArrowUp = () => {
+  if (showResults.value && props.results.length > 0) {
+    activeIndex.value = activeIndex.value <= 0
+      ? props.results.length - 1
+      : activeIndex.value - 1
+  }
+}
+
+const handleEnter = () => {
+  if (showResults.value && activeIndex.value >= 0) {
+    handleSelect(props.results[activeIndex.value])
+  }
+}
+
+const handleSelect = (result: SearchResult) => {
+  emit('select', result)
+  emit('update:modelValue', result.label)
+  showResults.value = false
+  activeIndex.value = -1
+}
+
+// Reset active index when results change
+watch(() => props.results, () => {
+  activeIndex.value = -1
+})
+</script>
+
+<style lang="scss" scoped>
+.search-input {
+  position: relative;
+  width: 100%;
+
+  &__field-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  &__icon {
+    position: absolute;
+    left: 0.75rem;
+    font-size: 1.25rem;
+    color: var(--color-text-secondary, #6b7280);
+    pointer-events: none;
+  }
+
+  &__field {
+    width: 100%;
+    padding: 0.625rem 2.5rem;
+    font-size: 0.875rem;
+    color: var(--color-text-primary, #111827);
+    background-color: var(--color-bg-primary, white);
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-md, 0.375rem);
+    transition: all 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-aba-blue, #4f46e5);
+      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
     }
-  },
 
-  watch: {
-    value (value) {
-      this.inputValue = value
-    },
-    suggestions (value) {
-      if (!value || !value.length) {
-        this.closeSaggestionsTimeout = setTimeout(() => {
-          if (this.$refs.popper) this.$refs.popper.showPopper = false
-        }, 1000)
-      } else {
-        clearTimeout(this.closeSaggestionsTimeout)
-        if (!(this.$refs.popper || {}).showPopper) {
-          this.$nextTick(() => {
-            if (this.$refs.popper) this.$refs.popper.showPopper = true
-          })
-        }
-      }
+    &:disabled {
+      background-color: var(--color-bg-disabled, #f3f4f6);
+      cursor: not-allowed;
     }
-  },
 
-  created () {
-    this.inputValue = this.value
-  },
+    &::placeholder {
+      color: var(--color-text-placeholder, #9ca3af);
+    }
+  }
 
-  mounted () {
-    if (this.focusOnLoad) this.$refs.input.focus()
-    // this.$refs.popper.showPopper = true
-  },
+  &__clear {
+    position: absolute;
+    right: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    color: var(--color-text-secondary, #6b7280);
+    border-radius: var(--radius-full, 9999px);
+    transition: all 0.2s ease;
 
-  methods: {
-    onClick (str) {
-      console.log(`!!! CLICK ${str} !!!`)
-    },
-    getSuggestions () {
-      if (this.oldInputValue !== this.inputValue ||
-        (!this.suggestions.length && this.suggestionActivationThreshold === 0)
-      ) {
-        this.selectedIndex = -1
-        const inputValue = this.inputValue.trim()
-        if (!inputValue) this.suggestions = []
-        if ((inputValue.length && inputValue.length >= this.suggestionActivationThreshold) || this.suggestionActivationThreshold === 0) {
-          const task = this.query(inputValue)
-          if (task && task.then) {
-            task.then(records => {
-              this.suggestions = records.sort(this.sortFunc)
-              if (this.maxSuggestionsNumber > 0) {
-                this.suggestions = this.suggestions.slice(0, this.maxSuggestionsNumber)
-              }
-            })
-          }
-        }
-        this.oldInputValue = this.inputValue
-      }
-    },
+    &:hover {
+      background-color: var(--color-bg-hover, #f3f4f6);
+      color: var(--color-text-primary, #111827);
+    }
 
-    selectSuggestion (record) {
-      this.inputValue = record.title || record.displayName
-      this.completeTyping()
-    },
+    i {
+      font-size: 1.125rem;
+    }
+  }
 
-    completeTyping () {
-      const result = this.searchResult
-      if (result) {
-        const value = typeof result === 'string'
-          ? result
-          : !Array.isArray(result) && (result.title || result.displayName)
-            ? result.title || result.displayName
-            : ''
-        if (value) this.inputValue = value
-      }
-      this.$emit('input', this.output)
-      this.clearSuggestions()
-    },
+  &__results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 0.25rem;
+    padding: 0.25rem;
+    background-color: var(--color-bg-primary, white);
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-md, 0.375rem);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    z-index: 50;
+  }
 
-    onFocus () {
-      this.getSuggestions()
-    },
+  &__result {
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm, 0.25rem);
+    cursor: pointer;
+    transition: all 0.2s ease;
 
-    onBlur () {
-      this.$emit('blur', { ...this.output })
-      this.inputValue = ''
-      this.hideSuggestions()
-    },
-
-    onInput (value) {
-      this.inputValue = value
-      this.$emit('typing', this.inputValue)
-    },
-
-    onTab () {
-      this.$emit('tab', { ...this.output })
-      this.hideSuggestions()
-    },
-
-    onEsc () {
-      if (this.suggestions.length) {
-        this.clearSuggestions()
-      } else {
-        this.clear()
-        this.blur()
-        this.$emit('esc')
-      }
-    },
-
-    hideSuggestions () {
-      if (!this.inputValue) {
-        this.$nextTick(() => {
-          this.clearSuggestions()
-        })
-      }
-    },
-
-    nextSuggestion () {
-      if (this.selectedIndex + 1 <= this.suggestions.length - 1) {
-        this.selectedIndex++
-      } else {
-        this.selectedIndex = -1
-      }
-    },
-
-    prevSuggestion () {
-      if (this.selectedIndex > -1) {
-        this.selectedIndex--
-      }
-    },
-
-    clearSuggestions () {
-      this.suggestions = []
-      this.selectedIndex = -1
-    },
-
-    clear () {
-      this.clearSuggestions()
-      this.inputValue = ''
-    },
-
-    focus () {
-      this.$refs.input.focus()
-    },
-
-    blur () {
-      this.$refs.input.blur()
-      this.$emit('blur')
+    &:hover,
+    &--active {
+      background-color: var(--color-bg-hover, #f3f4f6);
+      color: var(--color-aba-blue, #4f46e5);
     }
   }
 }
-</script>
-
-<!--suppress CssInvalidAtRule -->
-<style lang="scss">
-  .suggestions {
-    position: relative;
-    display: block;
-    .popper-trigger {
-      @apply block h-full;
-    }
-    .popper {
-      padding: 0;
-      border: #ccc solid;
-      border-width: 0 1px 1px 1px;
-      border-top-left-radius: 0;
-      border-top-right-radius: 0;
-      box-shadow: 0 -1px 0 blue;
-
-      .popper-content {
-        max-height: 20rem;
-        @apply block overflow-auto w-full h-full;
-      }
-
-      li {
-        @apply px-base py-sm text-sm whitespace-no-wrap;
-        &.highlighted {
-          @apply text-aba-blue bg-gray-100;
-        }
-      }
-    }
-  }
 </style>

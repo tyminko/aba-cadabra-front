@@ -32,12 +32,21 @@ export default {
       return Object.values(this.feed).sort((a, b) => b.date - a.date)
     },
     markers () {
-      return this.posts.map(post => {
-        const { lat, lng } = post.location || {}
-        if (lat && lng) {
-          return { lat: parseFloat(lat), lng: parseFloat(lng), url: '', label: `#${post.countNumber}` }
-        }
-      }).filter(m => !!m).sort((a, b) => a.lat - b.lat)
+      return this.posts
+        .map(post => {
+          const { lat, lng } = post.location || {}
+          if (!lat || !lng) {
+            return null
+          }
+          return {
+            lat: parseFloat(lat),
+            lng: parseFloat(lng),
+            url: '',
+            label: `#${post.countNumber}`
+          }
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.lat - b.lat)
     },
     description () {
       if ((this.programmeObj || {}).text) {
@@ -66,7 +75,7 @@ export default {
     }
   },
 
-  beforeDestroy () {
+  beforeUnmount () {
     this.unsubscribeAll()
   },
 

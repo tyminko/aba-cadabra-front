@@ -58,7 +58,7 @@ export default {
     }
   },
 
-  beforeDestroy () {
+  beforeUnmount () {
     if (typeof this.profileUnsubscribe === 'function') {
       this.profileUnsubscribe()
     }

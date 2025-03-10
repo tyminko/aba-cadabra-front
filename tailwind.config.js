@@ -2,7 +2,7 @@ const baseSize = 3 // rem
 const textBlockWidth = 38 // rem
 module.exports = {
   important: '#app',
-  purge: [
+  content: [
     './src/**/*.html',
     './src/**/*.vue',
     './src/**/*.jsx'
@@ -17,8 +17,8 @@ module.exports = {
         'aba-red': '#860025',
         'aba-blue-dark': '#001776',
         'aba-blue-semi': 'rgba(0,61,255,0.44)',
-        'shadow': 'rgba(0,0,0,0.2)',
-        'milk': 'rgba(255,255,255,0.8)',
+        shadow: 'rgba(0,0,0,0.2)',
+        milk: 'rgba(255,255,255,0.8)',
         gray: {
           100: '#fafafa',
           200: '#e6e6e6',
@@ -32,7 +32,7 @@ module.exports = {
         }
       },
       spacing: {
-        'base': `${baseSize}rem`,
+        base: `${baseSize}rem`,
         '1/12base': `${baseSize / 12}rem`,
         '1/8base': `${baseSize / 8}rem`,
         '1/6base': `${baseSize / 6}rem`,
@@ -42,50 +42,50 @@ module.exports = {
         '3/4base': `${baseSize * 0.75}rem`,
         '5/6base': `${baseSize / 6 * 5}rem`,
         '3/8base': `${baseSize * 0.375}rem`,
-        'text': `${textBlockWidth}em`,
-        'x2': `${baseSize * 2}rem`,
-        'x3': `${baseSize * 3}rem`
+        text: `${textBlockWidth}em`,
+        x2: `${baseSize * 2}rem`,
+        x3: `${baseSize * 3}rem`
       },
       padding: {
-        'xs': `${baseSize / 12}rem`,
-        'sm': `${baseSize / 6}rem`,
-        'base': `${baseSize / 3}rem`,
-        'lg': `${baseSize / 2}rem`,
-        'xl': `${baseSize / 3 * 2}rem`,
-        'xxl': `${baseSize * 2}rem`
+        xs: `${baseSize / 12}rem`,
+        sm: `${baseSize / 6}rem`,
+        base: `${baseSize / 3}rem`,
+        lg: `${baseSize / 2}rem`,
+        xl: `${baseSize / 3 * 2}rem`,
+        xxl: `${baseSize * 2}rem`
       },
       margin: {
-        'base': `${baseSize / 3}rem`,
+        base: `${baseSize / 3}rem`,
         '-base': `-${baseSize / 3}rem`,
-        'sm': `${baseSize / 6}rem`,
-        'xs': `${baseSize / 12}rem`,
-        'lg': `${baseSize / 2}rem`,
+        sm: `${baseSize / 6}rem`,
+        xs: `${baseSize / 12}rem`,
+        lg: `${baseSize / 2}rem`,
         '-sm': `-${baseSize / 6}rem`,
-        'xl': `${baseSize / 3 * 2}rem`,
+        xl: `${baseSize / 3 * 2}rem`,
         '-xl': `-${baseSize / 3 * 2}rem`,
-        'xxl': `${baseSize}rem`
+        xxl: `${baseSize}rem`
       },
       gap: {
-        'base': `${baseSize / 3}rem`,
-        'lg': `${baseSize / 2}rem`
+        base: `${baseSize / 3}rem`,
+        lg: `${baseSize / 2}rem`
       },
       maxWidth: {
-        'text': `${textBlockWidth}em`,
+        text: `${textBlockWidth}em`,
         '1/8base': `${baseSize / 8}rem`,
         '5/6base': `${baseSize / 6 * 5}rem`
       },
       minWidth: {
-        'text': `${textBlockWidth}em`,
+        text: `${textBlockWidth}em`,
         '1/8base': `${baseSize / 8}rem`,
         '5/6base': `${baseSize / 6 * 5}rem`
       },
       minHeight: {
-        'base': `${baseSize}rem`,
-        'x2': `${baseSize * 2}rem`
+        base: `${baseSize}rem`,
+        x2: `${baseSize * 2}rem`
       },
       borderWidth: {
         '1/2base': `${baseSize / 2}rem`,
-        'xl': `${baseSize / 12}rem`
+        xl: `${baseSize / 12}rem`
       },
       borderRadius: {
         '1/2base': `${baseSize * 0.5}rem`,
@@ -100,7 +100,7 @@ module.exports = {
         '1/12base': `${baseSize / 12}rem`
       },
       transitionProperty: {
-        'spacing': 'margin, padding'
+        spacing: 'margin, padding'
       }
     }
   },

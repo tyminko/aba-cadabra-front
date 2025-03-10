@@ -1,66 +1,66 @@
 <template>
   <div>
     <input
-      ref="input"
-      type="file"
-      style="display:none"
+      ref='input'
+      type='file'
+      style='display:none'
       multiple
-      accept="image/*, application/pdf"
-      @change="addFilesFromOpenDialog">
+      accept='image/*, application/pdf'
+      @change='addFilesFromOpenDialog'>
     <draggable
-      ref="previews"
-      v-model="attachments"
-      v-bind="dragOptions"
-      :move="onDragging"
-      @start="dragging = true"
-      @end="onEndDragging">
+      ref='previews'
+      v-model='attachments'
+      v-bind='dragOptions'
+      :move='onDragging'
+      @start='dragging = true'
+      @end='onEndDragging'>
       <transition-group
-        ref="attachments-grid"
-        type="transition"
-        :name="!dragging ? 'flip-list' : null"
-        class="draggable attachments-grid">
+        ref='attachments-grid'
+        type='transition'
+        :name='!dragging ? "flip-list" : null'
+        class='draggable attachments-grid'>
         <attachment-editor-cell
-          v-for="(item, i) in attachments"
-          v-model="attachments[i]"
-          :key="item.id || i"
-          :no-poster="maxNumber === 1"
-          :no-caption="noCaption"
-          :no-crop="noCrop"
-          :is-poster="item.id === posterId"
-          class="draggable-box bg-gray-200 cursor-move"
-          @set-poster="setPoster"
-          @remove="removeAttachment"/>
+          v-for='(item, i) in attachments'
+          v-model='attachments[i]'
+          :key='item.id || i'
+          :no-poster='maxNumber === 1'
+          :no-caption='noCaption'
+          :no-crop='noCrop'
+          :is-poster='item.id === posterId'
+          class='draggable-box bg-gray-200 cursor-move'
+          @set-poster='setPoster'
+          @remove='removeAttachment'/>
         <dropzone
-          v-if="!maxNumber || attachments.length < maxNumber"
-          :key="'n-a'"
-          ref="new-attachment-cell"
-          draggable="false"
-          class="new-attachment-cell no-move flex flex-col items-center justify-center bg-gray-100"
-          @drop="addFiles">
-          <p class="italic capitalize font-light text-gray-400">{{dropzoneMessage}}</p>
-          <div class="flex items-center">
-            <button class="flex-col h-auto leading-none" @click.prevent="openFileDialog">
-              <i class="material-icons">attachment</i>
-              <span class="text-sm text-center mt-1">Attach File</span>
+          v-if='!maxNumber || attachments.length < maxNumber'
+          :key='"n-a"'
+          ref='new-attachment-cell'
+          draggable='false'
+          class='new-attachment-cell no-move flex flex-col items-center justify-center bg-gray-100'
+          @drop='addFiles'>
+          <p class='italic capitalize font-light text-gray-400'>{{dropzoneMessage}}</p>
+          <div class='flex items-center'>
+            <button class='flex-col h-auto leading-none' @click.prevent='openFileDialog'>
+              <i class='material-icons'>attachment</i>
+              <span class='text-sm text-center mt-1'>Attach File</span>
             </button>
-            <button v-if="allowUrl" class="flex-col h-auto leading-none" @click.prevent="showUrlInput = true">
-              <i class="material-icons">link</i>
-              <span class="text-sm text-center mt-1">Attach Url</span>
+            <button v-if='allowUrl' class='flex-col h-auto leading-none' @click.prevent='showUrlInput = true'>
+              <i class='material-icons'>link</i>
+              <span class='text-sm text-center mt-1'>Attach Url</span>
             </button>
           </div>
           <transition>
             <div
-              v-if="showUrlInput"
-              class="url-input absolute inset-0 flex items-center justify-center bg-white">
-              <div class="flex items-center justify-center w-full max-w-full">
-                <px-input v-model="urlToInsert" placeholder="Url" class="max-w-full">
-                  <template v-slot:add-on>
-                    <div class="flex">
-                      <button class="w-3/4base" @click.prevent="addAttachmentFromUrl">
-                        <i class="material-icons text-base">done</i>
+              v-if='showUrlInput'
+              class='url-input absolute inset-0 flex items-center justify-center bg-white'>
+              <div class='flex items-center justify-center w-full max-w-full'>
+                <px-input v-model='urlToInsert' placeholder='Url' class='max-w-full'>
+                  <template #add-on>
+                    <div class='flex'>
+                      <button class='w-3/4base' @click.prevent='addAttachmentFromUrl'>
+                        <i class='material-icons text-base'>done</i>
                       </button>
-                      <button class="w-3/4base" @click.prevent="addAttachmentFromUrl">
-                        <i class="material-icons text-base" @click.prevent="showUrlInput = false">close</i>
+                      <button class='w-3/4base' @click.prevent='addAttachmentFromUrl'>
+                        <i class='material-icons text-base' @click.prevent='showUrlInput = false'>close</i>
                       </button>
                     </div>
                   </template>
@@ -71,7 +71,7 @@
         </dropzone>
       </transition-group>
     </draggable>
-    <progress v-if="uploadPercentage" max="100" :value.prop="uploadPercentage"/>
+    <progress v-if='uploadPercentage' max='100' :value.prop='uploadPercentage'/>
   </div>
 </template>
 
@@ -105,7 +105,7 @@ export default {
   },
 
   data: () => ({
-    /** @type (PostAttachment|RawAttachment)[] */
+    /** @type(PostAttachment|RawAttachment)[] */
     attachments: [],
     removedAttachments: [],
     showUrlInput: false,
@@ -133,7 +133,7 @@ export default {
   },
 
   watch: {
-    value (newValue) {
+    value(newValue) {
       this.convertToAttachments(newValue)
     }
   },
@@ -143,13 +143,13 @@ export default {
   },
 
   mounted () {
-    this.setSpanOnLastGridCell()
+    this.setSpanOnLastGridCell ()
   },
 
   methods: {
     openFileDialog () {
       if (this.$refs.input) {
-        this.$refs.input.click()
+        this.$refs.input.click ()
       }
     },
 
@@ -157,7 +157,7 @@ export default {
       this.showEmbedDialog = true
     },
 
-    addFilesFromOpenDialog (e) {
+    addFilesFromOpenDialog(e) {
       this.addFiles(e.target.files)
       e.target.value = ''
     },
@@ -170,11 +170,11 @@ export default {
       if (attachment) {
         this.showUrlInput = false
         this.attachments.push(attachment)
-        this.updateAttachmentsOrder()
+        this.updateAttachmentsOrder ()
       }
     },
 
-    addFiles (files) {
+    addFiles(files) {
       let addedFiles = Array.from(files)
         .filter(file => isSupportedFormat(file))
       if (!this.allowDuplicates) {
@@ -201,17 +201,17 @@ export default {
           }
         })
 
-      this.updateAttachmentsOrder()
+      this.updateAttachmentsOrder ()
     },
 
     updateAttachmentsOrder () {
       this.attachments.forEach((a, i) => { a.order = i })
-      this.setSpanOnLastGridCell()
+      this.setSpanOnLastGridCell ()
     },
 
     async uploadNewAttachments () {
       if (!this.authorId && !this.user) return
-      this.updateAttachmentsOrder()
+      this.updateAttachmentsOrder ()
       /** @type RawAttachment[] */
       const rawAttachments = this.attachments.filter(a => a.file instanceof Blob)
       rawAttachments.forEach(a => this.$set(a, 'progress', 1))
@@ -239,8 +239,8 @@ export default {
     },
 
     async processAttachments () {
-      await this.uploadNewAttachments()
-      await this.deleteMarkedAttachments()
+      await this.uploadNewAttachments ()
+      await this.deleteMarkedAttachments ()
       return this.attachments.reduce((res, item) => {
         const { id, name, html, caption, order, type, srcSet, pointOfInterest } = item
         res[id] = { order, type, srcSet }
@@ -252,7 +252,7 @@ export default {
       }, {})
     },
 
-    removeAttachment (id) {
+    removeAttachment(id) {
       const index = this.attachments.findIndex(a => a.id === id)
       if (index < 0) return
       const attachmentToRemove = this.attachments[index]
@@ -264,15 +264,15 @@ export default {
         this.removedAttachments.push(removed)
       }
       this.$emit('remove', id)
-      this.updateAttachmentsOrder()
+      this.updateAttachmentsOrder ()
     },
 
-    setPoster (id) {
+    setPoster(id) {
       this.$emit('set-poster', id)
     },
 
     /** @param {{}|[]} inputAttachments */
-    convertToAttachments (inputAttachments) {
+    convertToAttachments(inputAttachments) {
       if (Array.isArray(inputAttachments)) {
         this.attachments = inputAttachments
       } else {
@@ -281,7 +281,7 @@ export default {
           return res
         }, []).sort((a, b) => a.order - b.order)
       }
-      this.updateAttachmentsOrder()
+      this.updateAttachmentsOrder ()
     },
 
     onDragging () {
@@ -290,7 +290,7 @@ export default {
 
     onEndDragging () {
       this.dragging = false
-      this.updateAttachmentsOrder()
+      this.updateAttachmentsOrder ()
     },
 
     setSpanOnLastGridCell () {
@@ -305,7 +305,7 @@ export default {
      * @param url
      * @return {Promise<PostAVAttachment|PostEmbedAttachment|never>}
      */
-    async makeAttachmentFromUrl (url) {
+    async makeAttachmentFromUrl(url) {
       if (!url) {
         return Promise.reject(new Error('Empty url'))
       }
@@ -343,7 +343,7 @@ export default {
   }
   .new-attachment-cell{
     transition: 0s !important;
-    @media (max-width: 548px) {
+    @media(max-width: 548px) {
       grid-column: span 1 / auto !important;
     }
   }

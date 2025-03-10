@@ -2,130 +2,152 @@
   <!--suppress HtmlFormInputWithoutLabel -->
   <input
     :type="type"
-    v-model="model"
+    v-model="modelValue"
     v-input-auto-width="autoWidthOptions"
     :placeholder="placeholder"
     :autocomplete="autocomplete"
     :disabled="disabled"
     :spellcheck="spellcheck"
+    :id="inputId"
+    :aria-label="placeholder"
     @click="focus"
-    @focus="$emit('focus')"
-    @blur="$emit('blur')"
-    @change="$emit('change')"
-    @keydown.down="$emit('arrow-down')"
-    @keydown.up="$emit('arrow-up')"
-    @keydown.enter.prevent="$emit('enter')"
-    @keyup.exact="$emit('keyup')"
+    @focus="emit('focus')"
+    @blur="emit('blur')"
+    @change="emit('change')"
+    @keydown.down="emit('arrow-down')"
+    @keydown.up="emit('arrow-up')"
+    @keydown.enter.prevent="emit('enter')"
+    @keyup.exact="emit('keyup')"
     @keydown.esc="onEsc">
 </template>
 
-<script>
+<script setup>
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import inputAutoWidth from 'vue-input-autowidth'
+import { useId } from '../../../../composables/useId'
 
-export default {
-  name: 'InputFlex',
-  directives: { inputAutoWidth },
-  props: {
-    value: [String, Number],
-    autocomplete: String,
-    disabled: Boolean,
-    spellcheck: Boolean,
-    placeholder: [String, Number],
-    type: { type: String, default: 'text' },
-    minWidth: { type: [String, Number], default: 0 },
-    comfortZone: { type: [String, Number], default: 0 }
-  },
+// Prop
+const props = defineProp({
+  modelValue: [String, Number],
+  autocomplete: String,
+  disabled: Boolean,
+  spellcheck: Boolean,
+  placeholder: [String, Number],
+  type: { type: String, default: 'text' },
+  minWidth: { type: [String, Number], default: 0 },
+  comfortZone: { type: [String, Number], default: 0 }
+})
 
-  data: () => ({
-    tempValue: '',
-    defaultMinWidth: 96,
-    actualMinWidth: 0,
-    testId: 'input-flex-test-width-span'
-  }),
+// Emit
+const emit = defineEmit([
+  'update:modelValue',
+  'focus',
+  'blur',
+  'change',
+  'arrow-down',
+  'arrow-up',
+  'enter',
+  'keyup',
+  'esc'
+])
 
-  computed: {
-    model: {
-      get () { return this.tempValue },
-      set (val) {
-        this.tempValue = val
-        this.$emit('input', val)
-      }
-    },
-    autoWidthOptions () {
-      return {
-        maxWidth: '100%',
-        minWidth: `${parseInt(this.actualMinWidth) + parseInt(this.comfortZone) + 2}px`, // "+ 2" is a magical number added by vue-input-autowidth
-        comfortZone: parseInt(this.comfortZone)
-      }
-    }
-  },
+// Constant
+const DEFAULT_MIN_WIDTH = 96
 
-  watch: {
-    value (val) {
-      this.tempValue = val
-    },
-    async placeholder () {
-      this.actualMinWidth = this.minWidth || await this.placeholderWidth()
-    }
-  },
+// Generate unique ID
+const inputId = useId('input-flex')
+const testId = useId({ prefix: 'test', namespace: inputId })
 
-  async mounted () {
-    this.tempValue = this.value
-    this.actualMinWidth = this.minWidth || await this.placeholderWidth()
-  },
+// Ref
+const tempValue = ref('')
+const actualMinWidth = ref(0)
 
-  methods: {
-    focus () {
-      this.$el.focus()
-    },
+// Computed
+const autoWidthOptions = computed(() => ({
+  maxWidth: '100%',
+  minWidth: `${parseInt(actualMinWidth.value) + parseInt(props.comfortZone) + 2}px`, // "+ 2" is a magical number added by vue-input-autowidth
+  comfortZone: parseInt(props.comfortZone)
+}))
 
-    blur () {
-      this.$el.blur()
-    },
-
-    onEsc (e) {
-      e.stopImmediatePropagation()
-      this.$emit('esc')
-    },
-
-    async placeholderWidth () {
-      if (!this.$el) return
-      const test = document.getElementById(this.testId) || document.createElement('span')
-      const style = window.getComputedStyle(this.$el)
-      ;(['fontFamily',
-        'fontKerning',
-        'fontOpticalSizing',
-        'fontSize',
-        'fontStretch',
-        'fontStyle',
-        'fontVariant',
-        'fontVariantLigatures',
-        'fontVariantCaps',
-        'fontVariantNumeric',
-        'fontVariantEast-asian',
-        'fontWeight',
-        'letterSpacing',
-        'padding',
-        'textIndent',
-        'textTransform',
-        'whiteSpace',
-        'wordBreak',
-        'wordSpacing']).forEach(prop => {
-        test.style[prop] = style[prop]
-      })
-      test.style.position = 'absolute'
-      test.style.left = '-9000px'
-      test.innerText = this.placeholder
-      test.id = this.testId
-      document.body.appendChild(test)
-      await this.$nextTick()
-      const width = test.offsetWidth
-      return parseInt(width) || this.defaultMinWidth
-    }
-  },
-  beforeDestroy () {
-    const test = document.getElementById(this.testId)
-    if (test) test.parentNode.removeChild(test)
-  }
+// Method
+const focus = () => {
+  document.activeElement?.blur ()
 }
+
+const blur = () => {
+  document.activeElement?.blur ()
+}
+
+const onEsc = (e) => {
+  e.stopImmediatePropagation ()
+  emit('esc')
+}
+
+const placeholderWidth = async () => {
+  if (!document.activeElement) return
+
+  const test = document.getElementById(testId) || document.createElement('span')
+  const style = window.getComputedStyle(document.activeElement)
+
+  ;([
+    'fontFamily',
+    'fontKerning',
+    'fontOpticalSizing',
+    'fontSize',
+    'fontStretch',
+    'fontStyle',
+    'fontVariant',
+    'fontVariantLigatures',
+    'fontVariantCaps',
+    'fontVariantNumeric',
+    'fontVariantEast-asian',
+    'fontWeight',
+    'letterSpacing',
+    'padding',
+    'textIndent',
+    'textTransform',
+    'whiteSpace',
+    'wordBreak',
+    'wordSpacing'
+  ]).forEach(prop => {
+    test.style[prop] = style[prop]
+  })
+
+  test.style.position = 'absolute'
+  test.style.left = '-9000px'
+  test.innerText = props.placeholder
+  test.id = testId
+  document.body.appendChild(test)
+
+  await nextTick ()
+  const width = test.offsetWidth
+  return parseInt(width) || DEFAULT_MIN_WIDTH
+}
+
+// Watcher
+watch(() => props.modelValue, (val) => {
+  tempValue.value = val
+  emit('update:modelValue', val)
+})
+
+watch(() => props.placeholder, async () => {
+  actualMinWidth.value = props.minWidth || await placeholderWidth ()
+})
+
+// Lifecycle
+onMounted(async () => {
+  tempValue.value = props.modelValue
+  actualMinWidth.value = props.minWidth || await placeholderWidth ()
+})
+
+onBeforeUnmount(() => {
+  const test = document.getElementById(testId)
+  if (test) test.parentNode.removeChild(test)
+})
+
+// Expose method
+defineExpose({
+  focus,
+  blur
+})
 </script>

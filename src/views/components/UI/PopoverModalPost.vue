@@ -1,103 +1,108 @@
 <template>
-  <transition name="fade">
-    <div v-if="open"
-         class="popover-modal modal-post">
-      <div class="modal-shadow" @click="close"/>
-      <div class="content-box bg-white rounded-sm">
-        <header class="flex h-base items-center pl-base">
-          <button v-if="allowCoBack" class="w-base h-base ml-auto" @click="goBack">
-            <i class="material-icons">arrow_back</i>
-          </button>
-          <slot name="header" />
-          <button class="w-base h-base ml-auto" @click="close">
-            <i class="material-icons">close</i>
-          </button>
-        </header>
-        <slot/>
+  <Teleport to="body">
+    <Transition name="fade">
+      <div v-if="isOpen"
+           class="popover-modal modal-post">
+        <div class="modal-shadow" @click="close"/>
+        <div class="content-box bg-white rounded-sm">
+          <header class="flex h-base items-center pl-base">
+            <button v-if="allowCoBack" class="w-base h-base ml-auto" @click="goBack">
+              <i class="material-icons">arrow_back</i>
+            </button>
+            <slot name="header" />
+            <button class="w-base h-base ml-auto" @click="close">
+              <i class="material-icons">close</i>
+            </button>
+          </header>
+          <slot/>
+        </div>
       </div>
-    </div>
-  </transition>
+    </Transition>
+  </Teleport>
 </template>
 
-<script>
+<script setup>
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
 import { getRootPath } from '../../../lib/bookmarks'
 import { bodyScrollGuard } from '../../../lib/control-body-scroll'
-import clickOutside from 'vue-click-outside'
 
-export default {
-  name: 'PopoverModalPost',
-  directives: { clickOutside },
-  props: {
-    bookmark: null
-  },
-  data: () => ({
-    allowClickOutside: true,
-    allowCoBack: true,
-    open: true
-  }),
+// Router
+const router = useRouter ()
 
-  created () {
-    window.addEventListener('keydown', e => {
-      if (e.key === 'Escape' || e.keyCode === 27) {
-        this.$emit('esc', e)
-        this.close()
-      }
-    })
-  },
+// Prop
+defineProp({
+  bookmark: {
+    type: [Object, null],
+    default: null
+  }
+})
 
-  mounted () {
-    this.setBodyScroll(this.open)
-    this.setAllowClickOutside()
-  },
+// Emit
+const emit = defineEmit(['close', 'esc'])
 
-  watch: {
-    open (value) {
-      this.setBodyScroll(value)
-      this.setAllowClickOutside()
-    }
-  },
+// State
+const isOpen = ref(true)
+const allowClickOutside = ref(true)
+const allowCoBack = ref(true)
 
-  methods: {
-    goBack () {
-      history.back()
-    },
+// Method
+const goBack = () => {
+  history.back ()
+}
 
-    close () {
-      if (this.open && this.allowClickOutside) {
-        this.open = false
-        this.$emit('close')
-        setTimeout(() => {
-          const rootPath = getRootPath() || '/'
-          this.$router.push(rootPath)
-        }, 200)
-      }
-    },
-
-    setBodyScroll (freeze) {
-      if (freeze) {
-        bodyScrollGuard.freezeBodyScroll()
-      } else {
-        bodyScrollGuard.releaseBodyScroll()
-      }
-    },
-
-    releaseBgScroll () {
-      this.setBodyScroll(false)
-    },
-
-    setAllowClickOutside () {
-      if (this.open) {
-        setTimeout(() => { this.allowClickOutside = true }, 100)
-      } else {
-        this.allowClickOutside = false
-      }
-    }
-  },
-
-  beforeDestroy () {
-    bodyScrollGuard.releaseBodyScroll()
+const close = () => {
+  if (isOpen.value && allowClickOutside.value) {
+    isOpen.value = false
+    emit('close')
+    setTimeout(() => {
+      const rootPath = getRootPath () || '/'
+      router.push(rootPath)
+    }, 200)
   }
 }
+
+const setBodyScroll = (freeze) => {
+  if (freeze) {
+    bodyScrollGuard.freezeBodyScroll ()
+  } else {
+    bodyScrollGuard.releaseBodyScroll ()
+  }
+}
+
+const setAllowClickOutside = () => {
+  if (isOpen.value) {
+    setTimeout(() => { allowClickOutside.value = true }, 100)
+  } else {
+    allowClickOutside.value = false
+  }
+}
+
+// Event handler
+const handleEscKey = (e) => {
+  if (e.key === 'Escape' || e.keyCode === 27) {
+    emit('esc', e)
+    close ()
+  }
+}
+
+// Lifecycle hook
+onMounted(() => {
+  window.addEventListener('keydown', handleEscKey)
+  setBodyScroll(isOpen.value)
+  setAllowClickOutside ()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleEscKey)
+  bodyScrollGuard.releaseBodyScroll ()
+})
+
+// Watcher
+watch(() => isOpen.value, (value) => {
+  setBodyScroll(value)
+  setAllowClickOutside ()
+})
 </script>
 
 <!--suppress CssInvalidAtRule -->
@@ -127,5 +132,13 @@ export default {
     .modal-shadow {
       background: rgba(215, 215, 215, 0.8);
     }
+  }
+
+  .fade-enter-active, .fade-leave-active {
+    transition: opacity 0.2s;
+  }
+
+  .fade-enter-from, .fade-leave-to {
+    opacity: 0;
   }
 </style>

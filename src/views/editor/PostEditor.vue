@@ -58,50 +58,50 @@ export default {
   },
 
   watch: {
-    value (value) {
-      this.setPostData()
+    value(value) {
+      this.setPostData ()
     }
   },
 
   created () {
-    this.setPostData()
+    this.setPostData ()
   },
 
   methods: {
-    preventEnter (e) {
+    preventEnter(e) {
       return false
     },
 
-    onEsc (e) {
-      e.stopImmediatePropagation()
+    onEsc(e) {
+      e.stopImmediatePropagation ()
       let escaped = false
-      if (this.$refs['date']) {
-        escaped = this.$refs['date'].onEsc(e)
+      if (this.$refs.date) {
+        escaped = this.$refs.date.onEsc(e)
         if (escaped) return
       }
       if (this.$refs['text-editor']) {
         escaped = this.$refs['text-editor'].onEsc(e)
         if (escaped) return
       }
-      this.close()
+      this.close ()
     },
 
     addAttachment () {
       if (this.$refs['attachments-editor']) {
-        this.$refs['attachments-editor'].openFileDialog()
+        this.$refs['attachments-editor'].openFileDialog ()
       }
     },
 
     embedUrl () {
       if (this.$refs['attachments-editor']) {
-        this.$refs['attachments-editor'].openEmbedDialog()
+        this.$refs['attachments-editor'].openEmbedDialog ()
       }
     },
 
     close () {
       const allSave = true
       if (allSave) {
-        if (this.unsubscribe) this.unsubscribe()
+        if (this.unsubscribe) this.unsubscribe ()
         this.postData = { ...this.emptyPostData }
         this.$emit('close')
       }

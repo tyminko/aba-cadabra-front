@@ -52,8 +52,8 @@ export default {
       let src = null
       const firstVisualAttachment = Object.values(post.attachments).find(attachment => {
         return (attachment.type || '').startsWith('image/') ||
-              attachment.srcSet.hasOwnProperty('full') ||
-              attachment.srcSet.hasOwnProperty('preview')
+              Object.prototype.hasOwnProperty.call(attachment.srcSet, 'full') ||
+              Object.prototype.hasOwnProperty.call(attachment.srcSet, 'preview')
       })
       if (firstVisualAttachment) {
         src = firstVisualAttachment.srcSet
@@ -88,7 +88,7 @@ export default {
     }
   },
 
-  beforeDestroy () {
+  beforeUnmount () {
     if (typeof this.profileUnsubscribe === 'function') {
       this.profileUnsubscribe()
     }

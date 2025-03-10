@@ -78,7 +78,7 @@ export default {
       db.collection('posts')
         .where('type', '==', 'event')
         .where('status', '==', 'public')
-        .where('participants', 'array-contains', { displayName, id, 'star': true })
+        .where('participants', 'array-contains', { displayName, id, star: true })
         .orderBy('date', 'desc')
         .get()
         .then(snapshot => {

@@ -6,18 +6,18 @@
     </button>
     <div class="px-sm mb-sm">Reset Password</div>
     <form
-      ref="form"
+      ref="formRef"
       class="login-box"
-      @submit.prevent="sendRequest">
+      @submit.prevent="handleSendRequest">
         <px-input
-          ref="email"
+          ref="emailRef"
           v-model="userEmail"
           label="Email"
           type="email"
           hint="Request an email with the password resetting details."
           :error="error"
           :validate-on-blur="true"
-          :rules="[rules.required, rules.email, rules.serverError]"
+          :rules="[validationRules.required, validationRules.email, validationRules.serverError]"
           @input="clearMessage" />
         <div v-if="message" class="desc px-sm" :class="{open: message}">
           {{message}}
@@ -26,7 +26,7 @@
     <div class="flex justify-end">
       <button
         :disabled="!enableRequest"
-        @click="sendRequest"
+        @click="handleSendRequest"
         class="submit w-auto p-sm">
         Send Email
       </button>
@@ -34,87 +34,74 @@
   </div>
 </template>
 
-<script>
-import { mapState } from 'vuex'
+<script setup>
+import { ref, computed, onMounted } from 'vue'
 import { auth } from '../../../lib/firebase'
 import PxInput from '../UI/inputs/PxInput'
 
-export default {
-  name: 'ForgotPasswordForm',
-  components: { PxInput },
-  data () {
-    return {
-      userEmail: '',
-      savedEmail: '',
-      emailIsSent: false,
-      messageBarOpen: false,
-      error: null,
-      rules: {
-        required: value => (!!value || this.emailIsSent) || 'Required',
-        email: value => /.+@.+\..+/.test(value) || 'E-mail must be valid',
-        serverError: value => !this.error || (this.errorMessages[this.error.code] || this.errorMessages.default)
-      },
-      errorMessages: {
-        'auth/user-not-found': 'There is no user with this email address.',
-        'auth/invalid-email': "It doesn't look like an email address.",
-        'default': 'Sorry, there was a problem with sending a message to this email address.'
-      }
-    }
-  },
-  computed: {
-    ...mapState(['user']),
-    message () {
-      if (this.emailIsSent) {
-        return `An Email with the password resetting details has been sent to ${this.savedEmail}.`
-      }
-      // } else if (this.error) {
-      //   return this.errorMessages[this.error.code] || this.errorMessages.default
-      // }
-      return ''
-    },
-    formValid () {
-      return (this.userEmail && (this.$refs.email || {}).isValid)
-      // const pxInputs = [this.$refs.email]
-      // // !!! DEBUG !!!
-      // console.log(`%c formValid() %c pxInputs.find(input => !input.isValid): `, 'background:#ffbb00;color:#000', 'color:#00aaff', pxInputs.find(input => !input.isValid))
-      // return pxInputs.find(input => !input.isValid).length === 0
-    },
-    enableRequest () {
-      return this.formValid
-    }
-  },
+// Emit
+defineEmit(['close'])
 
-  mounted () {
-    this.$refs.email.focus()
-  },
+// Ref
+const formRef = ref(null)
+const emailRef = ref(null)
+const userEmail = ref('')
+const savedEmail = ref('')
+const emailIsSent = ref(false)
+const error = ref(null)
 
-  methods: {
-    sendRequest () {
-      auth.sendPasswordResetEmail(this.userEmail)
-        .then(() => {
-          this.emailIsSent = true
-          this.savedEmail = this.userEmail
-          this.userEmail = ''
-          this.error = null
-        })
-        .catch(err => {
-          this.error = this.errorMessages[err.code] || this.errorMessages.default
-        })
-    },
+// Error Message
+const errorMessages = {
+  'auth/user-not-found': 'There is no user with this email address.',
+  'auth/invalid-email': "It doesn't look like an email address.",
+  default: 'Sorry, there was a problem with sending a message to this email address.'
+}
 
-    redirectTo (routeName) {
-      this.$router.replace({ name: routeName })
-    },
+// Validation Rule
+const validationRules = {
+  required: value => (!!value || emailIsSent.value) || 'Required',
+  email: value => /.+@.+\..+/.test(value) || 'E-mail must be valid',
+  serverError: value => !error.value || (errorMessages[error.value.code] || errorMessages.default)
+}
 
-    clearMessage () {
-      this.error = null
-      this.emailIsSent = false
-      this.savedEmail = ''
-      // if (this.message) this.message = ''
-    }
+// Computed
+const message = computed(() => {
+  if (emailIsSent.value) {
+    return `An Email with the password resetting details has been sent to ${savedEmail.value}.`
+  }
+  return ''
+})
+
+const formValid = computed(() =>
+  userEmail.value && (emailRef.value || {}).isValid
+)
+
+const enableRequest = computed(() => formValid.value)
+
+// Method
+const handleSendRequest = async () => {
+  try {
+    await auth.sendPasswordResetEmail(userEmail.value)
+    emailIsSent.value = true
+    savedEmail.value = userEmail.value
+    userEmail.value = ''
+    error.value = null
+  } catch (err) {
+    error.value = errorMessages[err.code] || errorMessages.default
   }
 }
+
+const clearMessage = () => {
+  error.value = null
+  emailIsSent.value = false
+  savedEmail.value = ''
+}
+
+// Lifecycle
+onMounted(() => {
+  emailRef.value?.focu ()
+})
 </script>
 
-<style lang='scss'>
+<style lang="scss">
 </style>

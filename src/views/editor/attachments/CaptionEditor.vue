@@ -21,7 +21,7 @@
       :class="{'w-3/4base':caption||startEditing}"
       @click.prevent="toggleCaptionEditor">
       <i v-if="caption&&!startEditing" class="material-icons text-sm">edit</i>
-      <i v-else-if="startEditing" class="material-icons text-sm">done</i>
+      <i v-else-if ="startEditing" class="material-icons text-sm">done</i>
       <span v-else class="text-xs">Add Caption</span>
     </button>
   </div>
@@ -45,7 +45,7 @@ export default {
   computed: {
     caption: {
       get () { return this.text || this.value },
-      set (newValue) {
+      set(newValue) {
         this.text = newValue
         this.$emit('input', newValue)
       }
@@ -55,9 +55,9 @@ export default {
   methods: {
     toggleCaptionEditor () {
       if (this.startEditing) {
-        this.finishCaptionEditing()
+        this.finishCaptionEditing ()
       } else {
-        this.openEditor()
+        this.openEditor ()
       }
     },
 
@@ -66,28 +66,28 @@ export default {
       if (typeof this.value === 'undefined') {
         this.$emit('add-caption')
       }
-      await this.$nextTick()
-      this.$refs.caption.expand()
-      this.$refs['caption-text'].focus()
+      await this.$nextTick ()
+      this.$refs.caption.expand ()
+      this.$refs['caption-text'].focus ()
     },
 
     async closeEditor () {
       this.startEditing = false
-      await this.$nextTick()
+      await this.$nextTick ()
       if (this.$refs.caption) {
-        this.$refs.caption.collapse()
+        this.$refs.caption.collapse ()
       }
     },
 
     finishCaptionEditing () {
-      this.caption = this.$refs['caption-text'].textContent.trim()
-      this.closeEditor()
+      this.caption = this.$refs['caption-text'].textContent.trim ()
+      this.closeEditor ()
     },
 
-    onEsc (e) {
+    onEsc(e) {
       e.target.textContent = this.caption
-      e.stopImmediatePropagation()
-      this.closeEditor()
+      e.stopImmediatePropagation ()
+      this.closeEditor ()
     }
   }
 }

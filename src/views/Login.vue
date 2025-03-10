@@ -1,46 +1,67 @@
 <template>
-  <div class="login">
-    <router-view />
+  <div
+    class="login"
+    :aria-busy="isNavigating">
+    <router-view v-slot="{ Component }">
+      <transition
+        name="fade"
+        mode="out-in"
+        @before-leave="isNavigating = true"
+        @after-enter="isNavigating = false">
+        <component :is="Component" />
+      </transition>
+    </router-view>
   </div>
 </template>
 
-<script>
-import { mapState } from 'vuex'
-import localData from '../lib/local-storage'
+<script setup lang="ts">
+import { ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { useStore } from 'vuex'
+import { localData } from '../lib/local-storage'
 
-export default {
-  name: 'Login',
-  props: {
-  },
+defineOptions({
+  name: 'LoginPage'
+})
 
-  data: () => ({
-  }),
+// Router and Store
+const router = useRouter()
+const store = useStore()
 
-  computed: {
-    ...mapState(['user'])
-  },
+// State
+const isNavigating = ref(false)
 
-  watch: {
-    user (value) {
-      if (value) {
-        const lastRoute = localData.get('last-visited-route')
-        if ((lastRoute || {}).name !== this.$route.name) {
-          this.$router.push(lastRoute || { name: 'home' })
-        }
-      }
+// Watch for user authentication state
+watch(() => store.state.user, (user) => {
+  if (user) {
+    const lastRoute = localData.get('last-visited-route')
+    const currentRouteName = router.currentRoute.value.name
+
+    if (lastRoute?.name !== currentRouteName) {
+      router.push(lastRoute || { name: 'home' })
     }
-  },
-
-  methods: {
   }
-}
+})
 </script>
 
-<style lang='scss'>
-  .login{
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+<style lang="scss" scoped>
+.login {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background-color: var(--bg-color, #f3f4f6);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>

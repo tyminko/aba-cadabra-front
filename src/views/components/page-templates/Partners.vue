@@ -31,7 +31,7 @@ import { mapActions, mapState } from 'vuex'
 import FeedSubscription from '../../../mixins/feed-subscription'
 
 export default {
-  name: 'Partners',
+  name: 'PartnersPage',
   mixins: [FeedSubscription],
   props: {},
 
@@ -46,8 +46,8 @@ export default {
     adminOrEditor () {
       return this.user && (this.user.role === 'admin' || this.user.role === 'editor')
     },
-    posts () {
-      return Object.values(this.feed).sort((a, b) => {
+    post () {
+      return Object.value(this.feed).sort((a, b) => {
         if (a.title < b.title) return -1
         if (a.title > b.title) return 1
         return 0
@@ -56,8 +56,8 @@ export default {
   },
 
   methods: {
-    ...mapActions(['showEditor']),
-    openEditor (post) {
+    ...mapAction(['showEditor']),
+    openEditor(post) {
       this.showEditor({
         type: 'partner',
         value: post
@@ -68,16 +68,16 @@ export default {
       this.postToEdit = null
     },
 
-    hasLogo (post) {
-      return post.logo || Object.values((post.attachments || {})).length
+    hasLogo(post) {
+      return post.logo || Object.value((post.attachments || {})).length
     },
 
-    logoUrl (post) {
+    logoUrl(post) {
       let src = null
       if (post.logo) {
         src = post.logo.srcSet
       } else {
-        src = (Object.values(post.attachments)[0] || {}).srcSet
+        src = (Object.value(post.attachments)[0] || {}).srcSet
       }
       if (!src) return ''
       const { full, preview, original } = src

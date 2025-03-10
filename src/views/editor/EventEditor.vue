@@ -116,19 +116,19 @@ export default {
     },
     participants: {
       get () { return Object.values((this.postData.participants) || {}) || [] },
-      set (newValue) { this.$set(this.postData, 'participants', newValue) }
+      set(newValue) { this.$set(this.postData, 'participants', newValue) }
     },
     location: {
       get () { return this.postData.location || {} },
-      set (newValue) { this.$set(this.postData, 'location', newValue) }
+      set(newValue) { this.$set(this.postData, 'location', newValue) }
     },
     supportedBy: {
       get () { return this.postData.supportedBy },
-      set (newValue) { this.$set(this.postData, 'supportedBy', newValue) }
+      set(newValue) { this.$set(this.postData, 'supportedBy', newValue) }
     },
     countNumber: {
       get () { return this.postData.countNumber },
-      set (newValue) {
+      set(newValue) {
         this.$set(this.postData, 'countNumber', newValue)
         this.$emit('set-header', this.headerTitle)
       }
@@ -156,7 +156,7 @@ export default {
     },
     partOfProgrammeId: {
       get () { return (this.postData.partOfProgramme || {}).programmeId || '--' },
-      async set (newValue) {
+      async set(newValue) {
         if (newValue !== '--') {
           const { singlePostLabel, title, id } = this.programmes.find(p => p.id === newValue)
           this.$set(this.postData, 'partOfProgramme', { singlePostLabel, title, programmeId: id })
@@ -165,7 +165,7 @@ export default {
           this.$set(this.postData, 'partOfProgramme', null)
           this.postData.countNumber = null
         }
-        this.setAutoStatus()
+        this.setAutoStatus ()
         this.$emit('set-header', this.headerTitle)
       }
     },
@@ -190,7 +190,7 @@ export default {
   },
 
   methods: {
-    setPostStatus (status) {
+    setPostStatus(status) {
       this.postStatus = status
       this.statusIsAutoSet = false
     },
@@ -217,21 +217,21 @@ export default {
           this.statusIsAutoSet = false
       }
     },
-    async institutionsQuery (str) {
+    async institutionsQuery(str) {
       if (!this.institutions) {
         this.institutions = await db.collection('institutions')
-          .get()
+          .get ()
           .then(snapshot => {
             return snapshot.docs.map(doc => {
-              const { title } = doc.data()
+              const { title } = doc.data ()
               return { id: doc.id, title }
             })
           })
       }
-      return this.institutions.filter(i => i.title.toLowerCase().includes(str.toLowerCase()))
+      return this.institutions.filter(i => i.title.toLowerCase ().includes(str.toLowerCase ()))
     },
 
-    async getActualCountForProgramme (programmeId) {
+    async getActualCountForProgramme(programmeId) {
       if (programmeId === ((this.value || {}).partOfProgramme || {}).programmeId) {
         return this.value.countNumber
       }
@@ -242,9 +242,9 @@ export default {
         .where('partOfProgramme.programmeId', '==', programmeId)
         .orderBy('countNumber', 'desc')
         .limit(1)
-        .get()
+        .get ()
         .then(snapshot => {
-          return snapshot.docs.map(doc => (doc.data() || {}).countNumber)[0]
+          return snapshot.docs.map(doc => (doc.data () || {}).countNumber)[0]
         })
       this.$set(this.nextCounts, programmeId, (parseInt(lastCount) || 0) + 1)
       return this.nextCounts[programmeId]

@@ -7,115 +7,116 @@
       </div>
     </template>
     <template v-else>
-      <post-cell
-        v-for="post in posts"
-        :key="post.id"
-        :post="post">
-        <template v-slot:quick-edit-button="{cellSize}">
-          <template v-if="withoutQuickEdit">
-            <a class="button edit-button compact w-2/3base h-2/3base text-gray-600 hover:text-aba-blue ml-auto" @click.prevent="openEditor(post)">
-              <i class="material-icons text-base cursor-pointer">edit</i>
-            </a>
-          </template>
-          <template v-else>
-            <popper
-              v-if="adminOrEditor || post.author.uid === (user || {}).uid"
-              placement="right"
-              class="ml-auto">
-              <template v-slot:reference="{show}">
-              <span
-                class="button edit-button compact w-2/3base h-2/3base text-gray-600 hover:text-aba-blue"
-                :class="{active:show}">
-                <i class="material-icons text-base cursor-pointer">edit</i>
-              </span>
-              </template>
-              <template v-slot:default="{hide}">
-                <post-editor-palette
-                  :current="cellSize"
-                  @close="hide"
-                  @set-size="setCellSize(post.id, $event)"
-                  @open-editor="openEditor(post)"
-                  @hide-post="hidePost(post)"
-                  @remove-post="removePost(post)"/>
-              </template>
-            </popper>
-          </template>
-        </template>
-      </post-cell>
+      <div v-for="post in posts" :key="post.id" class="post-item">
+        <post-cell
+          :post="post"
+          :without-quick-edit="withoutQuickEdit"
+          @click="openPostModal(post)"
+        />
+        <popper
+          v-if="!withoutQuickEdit"
+          ref="popper"
+          trigger="none"
+          :placement="'right'"
+          :position="popperPos"
+          :force-show="!!editingPost && editingPost.id === post.id"
+          @created="onPopperCreated">
+          <post-editor-palette
+            :post="editingPost"
+            :processing="processing"
+            @close="closeEditor"
+            @save="savePost"
+            @remove="removePost"/>
+        </popper>
+      </div>
     </template>
   </div>
 </template>
 
-<script>
-import { mapActions, mapState } from 'vuex'
+<script setup lang="ts">
+import { ref, watch } from 'vue'
+import { useStore } from 'vuex'
+import { collection, doc, updateDoc, deleteDoc } from 'firebase/firestore'
+import PostCell from './PostCell.vue'
+import Popper from './UI/Popper.js.vue'
+import PostEditorPalette from '../editor/PostEditorPalette.vue'
 import { db } from '../../lib/firebase'
-import PostCell from './PostCell'
-import Popper from './UI/Popper.js'
-import PostEditorPalette from '../editor/PostEditorPalette'
 
-export default {
-  name: 'PostFeedGrid',
-  components: { PostEditorPalette, Popper, PostCell },
-  props: {
-    posts: { type: Array, default: () => [] },
-    withoutQuickEdit: { type: Boolean, default: false },
-    processing: Boolean
-  },
+defineOptions({
+  name: 'PostFeedGrid'
+})
 
-  data: () => ({}),
+export interface AbaPost {
+  id: string
+  title: string
+  excerpt?: string
+  image?: string
+  imageAlt?: string
+  imageWidth?: number
+  imageHeight?: number
+  category?: string
+  author?: string
+  createdAt: Date | string
+  featured?: boolean
+  type: string
+  status?: string
+  [key: string]: any
+}
 
-  computed: {
-    ...mapState(['user']),
-    adminOrEditor () {
-      return !!this.user && (this.user.role === 'admin' || this.user.role === 'editor')
-    }
-  },
+interface Props {
+  posts: AbaPost[]
+  withoutQuickEdit?: boolean
+  processing?: boolean
+}
 
-  watch: {
-    processing () {
-      if (!this.processing) this.setContentLoaded()
-    }
-  },
+const props = withDefault(defineProps<Props>(), {
+  withoutQuickEdit: false,
+  processing: false
+})
 
-  methods: {
-    ...mapActions(['showEditor', 'openPost', 'setContentLoaded']),
-    openEditor (post) {
-      this.showEditor({
-        type: post.type,
-        value: post
-      })
-    },
+const store = useStore ()
+const popper = ref<InstanceType<typeof Popper> | null>(null)
+const editingPost = ref<AbaPost | null>(null)
+const popperPos = ref({ x: 0, y: 0 })
 
-    openPostModal (post) {
-      let value = post
-      if (post.type === 'event') {
+const openPostModal = (post: AbaPost) => {
+  window.history.replaceState({}, '', `/${post.type}/${post.id}`)
+  store.dispatch('openPost', { type: post.type, value: post.id })
+}
 
-      }
-      // !!! DEBUG !!!
-      console.log(`%c openPostModal() %c this.$route.path: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.$route.path)
-      window.history.replaceState({}, '', `/${post.type}/${post.id}`)
-      this.openPost({ type: post.type, value })
-    },
+const onPopperCreated = () => {
+  // Handle popper creation
+}
 
-    setCellSize (id, size) {
-      db.collection('posts').doc(id).update({
-        cardSize: size
-      })
-    },
+const closeEditor = () => {
+  editingPost.value = null
+}
 
-    removePost (post) {
-      db.collection('posts').doc(post.id).update({ status: 'trash' })
-    },
-
-    hidePost (post) {
-      db.collection('posts').doc(post.id).update({ status: 'draft' })
-    },
-
-    closeEditor () {
-      this.postToEdit = null
-    }
+const savePost = async (post: AbaPost) => {
+  try {
+    const collectionRef = collection(db, post.type)
+    const docRef = doc(collectionRef, post.id)
+    await updateDoc(docRef, post)
+    closeEditor ()
+  } catch (error) {
+    console.error('Error saving post:', error)
   }
 }
+
+const removePost = async (post: AbaPost) => {
+  try {
+    const collectionRef = collection(db, post.type)
+    const docRef = doc(collectionRef, post.id)
+    await deleteDoc(docRef)
+    closeEditor ()
+  } catch (error) {
+    console.error('Error removing post:', error)
+  }
+}
+
+watch(() => props.processing, (val) => {
+  if (!val) store.dispatch('setContentLoaded')
+})
 </script>
 
 <!--suppress CssInvalidAtRule -->
@@ -134,5 +135,14 @@ export default {
     grid-gap: $gap-w;
     @apply p-lg;
     max-width: 100%;
+
+    .post-item {
+      cursor: pointer;
+      transition: transform 0.2s;
+
+      &:hover {
+        transform: scale(1.02);
+      }
+    }
   }
 </style>

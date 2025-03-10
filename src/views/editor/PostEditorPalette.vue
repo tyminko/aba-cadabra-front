@@ -48,7 +48,7 @@ export default {
       this.$emit('close')
       this.$emit('open-editor')
     },
-    setSize (size) {
+    setSize(size) {
       this.$emit('close')
       this.$emit('set-size', this.current === size ? '' : size)
     },

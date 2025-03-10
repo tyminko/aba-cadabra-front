@@ -1,233 +1,263 @@
 <template>
-  <content-with-sidebar class="event">
-    <template v-slot:main>
+  <ContentWithSidebar class="event">
+    <template #main>
       <div class="text-block relative">
         <button
           v-if="allowEdit"
-          class="compact absolute right-0"
+          class="compact absolute right-0 hover:text-aba-blue transition-colors"
           @click="openEditor">
           <i class="material-icons text-base">edit</i>
         </button>
-        <h1 class="text-5xl mt-sm">{{title}}</h1>
-        <h2 class="mt-sm">{{secondTittle}}</h2>
+        <h1 class="text-5xl mt-sm">{{ title }}</h1>
+        <h2 v-if="secondTitle" class="mt-sm">{{ secondTitle }}</h2>
         <div class="flex mt-base">
-          <h1 class="font-light">{{formattedDate}}</h1>
+          <h1 class="font-light">{{ formattedDate }}</h1>
         </div>
         <div v-if="location" class="location mt-sm">
-          {{location}}
+          {{ location }}
         </div>
         <div class="participants my-base">
-          <credits-string v-if="hosts.length" prefix="Hosted by" :persons="hosts" />
-          <credits-string v-if="participants.length" prefix="With" :persons="participants" />
+          <CreditsString v-if="hosts.length" prefix="Hosted by" :persons="hosts" />
+          <CreditsString v-if="participants.length" prefix="With" :persons="participants" />
         </div>
         <div v-if="partners.length" class="partners my-base">
-          <credits-string prefix="Supported by" :persons="partners" no-link/>
+          <CreditsString prefix="Supported by" :persons="partners" :no-link="true"/>
         </div>
         <button
           v-if="allowReservation"
-          class="h-auto px-base py-sm text-aba-blue border-2 border-aba-blue"
-          @click="openReservation=!openReservation">
+          class="h-auto px-base py-sm text-aba-blue border-2 border-aba-blue hover:bg-aba-blue hover:text-white transition-colors"
+          @click="toggleReservation">
           Make Reservation
         </button>
       </div>
-      <attachments-view :attachments="(post || {}).attachments || {}"/>
-      <div class="text-block mt-base" v-html="content" />
-      <reservation-form-popover
+      <AttachmentsView :attachments="attachments"/>
+      <div class="text-block mt-base" v-html="sanitizedContent" />
+      <ReservationFormPopover
         v-if="allowReservation"
         :open="openReservation"
         :event-data="eventData"
-        @close="openReservation=false"/>
-      <reservation-confirm
+        @close="closeReservation"/>
+      <ReservationConfirm
         v-if="shouldConfirmReservation"
         :event-id="eventId"
-        :data="{title,formattedDate,location}"
+        :data="confirmationData"
         :confirmed="closeReservationConfirmedMessage"
-        @close="()=>{}"/>
+        @close="closeConfirmation"/>
     </template>
-    <template v-slot:sidebar>
-      <event-sidebar :post="post" :show-map="true"/>
+    <template #sidebar>
+      <EventSidebar :post="post" :show-map="true"/>
     </template>
-  </content-with-sidebar>
+  </ContentWithSidebar>
 </template>
 
-<script>
-import { mapState, mapActions } from 'vuex'
+<script setup>
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { useStore } from 'vuex'
+import { useRoute } from 'vue-router'
 import { db } from '../lib/firebase'
 import * as date from '../lib/date'
-import ReservationMixin from '../mixins/reservation'
+import { useReservation } from '../composables/useReservation'
 import DOMPurify from 'dompurify'
-import ContentWithSidebar from './components/UI/layouts/ContentWithSidebar'
-import CreditsString from './components/CreditsString'
-import EventSidebar from './EventSidebar'
-import ReservationFormPopover from './components/forms/ReservationFormPopover'
-import ReservationConfirm from './components/forms/ReservationConfirm'
-import AttachmentsView from './components/AttachmentsView'
+import ContentWithSidebar from './components/UI/layouts/ContentWithSidebar.vue'
+import CreditsString from './components/CreditsString.vue'
+import EventSidebar from './EventSidebar.vue'
+import ReservationFormPopover from './components/forms/ReservationFormPopover.vue'
+import ReservationConfirm from './components/forms/ReservationConfirm.vue'
+import AttachmentsView from './components/AttachmentsView.vue'
 
-export default {
-  name: 'EventView',
-  mixins: [ReservationMixin],
-  components: { AttachmentsView, ReservationConfirm, ReservationFormPopover, EventSidebar, CreditsString, ContentWithSidebar },
-  props: {
-    value: { type: Object, default: null }
-  },
+// Props
+const props = defineProps({
+  value: {
+    type: Object,
+    default: null
+  }
+})
 
-  data: () => ({
-    unsubscribe: null,
-    post: null,
-    openReservation: false,
-    reservation: null,
-    closeReservationConfirmedMessage: false
-  }),
+// Store & Router
+const store = useStore()
+const route = useRoute()
 
-  computed: {
-    ...mapState(['user']),
-    allowEdit () { return this.user && (this.user.role === 'admin' || this.user.role === 'editor') },
+// Composables
+const { allowReservation, shouldConfirmReservation } = useReservation()
 
-    eventData () {
-      return {
-        eventId: this.eventId,
-        eventUrl: window.location.href,
-        eventInfo: {
-          title: this.title,
-          secondTittle: this.secondTittle,
-          dateString: this.formattedDate,
-          locationString: this.location
-        }
+// State
+const post = ref(null)
+const openReservation = ref(false)
+const closeReservationConfirmedMessage = ref(false)
+let unsubscribe = null
+
+// Computed
+const user = computed(() => store.state.user)
+const allowEdit = computed(() =>
+  user.value && (user.value.role === 'admin' || user.value.role === 'editor')
+)
+
+const eventId = computed(() => route.params.id)
+
+const eventData = computed(() => ({
+  eventId: eventId.value,
+  eventUrl: window.location.href,
+  eventInfo: {
+    title: title.value,
+    secondTitle: secondTitle.value,
+    dateString: formattedDate.value,
+    locationString: location.value
+  }
+}))
+
+const title = computed(() => {
+  if (!post.value) return ''
+  if (post.value.partOfProgramme && post.value.countNumber) {
+    return `${post.value.partOfProgramme.singlePostLabel} #${post.value.countNumber}`
+  }
+  return post.value.title
+})
+
+const secondTitle = computed(() => {
+  if (!post.value) return ''
+  if (post.value.partOfProgramme && post.value.countNumber) {
+    return post.value.title
+  }
+  return ''
+})
+
+const formattedDate = computed(() => {
+  if (!post.value) return ''
+  return date.format(post.value.date, 'full', 'de')
+})
+
+const location = computed(() =>
+  ((post.value || {}).location || {}).address || ''
+)
+
+const partners = computed(() =>
+  [...(post.value || {}).supportedBy || []].map(p => ({
+    id: p.id,
+    displayName: p.title || p.name
+  }))
+)
+
+const attachments = computed(() => {
+  const postAttachments = (post.value || {}).attachments || {}
+  const count = Object.keys(postAttachments).length
+  if (!count) return []
+
+  return Object.entries(postAttachments)
+    .sort((a, b) => a.order - b.order)
+    .reduce((res, [id, item]) => {
+      const { preview, full, original } = item.srcSet
+      let src
+      if (item.type === 'embed/vimeo') {
+        src = full
+        res.push({ id, type: item.type, vimeoId: item.name, url: src.url, dimensions: src.dimensions, caption: item.caption })
+      } else if (item.type === 'embed/mixcloud') {
+        src = full
+        res.push({ id, type: item.type, html: item.html, url: src.url, dimensions: src.dimensions, caption: item.caption })
+      } else {
+        src = full || (preview || {}).size > original.size ? preview : original
+        res.push({ id, type: item.type, url: src.url, dimensions: src.dimensions, caption: item.caption })
       }
-    },
+      return res
+    }, [])
+})
 
-    eventId () {
-      return this.$route.params.id
-    },
+const hosts = computed(() => {
+  if (!post.value?.participants) return []
+  return Object.values(post.value.participants).filter(p => p.star)
+})
 
-    title () {
-      if (!this.post) return ''
-      if (this.post.partOfProgramme && this.post.countNumber) {
-        return `${this.post.partOfProgramme.singlePostLabel} #${this.post.countNumber}`
+const participants = computed(() => {
+  if (!post.value?.participants) return []
+  return Object.values(post.value.participants).filter(p => !p.star)
+})
+
+const sanitizedContent = computed(() => {
+  if (post.value?.content) {
+    return DOMPurify.sanitize(post.value.content)
+  }
+  return ''
+})
+
+const confirmationData = computed(() => ({
+  title: title.value,
+  formattedDate: formattedDate.value,
+  location: location.value
+}))
+
+// Methods
+const openEditor = () => {
+  if (post.value) {
+    store.dispatch('showEditor', { value: post.value })
+  }
+}
+
+const toggleReservation = () => {
+  openReservation.value = !openReservation.value
+}
+
+const closeReservation = () => {
+  openReservation.value = false
+}
+
+const closeConfirmation = () => {
+  closeReservationConfirmedMessage.value = true
+}
+
+const subscribeEvent = () => {
+  if (props.value) {
+    post.value = props.value
+    return
+  }
+
+  if (!eventId.value) {
+    unsubscribeEvent()
+    return
+  }
+
+  unsubscribe = db.collection('posts')
+    .doc(eventId.value)
+    .onSnapshot(
+      doc => {
+        post.value = { ...doc.data(), id: doc.id }
+      },
+      error => {
+        console.error('Event subscription error:', error)
+        post.value = null
       }
-      return this.post.title
-    },
+    )
+}
 
-    secondTittle () {
-      if (!this.post) return ''
-      if (this.post.partOfProgramme && this.post.countNumber) {
-        return this.post.title
+const unsubscribeEvent = () => {
+  if (typeof unsubscribe === 'function') {
+    unsubscribe()
+  }
+  post.value = null
+}
+
+// Lifecycle
+onMounted(() => {
+  subscribeEvent()
+})
+
+onBeforeUnmount(() => {
+  unsubscribeEvent()
+})
+
+// Route watcher
+watch(() => route.path, () => {
+  unsubscribeEvent()
+  subscribeEvent()
+})
+</script>
+
+<style lang="scss" scoped>
+.event {
+  .list-string {
+    & > *:not(:last-child) {
+      &:after {
+        content: ", ";
       }
-      return ''
-    },
-
-    formattedEndDate () {
-      if (!this.post) return ''
-      return date.format(this.post.date, 'long', 'de')
-    },
-
-    formattedDate () {
-      if (!this.post) return ''
-      return date.format(this.post.date, 'full', 'de')
-    },
-
-    location () {
-      return ((this.post || {}).location || {}).address || ''
-    },
-
-    partners () {
-      return [...(this.post || {}).supportedBy || []].map(p => ({ id: p.id, displayName: p.title || p.name }))
-    },
-
-    attachments () {
-      const count = Object.keys((this.post || {}).attachments || {}).length
-      if (!count) return []
-      return Object.entries(this.post.attachments)
-        .sort((a, b) => a.order - b.order)
-        .reduce((res, [id, item]) => {
-          const { preview, full, original } = item.srcSet
-          let src
-          if (item.type === 'embed/vimeo') {
-            src = full
-            res.push({ id, type: item.type, vimeoId: item.name, url: src.url, dimensions: src.dimensions, caption: item.caption })
-          } else if (item.type === 'embed/mixcloud') {
-            src = full
-            res.push({ id, type: item.type, html: item.html, url: src.url, dimensions: src.dimensions, caption: item.caption })
-          } else {
-            src = full || (preview || {}).size > original.size ? preview : original
-            res.push({ id, type: item.type, url: src.url, dimensions: src.dimensions, caption: item.caption })
-          }
-          return res
-        }, [])
-    },
-
-    hosts () {
-      if (!this.post || !this.post.participants) return []
-      return Object.values(this.post.participants || []).filter(p => p.star)
-    },
-
-    participants () {
-      if (!this.post || !this.post.participants) return []
-      return Object.values(this.post.participants || []).filter(p => !p.star)
-    },
-
-    content () {
-      if ((this.post || {}).content) {
-        return DOMPurify.sanitize(this.post.content)
-      }
-      return ''
-    }
-  },
-
-  created () {
-    this.subscribeEvent()
-  },
-
-  watch: {
-    $route () {
-      this.unsubscribeEvent()
-      this.subscribeEvent()
-    }
-  },
-
-  beforeDestroy () {
-    this.unsubscribeEvent()
-  },
-
-  methods: {
-    ...mapActions(['showEditor']),
-    openEditor () {
-      if (this.post) this.showEditor({ value: this.post })
-    },
-    subscribeEvent () {
-      if (this.value) {
-        this.post = this.value
-        return
-      }
-      if (!this.eventId) return this.unsubscribeEvent()
-      this.unsubscribe = db.collection('posts')
-        .doc(this.eventId)
-        .onSnapshot(doc => {
-          this.post = { ...doc.data(), id: doc.id }
-        }, err => {
-          console.error('Event subscribeEvent:', err)
-        })
-    },
-
-    async closeConfirmation () {
-    },
-
-    unsubscribeEvent () {
-      if (typeof this.unsubscribe === 'function') this.unsubscribe()
-      this.post = null
     }
   }
 }
-</script>
-
-<style lang="scss">
-  .event {
-    .list-string {
-      & >*:not(:last-child) {
-        &:after {
-          content: ", ";
-        }
-      }
-    }
-  }
 </style>

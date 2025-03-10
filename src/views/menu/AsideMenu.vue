@@ -69,7 +69,7 @@ export default {
       }, 1000)
     },
     editMenu () {
-      this.emitRefresh()
+      this.emitRefresh ()
     }
   },
 
@@ -79,14 +79,14 @@ export default {
      * @param {string} type
      * @param {object=} item
      */
-    async openEditor (type, item) {
+    async openEditor(type, item) {
       if (!this.$refs.editor) return
       item = item ? await this.$refs.editor.prepareItemForEditor(item) : null
       this.showEditor({
         type,
         value: item,
         onSaved: () => {
-          this.emitRefresh()
+          this.emitRefresh ()
         }
       })
     },

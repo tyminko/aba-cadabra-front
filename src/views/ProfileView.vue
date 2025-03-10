@@ -71,7 +71,7 @@ export default {
       this.subscribeProfile()
     }
   },
-  beforeDestroy () {
+  beforeUnmount () {
     Object.values(this.unsubscribe).forEach(unsub => {
       if (typeof unsub === 'function') unsub()
     })
@@ -87,7 +87,7 @@ export default {
             this.profile = { uid: this.profileId, ...snapshot.data() }
           },
           err => {
-            console.error(`%c SUBSCRIBE PROFILE ERROR%c: `, 'background:#ff0000;color:#000', 'color:#00aaff', err)
+            console.error('%c SUBSCRIBE PROFILE ERROR%c: ', 'background:#ff0000;color:#000', 'color:#00aaff', err)
           })
     }
   }

@@ -28,7 +28,7 @@ export default {
     formattedDate () {
       return date.format(this.post.date, 'long', 'de')
     },
-    attachments () {
+    attachment () {
       return (this.post || {}).attachments || {}
     },
 
@@ -44,7 +44,20 @@ export default {
 
   },
 
-  methods: {}
+  methods: {
+    formatDate(date) {
+      return new Date(date).toLocaleDateString ()
+    },
+    getImageUrl(image) {
+      return image?.url || ''
+    },
+    getImageAlt(image) {
+      return image?.alt || ''
+    },
+    getImageCaption(image) {
+      return image?.caption || ''
+    }
+  }
 }
 </script>
 

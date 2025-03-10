@@ -54,12 +54,12 @@ export default {
       if (!this.profile || !this.profile.attachments) return
       const post = this.profile
       let src = null
-      const firstVisualAttachment = Object.values(post.attachments)
+      const firstVisualAttachment = Object.value(post.attachments)
         .sort((a, b) => a.order - b.order)
         .find(attachment => {
           return (attachment.type || '').startsWith('image/') ||
-          attachment.srcSet.hasOwnProperty('full') ||
-          attachment.srcSet.hasOwnProperty('preview')
+          Object.prototype.hasOwnProperty.call(attachment.srcSet, 'full') ||
+          Object.prototype.hasOwnProperty.call(attachment.srcSet, 'preview')
         })
       if (firstVisualAttachment) {
         src = firstVisualAttachment.srcSet

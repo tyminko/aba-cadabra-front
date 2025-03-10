@@ -1,14 +1,16 @@
 <template>
   <div class="post-feed flex-col">
-    <transition>
+    <transition name="fade">
       <div v-if="!processing" class="site-caption text-xs leading-none text-aba-blue">
         Artists research and residency program Air Berlin Alexanderplatz
       </div>
     </transition>
-    <transition>
-      <a-b-a-logo v-if="processing" class="bg-logo block"/>
-      Loading...
-    </transition>
+    <div v-if="processing" class="loading-container">
+      <transition name="fade">
+        <a-b-a-logo class="bg-logo block"/>
+      </transition>
+      <div>Loading...</div>
+    </div>
     <post-feed-grid
       :posts="posts"
       :processing="processing"
@@ -16,41 +18,55 @@
   </div>
 </template>
 
-<script>
-import FeedSubscription from '../mixins/feed-subscription'
+<script setup>
+import { computed, ref, watch } from 'vue'
+import { useFeedSubscription } from '../composables/useFeedSubscription'
 import PostFeedGrid from './components/PostFeedGrid'
 import ABALogo from './components/ABALogo'
 
-export default {
-  name: 'Home',
-  mixins: [FeedSubscription],
-  components: { ABALogo, PostFeedGrid },
+defineOptions({
+  name: 'HomePage'
+})
 
-  data: () => ({
-    feed: {},
-    includeDrafts: false
-  }),
-  computed: {
-    posts () {
-      return Object.values(this.feed).sort((a, b) => b.date - a.date)
-    }
-  },
-  watch: {
-    processing (val) {
-      if (val) return
-      setTimeout(() => {
-        if (!this.$refs['logo-box']) return
-        const top = this.$refs['logo-box'].getBoundingClientRect().bottom
-        window.scrollTo({ top, behavior: 'smooth' })
-      }, 500)
-    }
-  }
-}
+const logoBoxRef = ref(null)
+
+const { feed, processing } = useFeedSubscription()
+
+const posts = computed(() =>
+  Object.values(feed.value).sort((a, b) => b.date - a.date)
+)
+
+watch(processing, (val) => {
+  if (val) return
+  setTimeout(() => {
+    if (!logoBoxRef.value) return
+    const top = logoBoxRef.value.getBoundingClientRect().bottom
+    window.scrollTo({ top, behavior: 'smooth' })
+  }, 500)
+})
 </script>
 
 <style lang="scss" scoped>
   @import "../styles/vars";
   @import "../styles/mixins";
+
+  .fade-enter-active,
+  .fade-leave-active {
+    transition: opacity 0.3s ease;
+  }
+
+  .fade-enter-from,
+  .fade-leave-to {
+    opacity: 0;
+  }
+
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
 
   .site-caption {
     width: calc(100% - #{$base-size / 2});

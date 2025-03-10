@@ -6,7 +6,6 @@ declare interface Dimensions {
   h: number
 }
 
-
 declare interface FileData {
   url: string,
   name?: string,
@@ -105,4 +104,3 @@ export function fileToRawAttachment(file:File): RawAttachment;
 //   dimensions: Dimensions,
 //   attachment: RawAttachment
 // ): DataToUpload;
-

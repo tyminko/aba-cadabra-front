@@ -1,271 +1,232 @@
 <template>
-  <div class="tags-input mb-base">
-    <label class="px-label mb-sm">
-      <span v-if="labelText" class="label">{{labelText}}</span>
-    </label>
-    <div class="tags flex flex-wrap items-center">
-      <draggable-content
-        v-model="tags"
-        filter=".search-input"
-        :draggable="draggableSelector || '.tag-item'"
-        container-class="flex items-center flex-wrap"
-        class="tags-input credits flex flex-wrap items-center"
-        @end="$emit('input', tags)"
-        @move="onMove">
-        <slot :tags="tags">
-          <div v-for="tag in tags"
-               :key="tag.id"
-               class="tag-item flex items-center h-2/3base mr-sm mb-sm bg-aba-blue text-white text-sm font-thin capitalize">
-            <span class="pl-sm" :class="{italic:tag.new}">{{tag.title}}</span>
-            <button class="h-2/3base w-2/3base" @click.prevent="removeTag(tag.id)">
-              <i class="material-icons text-base text-white opacity-50">close</i>
-            </button>
-          </div>
-        </slot>
-        <div
-          :key="`search-input`"
-          draggable="false"
-          class="search-input flex items-center mb-sm">
-          <search-input
-            ref="tagInput"
-            :query="query"
-            :placeholder="placeholder || 'Add tag'"
-            @blur="onBlur"
-            @tab="onInput"
-            @input="onInput"/>
-          <button v-if="allowCreation" class="add compact" :disabled="noValue" @click="onInput">
-            <i class="material-icons text-base">add</i>
-          </button>
-        </div>
-      </draggable-content>
+  <div
+    class="tags-input"
+    :class="{ 'tags-input--error': error }">
+    <div
+      ref="containerRef"
+      class="tags-input__container"
+      :aria-label="label"
+      role="listbox"
+      tabindex="0"
+      @click="focusInput"
+      @keydown.backspace="handleContainerBackspace">
+      <span
+        v-for="(tag, index) in modelValue"
+        :key="index"
+        class="tags-input__tag"
+        role="option"
+        :aria-selected="true">
+        {{ tag }}
+        <button
+          type="button"
+          class="tags-input__remove"
+          :aria-label="`Remove ${tag}`"
+          @click.stop="removeTag(index)">
+          <i class="material-icons">close</i>
+        </button>
+      </span>
+
+      <input
+        ref="inputRef"
+        type="text"
+        class="tags-input__field"
+        :placeholder="placeholder"
+        :aria-label="inputLabel"
+        :disabled="disabled"
+        v-model="inputValue"
+        @keydown.enter.prevent="addTag"
+        @keydown.backspace="handleInputBackspace"
+        @keydown.delete="handleInputBackspace"
+        @focus="handleFocus"
+        @blur="handleBlur" />
+    </div>
+
+    <div
+      v-if="error"
+      class="tags-input__error"
+      role="alert">
+      {{ error }}
     </div>
   </div>
 </template>
 
-<script>
-import Tags from '../../../../lib/tags'
-import SearchInput from './SearchInput'
-import DraggableContent from '../DraggableContent'
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import type { Ref } from 'vue'
 
-export default {
-  name: 'TagsInput',
-  components: { DraggableContent, SearchInput },
-  props: {
-    query: {
-      type: Function,
-      default: string => Tags.query(string)
-    },
-    createTag: {
-      type: Function,
-      default: title => Tags.createTag(title, '')
-    },
-    value: { type: Array, default: () => [] },
-    limit: { type: Number, default: 0 },
-    deleteOnBackspace: { type: Boolean, default: false },
-    allowDuplicates: { type: Boolean, default: false },
-    allowCreation: { type: Boolean, default: true },
-    isEqual: {
-      type: Function,
-      default: (a, b) => {
-        const slug = tag => (tag.title || tag.displayName).toLowerCase().replace(/\s+/g, '-')
-        return slug(a) === slug(b)
-      }
-    },
-    placeholder: { type: String, default: '' },
-    label: { type: String, default: '' },
-    draggableSelector: String
-  },
+interface Props {
+  modelValue: string[]
+  placeholder?: string
+  label?: string
+  inputLabel?: string
+  error?: string
+  disabled?: boolean
+  maxTags?: number
+  allowDuplicates?: boolean
+}
 
-  data: () => ({
-    tags: [],
-    text: '',
+const props = withDefault(defineProps<Props>(), {
+  modelValue: () => [],
+  placeholder: 'Add tag...',
+  label: 'Tags input',
+  inputLabel: 'Type to add new tag',
+  error: '',
+  disabled: false,
+  maxTags: Infinity,
+  allowDuplicates: false
+})
 
-    input: '',
-    oldInput: '',
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: string[]): void
+  (e: 'add', value: string): void
+  (e: 'remove', value: string): void
+  (e: 'focus'): void
+  (e: 'blur'): void
+}>()
 
-    searchResults: [],
-    searchSelection: 0
-  }),
+const containerRef = ref<HTMLDivElement | null>(null)
+const inputRef = ref<HTMLInputElement | null>(null)
+const inputValue = ref('')
 
-  computed: {
-    noValue () {
-      return !this.text
-    },
+const addTag = () => {
+  const value = inputValue.value.trim ()
+  if (!value || props.disabled) return
 
-    labelText () {
-      return this.label || this.placeholder || ''
-    },
+  if (!props.allowDuplicates && props.modelValue.include(value)) {
+    return
+  }
 
-    placeholderText () {
-      return this.placeholder || this.label || ''
-    },
+  if (props.modelValue.length >= props.maxTags) {
+    return
+  }
 
-    labelVisible () {
-      return !!this.model
-    }
-  },
+  const newTags = [...props.modelValue, value]
+  emit('update:modelValue', newTags)
+  emit('add', value)
+  inputValue.value = ''
+}
 
-  watch: {
-    value () {
-      this.fromValue()
-    }
-  },
+const removeTag = (index: number) => {
+  if (props.disabled) return
+  const removedTag = props.modelValue[index]
+  const newTags = props.modelValue.filter((_, i) => i !== index)
+  emit('update:modelValue', newTags)
+  emit('remove', removedTag)
+}
 
-  created () {
-    this.fromValue()
-  },
+const handleContainerBackspace = (e: KeyboardEvent) => {
+  if (props.disabled) return
+  if (document.activeElement === containerRef.value && props.modelValue.length > 0) {
+    removeTag(props.modelValue.length - 1)
+  }
+}
 
-  methods: {
-    onMove () {
-      return true
-    },
+const handleInputBackspace = (e: KeyboardEvent) => {
+  if (props.disabled) return
+  if (!inputValue.value && props.modelValue.length > 0) {
+    removeTag(props.modelValue.length - 1)
+  }
+}
 
-    suggestionToTag (data) {
-      return {
-        ...data,
-        title: data.title || data.displayName
-      }
-    },
+const focusInput = () => {
+  if (!props.disabled) {
+    inputRef.value?.focu ()
+  }
+}
 
-    tagFromInput ({ search, result }) {
-      this.searchResults = result
-      let tag = null
-      if (result && result.id && (result.title || result.displayName)) {
-        // we have a selected suggestion
-        tag = { ...result }
-      } else if (Array.isArray(result)) {
-        // there are suggestions, but non is selected
-        search = search.toLocaleLowerCase()
-        const index = result.findIndex(suggestion => (suggestion.title || suggestion.displayName) === search)
-        if (index > -1) {
-          tag = { ...result[index] }
-        }
-      }
-      if (!tag && search && this.allowCreation) {
-        tag = this.createTag(search)
-      }
-      if (tag) {
-        this.appendTag(tag)
-      }
-      this.$refs.tagInput.clear()
-    },
+const handleFocus = () => {
+  emit('focus')
+}
 
-    onBlur (searchObj) {
-      this.tagFromInput(searchObj || {})
-    },
-
-    onInput (searchObj) {
-      this.tagFromInput(searchObj || {})
-      this.$refs.tagInput.focus()
-    },
-
-    onBackspace () {
-      if (!this.input.length && this.deleteOnBackspace) {
-        this.onRemoveTag(this.tags.length - 1)
-      }
-    },
-
-    fromValue () {
-      if (this.value) {
-        const tags = Array.isArray(this.value)
-          ? this.value
-          : Object.keys(this.value).map(key => this.value[key])
-        if (this.haveDuplicateTags(tags)) {
-          return
-        }
-        if (this.tags.length !== 0) {
-          this.tags.splice(0, this.tags.length)
-        }
-        for (let tag of tags) {
-          this.addTag(tag)
-        }
-      } else {
-        if (this.tags.length !== 0) {
-          this.tags.splice(0, this.tags.length)
-        }
-      }
-    },
-
-    /**
-     * @param {Tag} tag
-     */
-    appendTag (tag) {
-      console.log('appendTag()', tag)
-      if (tag) {
-        if (this.addTag(tag)) {
-          this.$emit('append', tag)
-          // Update the bound v-model value
-          this.$emit('input', this.tags)
-        }
-      }
-    },
-
-    /**
-     * @param {number} index
-     */
-    onRemoveTag (index) {
-      this.$emit('remove', this.tags[index])
-      this.tags.splice(index, 1)
-      // Update the bound v-model value
-      this.$emit('input', this.tags)
-    },
-
-    /**
-     * @param {Tag} tag
-     * @return {boolean}
-     */
-    addTag (tag) {
-      // Check if the limit has been reached
-      if (this.limit > 0 && this.tags.length >= this.limit) {
-        return false
-      }
-      // Attach the tag if it hasn't been attached yet
-      if (this.isDuplicateTag(tag)) {
-        return false
-      }
-      this.tags.push(tag)
-      return true
-    },
-
-    removeTag (id) {
-      const index = this.tags.findIndex(t => t.id === id)
-      if (index < 0) return
-      this.tags.splice(index, 1)
-      this.$emit('input', this.tags)
-    },
-
-    /**
-     * @param {Tag[]} tags
-     * @return {boolean}
-     */
-    haveDuplicateTags (tags) {
-      if (!tags && !this.tags) {
-        return true
-      }
-      if ((tags || []).length !== (this.tags || []).length) {
-        return false
-      }
-      return (Array.isArray(tags) ? [...tags] : [tags]).filter(value => !this.isDuplicateTag(value)).length === 0
-    },
-
-    /**
-     * @param {Tag} tag
-     * @return {boolean}
-     */
-    isDuplicateTag (tag) {
-      if (this.allowDuplicates) {
-        return false
-      }
-      if (!tag) {
-        return false
-      }
-      return !!this.tags.find(value => this.isEqual(value, tag))
-    }
+const handleBlur = () => {
+  emit('blur')
+  if (inputValue.value) {
+    addTag ()
   }
 }
 </script>
 
-<style lang="scss">
-  .tags-input {
+<style lang="scss" scoped>
+.tags-input {
+  &__container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.375rem;
+    min-height: 2.5rem;
+    background-color: var(--color-bg-primary, white);
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-md, 0.375rem);
+    transition: all 0.2s ease;
+
+    &:focus-within {
+      border-color: var(--color-aba-blue, #4f46e5);
+      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+    }
   }
+
+  &__tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    color: var(--color-text-primary, #111827);
+    background-color: var(--color-bg-secondary, #f3f4f6);
+    border-radius: var(--radius-full, 9999px);
+  }
+
+  &__remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.25rem;
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--color-text-secondary, #6b7280);
+    border-radius: var(--radius-full, 9999px);
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: var(--color-bg-hover, #e5e7eb);
+      color: var(--color-text-primary, #111827);
+    }
+
+    i {
+      font-size: 1rem;
+    }
+  }
+
+  &__field {
+    flex: 1;
+    min-width: 8rem;
+    padding: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--color-text-primary, #111827);
+    background: transparent;
+    border: none;
+    outline: none;
+
+    &::placeholder {
+      color: var(--color-text-placeholder, #9ca3af);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+
+  &__error {
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--color-error, #ef4444);
+  }
+
+  &--error &__container {
+    border-color: var(--color-error, #ef4444);
+
+    &:focus-within {
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
+    }
+  }
+}
 </style>

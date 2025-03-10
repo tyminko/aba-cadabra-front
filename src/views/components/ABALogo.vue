@@ -6,14 +6,16 @@
   </span>
 </template>
 
-<script>
-export default { name: 'ABALogo' }
+<script setup lang="ts">
+defineOptions({
+  name: 'ABALogo'
+})
 </script>
 
 <!--suppress CssInvalidAtRule -->
 <style lang="scss">
   @import "../../styles/vars";
-  @mixin transform-centered ($x-shift:0, $y-shift:0, $rotation:0) {
+  @mixin transform-centered($x-shift:0, $y-shift:0, $rotation:0) {
     transform: translate(-50% + $x-shift, -50% + $y-shift) rotate($rotation);
   }
   .a-b-a-logo {

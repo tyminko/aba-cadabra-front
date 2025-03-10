@@ -1,6 +1,6 @@
 import axios from 'axios'
 import jsonpAdapter from 'axios-jsonp'
-import simpleId from './simpleId'
+import { useId } from '../composables/useId'
 
 export default {
   /**
@@ -39,7 +39,7 @@ export default {
   async castEmbedToAttachment (embedData) {
     // const imgDimensions = await imageDimensionsFromUrl()
     return {
-      id: simpleId(),
+      id: useId('mixcloud'),
       type: 'embed/mixcloud',
       name: embedData.title,
       html: embedData.html,

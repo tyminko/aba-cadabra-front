@@ -25,177 +25,177 @@
     prevent-out-of-range
     mode="single"
     @onDateChange="handleDateChange">
-    <div class="">
+    <div
+      class="calendar"
+      role="application"
+      aria-label="Calendar">
       <div
         v-for="view in calendar"
         :key="`${view.month}-${view.year}`"
-        class="">
+        class="calendar-view">
         <div class="-mx-sm -mt-sm flex items-center justify-between text-base">
-          <button class="large" @click.prevent.stop="prevPage">
-            <i class="material-icons text-4xl">chevron_left</i>
+          <button
+            class="large"
+            aria-label="Previous month"
+            @click.prevent.stop="prevPage">
+            <i class="material-icons text-4xl" aria-hidden="true">chevron_left</i>
           </button>
-          <div class="title text-xl text-aba-blue">
+          <div
+            class="title text-xl text-aba-blue"
+            role="heading"
+            aria-level="1">
             <span class="mr-4">{{ monthNames[view.month].full }}</span>
             <span>{{ view.year }}</span>
           </div>
-          <button class="large" @click.prevent.stop="nextPage">
-            <i class="material-icons text-4xl">chevron_right</i>
+          <button
+            class="large"
+            aria-label="Next month"
+            @click.prevent.stop="nextPage">
+            <i class="material-icons text-4xl" aria-hidden="true">chevron_right</i>
           </button>
         </div>
-        <div class="grid grid-cols-7 text-base">
-          <span v-for="day in weekDayNames"
-                :key="day.short"
-                class="flex h-5/6base items-center justify-center">
-            <span>{{ day.short }}</span>
+        <div
+          class="grid grid-cols-7 text-base"
+          role="row">
+          <span
+            v-for="day in weekDayNames"
+            :key="day.short"
+            class="flex h-5/6base items-center justify-center"
+            role="columnheader"
+            :aria-label="day.full">
+            {{ day.short }}
           </span>
         </div>
-        <div class="grid grid-cols-7">
+        <div
+          class="grid grid-cols-7"
+          role="grid">
           <calendar-cell
             v-for="date in view.dates"
             :key="date.ms"
-            v-bind="getModifiers(date)"
+            v-bind="getModifier(date)"
             :date="date"
-            @click.native.prevent="onDateSelect(date)"
-            @mouseover.native="onDateMouseOver(date)"
-            @mouseout.native="onDateMouseOut"/>
+            @click.prevent="onDateSelect(date)"
+            @mouseover="onDateMouseOver(date)"
+            @mouseout="onDateMouseOut"/>
         </div>
       </div>
     </div>
   </renderless-calendar>
 </template>
 
-<script>
-import * as date from '../../../../lib/date'
-import RenderlessCalendar from 'vue-renderless-calendar/lib/RenderlessCalendar'
+<script setup lang="ts">
+import { ref, computed, onMounted, watch } from 'vue'
+import type { Ref } from 'vue'
+import * as dateUtils from '../../../../lib/date'
+import RenderlessCalendar from './RenderlessCalendar.vue'
 import CalendarCell from './CalendarCell.vue'
 
-export default {
-  name: 'Calendar',
-  components: { RenderlessCalendar, CalendarCell },
+interface Props {
+  value?: string | number
+  locale?: string
+}
 
-  props: {
-    value: [String, Number],
-    locale: String
-  },
+interface DateInfo {
+  month: number | string
+  year: number | string
+  string: string
+  ms?: number
+}
 
-  data () {
-    return {
-      minDate: '',
-      maxDate: '',
-      disabledDates: []
-    }
-  },
+interface CalendarRef {
+  setMonth: (params: { month: number | string; year: number | string }) => void
+}
 
-  computed: {
-    localCalendarStrings () {
-      return date.getCalendarStringsForLocale(this.locale)
-    },
+defineOptions({
+  name: 'EventCalendar'
+})
 
-    selectedDate () {
-      let d = { month: '', year: '', string: '' }
-      if (this.value) {
-        const date = new Date(this.value)
-        const year = date.getFullYear()
-        const month = date.getMonth()
-        const day = date.getDate()
-        d = {
-          year,
-          month,
-          string: `${year}-${month + 1}-${day}`
-        }
-      }
-      return d
-    }
-  },
+const props = withDefault(defineProps<Props>(), {
+  value: undefined,
+  locale: undefined
+})
 
-  watch: {
-    value () {
-      this.setMonth()
-    }
-  },
+const emit = defineEmits<{
+  (e: 'input', value: number): void
+}>()
 
-  mounted () {
-    this.setMonth()
-  },
+// State
+const calendar = ref<CalendarRef | null>(null)
+const minDate = ref('')
+const maxDate = ref('')
+const disabledDates = ref<string[]>([])
 
-  methods: {
-    setMonth () {
-      const { month, year } = this.selectedDate
-      if (month) {
-        // !!! DEBUG !!!
-        console.log(`%c setMonth() %c month: `, 'background:#ffbb00;color:#000', 'color:#00aaff', month)
-        this.$refs.calendar.setMonth({ month, year })
-      }
-    },
+// Computed
+const localCalendarStrings = computed(() =>
+  dateUtils.getCalendarStringsForLocale(props.locale)
+)
 
-    handleDateChange (payload) {
-      this.$emit('input', payload[0].ms)
-    }
+const selectedDate = computed<DateInfo>(() => {
+  const defaultDate = { month: '', year: '', string: '' }
+  if (!props.value) return defaultDate
+
+  const date = new Date(props.value)
+  const year = date.getFullYear ()
+  const month = date.getMonth ()
+  const day = date.getDate ()
+
+  return {
+    year,
+    month,
+    string: `${year}-${month + 1}-${day}`
+  }
+})
+
+// Method
+const setMonth = () => {
+  const { month, year } = selectedDate.value
+  if (month !== '') {
+    calendar.value?.setMonth({ month, year })
   }
 }
+
+const handleDateChange = (payload: DateInfo[]) => {
+  if (payload[0]?.ms) {
+    emit('input', payload[0].ms)
+  }
+}
+
+// Watcher
+watch(() => props.value, () => {
+  setMonth ()
+})
+
+// Lifecycle
+onMounted(() => {
+  setMonth ()
+})
 </script>
 
 <style scoped lang="scss">
-  $cell-width: 40px;
-  $cell-height: 40px;
-  $light-gray: #f7f7f9;
-
-  .calendar {
-    &__header {
-      padding: 8px 0;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    &__weeks {
-      display: flex;
-      justify-content: flex-start;
-    }
-
-    &__week-day {
-      display: inline-block;
-      width: $cell-width;
-      height: 40px;
-      text-transform: uppercase;
-      font-size: 12px;
-      font-weight: 600;
-      line-height: 40px;
-    }
-
-    &__body {
-      max-width: calc(#{$cell-width} * 7);
-      min-width: calc(#{$cell-width} * 7);
-      justify-content: flex-start;
-      display: flex;
-      flex-wrap: wrap;
-    }
-
-    &__month-btn {
-      background-color: $light-gray;
-      color: #383838;
-      border: none;
-      border-radius: 3px;
-      appearance: none;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-      /*background-image: url('../assets/arrow-point-to-right.svg');*/
-      background-size: 12px;
-      background-position: center;
-      background-repeat: no-repeat;
-      width: 50px;
-      height: 30px;
-
-      &:first-child {
-        transform: rotate(-180deg);
-      }
-
-      &:focus {
-        outline: none;
-        background-color: darken($light-gray, 10%);
-      }
-    }
-
+.calendar {
+  &-view {
+    @apply p-4;
   }
 
+  .grid {
+    display: grid;
+    gap: 0.5rem;
+
+    &-cols-7 {
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+    }
+  }
+
+  .title {
+    @apply font-semibold;
+  }
+
+  button.large {
+    @apply p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-aba-blue focus:ring-opacity-50;
+
+    i {
+      @apply text-gray-600;
+    }
+  }
+}
 </style>

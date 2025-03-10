@@ -48,7 +48,7 @@ export default {
       get () {
         return [...this.profiles].sort((a, b) => a.teamOrder - b.teamOrder)
       },
-      set (newValue) {
+      set(newValue) {
         const profilesRef = db.collection('profiles')
         this.profiles = [...newValue]
         newValue.forEach((prof, i) => {
@@ -57,47 +57,47 @@ export default {
         })
       }
     },
-    relatedProfilesIds () {
+    relatedProfilesId () {
       return ((this.post || {}).relatedPeople || []).map(p => p.id)
     },
-    tags () {
+    tag () {
       return (this.post || {}).tags || []
     }
   },
 
   created () {
-    this.subscribeRelatedProfiles()
-    this.getTagPosts()
+    this.subscribeRelatedProfile ()
+    this.getTagPost ()
   },
 
   watch: {
     post () {
-      this.subscribeRelatedProfiles()
-      this.getTagPosts()
+      this.subscribeRelatedProfile ()
+      this.getTagPost ()
     }
   },
 
-  beforeDestroy () {
+  beforeUnmount () {
     if (typeof this.profileUnsubscribe === 'function') {
-      this.profileUnsubscribe()
+      this.profileUnsubscribe ()
     }
   },
 
   methods: {
-    subscribeRelatedProfiles () {
+    subscribeRelatedProfile () {
       this.profiles = []
       db.collection('profiles')
         .where('teamOrder', '>', -1)
         .orderBy('teamOrder', 'asc')
-        .get()
+        .get ()
         .then(snapshot => {
           snapshot.forEach(doc => {
-            this.profiles.push({ ...doc.data(), id: doc.id })
+            this.profiles.push({ ...doc.data (), id: doc.id })
           })
         })
     },
 
-    getTagPosts () {
+    getTagPost () {
       const tagIds = (this.post || {}).tagIds || []
       if (!tagIds.length) {
         this.tagPosts = []
@@ -107,10 +107,10 @@ export default {
         return db.collection(collectionName)
           .where('status', '==', 'public')
           .where('tagIds', 'array-contains-any', tagIds)
-          .get()
+          .get ()
           .then(snapshot => {
             snapshot.forEach(doc => {
-              this.tagPosts.push({ ...doc.data(), id: doc.id })
+              this.tagPosts.push({ ...doc.data (), id: doc.id })
             })
           })
       }

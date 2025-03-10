@@ -1,54 +1,114 @@
 <template>
-  <div class="expandable-footer">
-    <expandable-text-line class="footer-content">
-      <slot />
-    </expandable-text-line>
-    <div class="tools">
-      <slot name="tools" />
-    </div>
-  </div>
+  <footer
+    class="expandable-footer"
+    :class="{ 'expandable-footer--expanded': isExpanded }"
+    role="contentinfo">
+    <button
+      class="expandable-footer__toggle"
+      :aria-expanded="isExpanded"
+      :aria-controls="contentId"
+      @click="toggle">
+      <span class="expandable-footer__toggle-text">
+        {{ isExpanded ? 'Show Less' : 'Show More' }}
+      </span>
+      <i class="material-icons expandable-footer__toggle-icon">
+        {{ isExpanded ? 'expand_less' : 'expand_more' }}
+      </i>
+    </button>
+
+    <transition name="expand">
+      <div
+        v-if="isExpanded"
+        :id="contentId"
+        class="expandable-footer__content">
+        <slot />
+      </div>
+    </transition>
+  </footer>
 </template>
 
-<script>
-import { mapState } from 'vuex'
-import ExpandableTextLine from 'vue-expandable-text-line'
+<script setup lang="ts">
+import { ref } from 'vue'
 
-export default {
-  name: 'ExpandableFooter',
-  components: { ExpandableTextLine },
-  props: {
-    duration: { type: Number, default: 0.1 }
-  },
-  data: () => ({
-    useHover: true,
-    minHeight: 0
-  }),
-  computed: {
-    ...mapState(['useTouch'])
-  },
+// Generate unique ID for ARIA attribute
+const contentId = `footer-content-${Math.random ().toString(36).substr(2, 9)}`
 
-  methods: {
-  }
+interface Props {
+  expanded?: boolean
+}
+
+const props = withDefault(defineProps<Props>(), {
+  expanded: false
+})
+
+const emit = defineEmits<{
+  (e: 'update:expanded', value: boolean): void
+  (e: 'toggle', value: boolean): void
+}>()
+
+const isExpanded = ref(props.expanded)
+
+const toggle = () => {
+  isExpanded.value = !isExpanded.value
+  emit('update:expanded', isExpanded.value)
+  emit('toggle', isExpanded.value)
 }
 </script>
 
-<style lang='scss'>
-  @import "../../../styles/vars";
+<style lang="scss" scoped>
+.expandable-footer {
+  position: relative;
+  width: 100%;
+  background-color: var(--color-bg-footer, #f9fafb);
+  border-top: 1px solid var(--color-border, #e5e7eb);
 
-  .expandable-footer {
+  &__toggle {
     display: flex;
-    align-items: flex-end;
-    height: $base-size / 2;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 1rem;
+    color: var(--color-text-secondary, #6b7280);
+    transition: all 0.2s ease;
 
-    .tools {
-      flex-shrink: 0;
-      background: $color-semitransparent;
-    }
-
-    .footer-content {
-      flex-grow: 1;
-      padding: 10px;
-      background: $color-semitransparent;
+    &:hover {
+      color: var(--color-aba-blue, #4f46e5);
+      background-color: var(--color-bg-hover, #f3f4f6);
     }
   }
+
+  &__toggle-text {
+    margin-right: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  &__toggle-icon {
+    font-size: 1.25rem;
+    transition: transform 0.2s ease;
+  }
+
+  &__content {
+    padding: 1.5rem;
+    border-top: 1px solid var(--color-border, #e5e7eb);
+  }
+
+  &--expanded {
+    .expandable-footer__toggle-icon {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 0.3s ease-in-out;
+  max-height: 300px;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
 </style>

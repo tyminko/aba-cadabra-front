@@ -6,8 +6,8 @@
       class="nav-item secondary-item ml-auto select-none text-xs leading-none cursor-pointer">
       <span>{{messageToggleDrafts}}</span>
     </a>
-    <sliding-panel v-if="user" ref="menu" class="user-menu">
-      <template v-slot:trigger="{on, open}">
+    <sliding-panel v-if="user" ref="menuRef" class="user-menu">
+      <template #trigger="{on, open}">
         <button class="user-menu-button mr-0" @click="on">
           <i class="material-icons dimmed">add</i>
         </button>
@@ -15,22 +15,22 @@
       <div class="user-actions-wrapper">
         <ul class="user-actions">
           <li v-if="contributor" class="menu-cell nav-item cursor-pointer">
-            <a @click.prevent="openEditor('post')">Add Blog Post</a>
+            <a @click.prevent="() => openEditor('post')">Add Blog Post</a>
           </li>
           <li v-if="adminOrEditor" class="menu-cell nav-item cursor-pointer">
-            <a @click.prevent="openEditor('event')">Add Event</a>
+            <a @click.prevent="() => openEditor('event')">Add Event</a>
           </li>
           <li v-if="adminOrEditor" class="menu-cell nav-item cursor-pointer">
-            <a @click.prevent="openEditor('partner')">Add Partner</a>
+            <a @click.prevent="() => openEditor('partner')">Add Partner</a>
           </li>
           <li v-if="admin" class="menu-cell nav-item cursor-pointer">
-            <a @click.prevent="openEditor('profile')">Add User</a>
+            <a @click.prevent="() => openEditor('profile')">Add User</a>
           </li>
         </ul>
       </div>
     </sliding-panel>
-    <sliding-panel ref="user-menu" class="user-menu">
-      <template v-slot:trigger="{on, open}">
+    <sliding-panel ref="userMenuRef" class="user-menu">
+      <template #trigger="{on, open}">
         <button class="user-menu-button" @click="on">
           <i v-if="user" class="material-icons dimmed" :class="{open, user}">{{open ? 'sentiment_very_satisfied' : 'sentiment_satisfied'}}</i>
           <i v-else class="material-icons dimmed" :class="{open}">chevron_right</i>
@@ -44,14 +44,8 @@
             <span class="block">Profile</span>
           </a>
           <router-link v-if="admin" :to="{name: 'users'}" class="menu-cell nav-item">
-            Users
+            User
           </router-link>
-<!--          <router-link v-if="admin" :to="{name: 'wp-users'}" class="menu-cell nav-item">-->
-<!--            Import WP Users-->
-<!--          </router-link>-->
-<!--          <router-link v-if="admin" :to="{name: 'wp-posts'}" class="menu-cell nav-item">-->
-<!--            Import WP Posts-->
-<!--          </router-link>-->
           <router-link :to="{name: 'internal'}" class="menu-cell nav-item">
             <span>Internal Posts</span>
           </router-link>
@@ -73,58 +67,68 @@
   </div>
 </template>
 
-<script>
-import { mapState, mapActions } from 'vuex'
+<script setup>
+import { ref, computed, watch, nextTick } from 'vue'
+import { useStore } from 'vuex'
 import SlidingPanel from './UI/SlidingPanel'
 import LoginForm from './login/LoginForm'
 
-export default {
-  name: 'UserMenu',
-  components: { SlidingPanel, LoginForm },
+const store = useStore ()
 
-  data: () => ({
-  }),
+// Ref
+const menuRef = ref(null)
+const userMenuRef = ref(null)
 
-  computed: {
-    ...mapState(['user', 'viewCanToggleDrafts', 'showDraftsInGrid']),
-    admin () {
-      return this.user && this.user.role === 'admin'
-    },
-    adminOrEditor () {
-      return this.user && (this.user.role === 'admin' || this.user.role === 'editor')
-    },
-    contributor () {
-      return this.user && (this.user.role === 'contributor' || this.adminOrEditor)
-    },
-    messageToggleDrafts () {
-      return this.showDraftsInGrid ? 'Hide Drafts' : `Show ${!this.adminOrEditor ? 'Mine ' : ''}Drafts`
-    }
-  },
+// Store state and action
+const user = computed(() => store.state.user)
+const viewCanToggleDrafts = computed(() => store.state.viewCanToggleDrafts)
+const showDraftsInGrid = computed(() => store.state.showDraftsInGrid)
 
-  watch: {
-    user () {
-      this.$nextTick(() => { if (this.$refs.menu) this.$refs.menu.jumpTop() })
-      this.$nextTick(() => { if (this.$refs['user-menu']) this.$refs['user-menu'].jumpTop() })
-    }
-  },
+// Computed propertie
+const admin = computed(() =>
+  user.value && user.value.role === 'admin'
+)
 
-  methods: {
-    ...mapActions(['logOut', 'showEditor', 'updateUser', 'toggleDraftsInGrid']),
-    openEditor (type, value) {
-      this.showEditor({ type, value })
-    },
-    openMyProfileEditor () {
-      this.showEditor({
-        type: 'profile',
-        value: this.user,
-        onSaved: ({ data }) => {
-          if (!data.displayName) return
-          this.updateUser({ ...this.user, displayName: data.displayName })
-        }
-      })
-    }
-  }
+const adminOrEditor = computed(() =>
+  user.value && (user.value.role === 'admin' || user.value.role === 'editor')
+)
+
+const contributor = computed(() =>
+  user.value && (user.value.role === 'contributor' || adminOrEditor.value)
+)
+
+const messageToggleDrafts = computed(() =>
+  showDraftsInGrid.value
+    ? 'Hide Drafts'
+    : `Show ${!adminOrEditor.value ? 'Mine ' : ''}Drafts`
+)
+
+// Method
+const logOut = () => store.dispatch('logOut')
+const toggleDraftsInGrid = () => store.dispatch('toggleDraftsInGrid')
+
+const openEditor = (type, value) => {
+  store.dispatch('showEditor', { type, value })
 }
+
+const openMyProfileEditor = () => {
+  store.dispatch('showEditor', {
+    type: 'profile',
+    value: user.value,
+    onSaved: ({ data }) => {
+      if (!data.displayName) return
+      store.dispatch('updateUser', { ...user.value, displayName: data.displayName })
+    }
+  })
+}
+
+// Watch
+watch(user, () => {
+  nextTick(() => {
+    if (menuRef.value) menuRef.value.jumpTop ()
+    if (userMenuRef.value) userMenuRef.value.jumpTop ()
+  })
+})
 </script>
 
 <!--suppress CssInvalidAtRule -->

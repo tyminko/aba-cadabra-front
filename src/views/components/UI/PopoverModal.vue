@@ -1,131 +1,218 @@
 <template>
-  <transition name="fade">
-    <div v-if="open"
-         class="popover-modal">
-      <div class="modal-shadow" @click="requestClose"/>
-      <div class="w-full h-full bg-white rounded-sm">
-        <header class="flex h-base items-center pl-base">
-          <slot name="header" />
-          <button class="w-base h-base ml-auto" @click="requestClose">
-            <i class="material-icons">close</i>
-          </button>
-        </header>
-        <slot/>
-      </div>
-    </div>
-  </transition>
+  <Teleport to="body">
+    <TransitionRoot appear :show="open">
+      <Dialog
+        as="div"
+        class="popover-modal"
+        @close="handleClose">
+        <div class="fixed inset-0 z-50">
+          <TransitionChild
+            as="template"
+            enter="ease-out duration-300"
+            enter-from="opacity-0"
+            enter-to="opacity-100"
+            leave="ease-in duration-200"
+            leave-from="opacity-100"
+            leave-to="opacity-0">
+            <DialogOverlay
+              class="modal-shadow fixed inset-0 bg-black/50 backdrop-blur-sm"
+              @click="handleOverlayClick" />
+          </TransitionChild>
+
+          <TransitionChild
+            as="template"
+            enter="ease-out duration-300"
+            enter-from="opacity-0 scale-95"
+            enter-to="opacity-100 scale-100"
+            leave="ease-in duration-200"
+            leave-from="opacity-100 scale-100"
+            leave-to="opacity-0 scale-95">
+            <div
+              class="modal-content w-full h-full bg-white rounded-sm shadow-xl transform transition-all"
+              :class="contentClass"
+              role="dialog"
+              :aria-labelledby="titleId"
+              :aria-describedby="descriptionId">
+              <header class="flex h-base items-center pl-base">
+                <slot name="header">
+                  <DialogTitle
+                    v-if="title"
+                    :id="titleId"
+                    class="text-lg font-medium text-gray-900">
+                    {{ title }}
+                  </DialogTitle>
+                </slot>
+                <button
+                  type="button"
+                  class="close-button w-base h-base ml-auto flex items-center justify-center text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-aba-blue focus:ring-opacity-50 rounded-sm transition-colors"
+                  @click="handleClose"
+                  aria-label="Close dialog">
+                  <i class="material-icons">close</i>
+                </button>
+              </header>
+
+              <div
+                :id="descriptionId"
+                class="modal-body">
+                <slot/>
+              </div>
+
+              <slot name="footer"/>
+            </div>
+          </TransitionChild>
+        </div>
+      </Dialog>
+    </TransitionRoot>
+  </Teleport>
 </template>
 
-<script>
+<script setup>
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import {
+  Dialog,
+  DialogOverlay,
+  DialogTitle,
+  TransitionRoot,
+  TransitionChild
+} from '@headlessui/vue'
 import { bodyScrollGuard } from '../../../lib/control-body-scroll'
-import clickOutside from 'vue-click-outside'
+import { useId } from '../../../composables/useId'
 
-export default {
-  name: 'PopoverModal',
-  directives: { clickOutside },
-  props: {
-    open: { type: Boolean, required: true }
+// Prop
+const props = defineProp({
+  open: {
+    type: Boolean,
+    required: true
   },
-
-  data: () => ({
-    allowClickOutside: true
-  }),
-
-  created () {
-    window.addEventListener('keydown', e => {
-      if (e.key === 'Escape' || e.keyCode === 27) {
-        this.$emit('esc', e)
-      }
-    })
+  title: {
+    type: String,
+    default: ''
   },
-
-  mounted () {
-    this.setBodyScroll(this.open)
-    this.setAllowClickOutside()
+  contentClass: {
+    type: [String, Array, Object],
+    default: ''
   },
-
-  watch: {
-    open (value) {
-      this.setBodyScroll(value)
-      this.setAllowClickOutside()
-    }
+  preventCloseOnOverlay: {
+    type: Boolean,
+    default: false
   },
+  preventCloseOnEsc: {
+    type: Boolean,
+    default: false
+  }
+})
 
-  methods: {
-    requestClose () {
-      if (this.open && this.allowClickOutside) {
-        this.$emit('close')
-      }
-    },
+// Emit
+const emit = defineEmit({
+  close: null,
+  esc: null,
+  'update:open': (value) => typeof value === 'boolean'
+})
 
-    setBodyScroll (freeze) {
-      if (freeze) {
-        bodyScrollGuard.freezeBodyScroll()
-      } else {
-        bodyScrollGuard.releaseBodyScroll()
-      }
-    },
+// Generated ID
+const titleId = useId('modal-title')
+const descriptionId = useId('modal-description')
 
-    releaseBgScroll () {
-      this.setBodyScroll(false)
-    },
+// State
+const allowClickOutside = ref(true)
 
-    setAllowClickOutside () {
-      if (this.open) {
-        setTimeout(() => { this.allowClickOutside = true }, 100)
-      } else {
-        this.allowClickOutside = false
-      }
-    }
-  },
+// Method
+const handleClose = () => {
+  emit('close')
+  emit('update:open', false)
+}
 
-  beforeDestroy () {
-    bodyScrollGuard.releaseBodyScroll()
+const handleOverlayClick = () => {
+  if (!props.preventCloseOnOverlay && allowClickOutside.value) {
+    handleClose ()
   }
 }
+
+const handleEscKey = (e) => {
+  if (e.key === 'Escape' || e.keyCode === 27) {
+    if (!props.preventCloseOnEsc) {
+      emit('esc', e)
+      handleClose ()
+    }
+  }
+}
+
+const setBodyScroll = (freeze) => {
+  if (freeze) {
+    bodyScrollGuard.freezeBodyScroll ()
+  } else {
+    bodyScrollGuard.releaseBodyScroll ()
+  }
+}
+
+const setAllowClickOutside = () => {
+  if (props.open) {
+    setTimeout(() => { allowClickOutside.value = true }, 100)
+  } else {
+    allowClickOutside.value = false
+  }
+}
+
+// Lifecycle
+onMounted(() => {
+  window.addEventListener('keydown', handleEscKey)
+  setBodyScroll(props.open)
+  setAllowClickOutside ()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleEscKey)
+  bodyScrollGuard.releaseBodyScroll ()
+})
+
+// Watcher
+watch(() => props.open, (value) => {
+  setBodyScroll(value)
+  setAllowClickOutside ()
+})
 </script>
 
-<!--suppress CssInvalidAtRule -->
-<style lang="scss">
-  // @import "../../../assets/styles/vars";
-  // @import "../../../assets/styles/mixins";
-  $basic-size: 3.8rem;
-  $basic-padding: 1rem;
-  $content-min-width: 5rem;
-  $tag-inline-height: 3.8rem;
+<style lang="scss" scoped>
+.popover-modal {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  overflow-y: auto;
 
-  .popover-modal {
-    position: fixed;
-    z-index: 9999;
+  .modal-content {
+    position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    min-width: min-content;
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100vh - 2rem);
+    display: flex;
+    flex-direction: column;
 
-    .modal-shadow {
-      content: '';
-      position: fixed;
-      height: calc(100vh + 10px);
-      width: calc(100vw + 10px);
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0, 0, 0, 0.5);
-      z-index: -1;
-    }
-
-    .modal-content-box {
-      position: relative;
-      width: 100%;
-      max-width: min-content;
+    .modal-body {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
   }
 
-  .fade-enter-active, .fade-leave-active {
-    transition: opacity 0.2s;
-  }
+  .close-button {
+    .material-icons {
+      font-size: 1.5rem;
+    }
 
-  /* .fade-leave-active below version 2.1.8 */
-  .fade-enter, .fade-leave-to {
-    opacity: 0;
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
   }
+}
+
+// Variable
+:root {
+  --base-size: 3.8rem;
+  --base-padding: 1rem;
+  --content-min-width: 5rem;
+  --tag-inline-height: 3.8rem;
+}
 </style>

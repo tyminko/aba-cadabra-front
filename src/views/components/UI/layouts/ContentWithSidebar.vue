@@ -1,22 +1,28 @@
 <template>
-  <div class="content-with-sidebar">
-    <div class="main-box">
+  <div
+    class="content-with-sidebar"
+    role="main">
+    <div
+      class="main-box"
+      role="region"
+      aria-label="Main content">
       <slot name="main" />
     </div>
-    <div class="sidebar-box">
+    <aside
+      class="sidebar-box"
+      role="complementary"
+      aria-label="Sidebar content">
       <slot name="sidebar"/>
-    </div>
+    </aside>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'ContentWithSidebar'
-}
+<script setup lang="ts">
+// Component is purely presentational, no props or logic needed
 </script>
 
 <!--suppress CssInvalidAtRule -->
-<style lang="scss">
+<style lang="scss" scoped>
   @import "../../../../styles/vars";
   @import "../../../../styles/mixins";
   $sidebar-width: $max-width-sidebar;
@@ -28,7 +34,7 @@ export default {
     /*justify-content: center;*/
     width: 100%;
     height: 100%;
-    padding: $base-padding 0;
+    padding: var(--base-padding, 1rem) 0;
     overflow-y: auto;
 
     & > * {
@@ -40,7 +46,7 @@ export default {
       flex-grow: 1;
       min-width: 0;
       .text-block {
-        padding: 0 $base-padding;
+        padding: 0 var(--base-padding, 1rem);
         max-width: 100%;
         hyphens: auto;
       }
@@ -55,8 +61,8 @@ export default {
         .main-box {
           overflow-y: auto;
           //max-width: calc(#{$max-width-text-block} + #{$base-padding} * 2);
-          padding: 0 $base-padding * 2;
-          border-right: 1px solid $color-aba-blue;
+          padding: 0 calc(var(--base-padding, 1rem) * 2);
+          border-right: 1px solid var(--color-aba-blue, #4f46e5);
         }
         .sidebar-box {
           overflow-y: auto;

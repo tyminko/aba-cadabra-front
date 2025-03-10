@@ -1,86 +1,87 @@
 <template>
   <transition
-    name="expand"
+    name="height"
     @enter="enter"
     @after-enter="afterEnter"
-    @leave="leave">
-    <slot />
+    @leave="leave"
+    @after-leave="afterLeave">
+    <slot v-if="show"></slot>
   </transition>
 </template>
-<script>
-/**
-  https://github.com/maoberlehner/transition-to-height-auto-with-vue
-*/
-export default {
-  name: `TransitionExpand`,
-  methods: {
-    afterEnter (element) {
-      // eslint-disable-next-line no-param-reassign
-      element.style.height = `auto`
-    },
-    enter (element) {
-      let { width, height } = getComputedStyle(element)
-      this.minHeight = height
-      /* eslint-disable no-param-reassign */
-      element.style.width = width
-      element.style.position = `absolute`
-      element.style.visibility = `hidden`
-      element.style.height = `auto`
-      element.style.whiteSpace = 'initial'
-      element.style.textOverflow = 'unset'
-      /* eslint-enable */
-      height = getComputedStyle(element).height
-      /* eslint-disable no-param-reassign */
-      element.style.width = null
-      element.style.position = null
-      element.style.visibility = null
-      element.style.whiteSpace = null
-      element.style.textOverflow = null
-      element.style.height = this.minHeight
-      /* eslint-enable */
-      // Force repaint to make sure the
-      // animation is triggered correctly.
-      // eslint-disable-next-line no-unused-expressions
-      getComputedStyle(element).height
-      setTimeout(() => {
-        // eslint-disable-next-line no-param-reassign
-        element.style.height = height
-      })
-    },
-    leave (element) {
-      const { height } = getComputedStyle(element)
-      // eslint-disable-next-line no-param-reassign
-      element.style.height = height
-      // Force repaint to make sure the
-      // animation is triggered correctly.
-      // eslint-disable-next-line no-unused-expressions
-      getComputedStyle(element).height
-      setTimeout(() => {
-        // eslint-disable-next-line no-param-reassign
-        element.style.height = 0
-      })
-    }
-  }
+
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue'
+
+interface Props {
+  show: boolean
+  duration?: number
+  easing?: string
 }
+
+const props = withDefault(defineProps<Props>(), {
+  duration: 300,
+  easing: 'ease-in-out'
+})
+
+const emit = defineEmits<{
+  (e: 'transition-start'): void
+  (e: 'transition-end'): void
+}>()
+
+const element = ref<HTMLElement | null>(null)
+let rafId: number | null = null
+
+const enter = (el: HTMLElement): void => {
+  element.value = el
+  el.style.height = 'auto'
+  const height = el.offsetHeight
+  el.style.height = '0'
+
+  rafId = requestAnimationFrame(() => {
+    el.style.transition = `height ${props.duration}ms ${props.easing}`
+    el.style.height = `${height}px`
+  })
+
+  emit('transition-start')
+}
+
+const afterEnter = (el: HTMLElement): void => {
+  el.style.height = 'auto'
+  emit('transition-end')
+}
+
+const leave = (el: HTMLElement): void => {
+  element.value = el
+  el.style.height = `${el.offsetHeight}px`
+
+  rafId = requestAnimationFrame(() => {
+    el.style.transition = `height ${props.duration}ms ${props.easing}`
+    el.style.height = '0'
+  })
+
+  emit('transition-start')
+}
+
+const afterLeave = (el: HTMLElement): void => {
+  el.style.height = ''
+  emit('transition-end')
+}
+
+onUnmounted(() => {
+  if (rafId !== null) {
+    cancelAnimationFrame(rafId)
+  }
+})
 </script>
 
-<style scoped>
-* {
-  will-change: height;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  perspective: 1000px;
-}
-</style>
-
-<style>
-.expand-enter-active,
-.expand-leave-active {
-  transition: height 1s ease-in-out;
+<style lang="scss" scoped>
+.height-enter-active,
+.height-leave-active {
   overflow: hidden;
 }
-.expand-enter,
-.expand-leave-to {
+
+.height-enter-from,
+.height-leave-to {
   height: 0;
 }
 </style>

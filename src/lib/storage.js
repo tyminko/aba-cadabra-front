@@ -1,7 +1,7 @@
 import Firebase from 'firebase/app'
 import { storage } from './firebase'
 import { toSlug } from './string'
-import simpleId from './simpleId'
+import { useId } from '../composables/useId'
 import ImageLib from './image'
 // import { FileData, ImageData, KnownAttachmentSizes } from './storage'
 
@@ -39,12 +39,12 @@ export function isSupportedImage (file) {
  * @return {boolean}
  */
 export function isSupportedFormat (file) {
-  return mimeExtension.hasOwnProperty(file.type)
+  return Object.prototype.hasOwnProperty.call(mimeExtension, file.type)
 }
 
 export function fileToRawAttachment (file) {
   return {
-    id: simpleId(),
+    id: useId('file'),
     file,
     type: file.type,
     image: null,
@@ -88,7 +88,7 @@ export function upload (userId, attachments, progressFn) {
       const attachments = uploadedAttachments.reduce((attachments, uploadedDataBySize) => {
         uploadedDataBySize.forEach(uploadedData => {
           const id = uploadedData.rawAttachment.id
-          if (!attachments.hasOwnProperty(id)) {
+          if (!Object.prototype.hasOwnProperty.call(attachments, id)) {
             const { type, name, order, caption, pointOfInterest } = uploadedData.rawAttachment
             attachments[id] = { id, type, order, caption, pointOfInterest, srcSet: {} }
             if (name) attachments[id].name = name
@@ -206,7 +206,7 @@ async function thingsToUploadForAttachment (attachment) {
  */
 async function dataToUploadForImgSize (sizeType, rawAttachment, mimeType) {
   if (rawAttachment.srcSet &&
-      rawAttachment.srcSet.hasOwnProperty(sizeType) &&
+      Object.prototype.hasOwnProperty.call(rawAttachment.srcSet, sizeType) &&
       rawAttachment.srcSet[sizeType].blob &&
       rawAttachment.srcSet[sizeType].dimensions) {
     return {
@@ -235,7 +235,7 @@ async function dataToUploadForImgSize (sizeType, rawAttachment, mimeType) {
 async function resizeForUpload (attachment, sizeType, mime) {
   /** @type Dimensions */
   let dimensions
-  let image = attachment.image
+  const image = attachment.image
   if (sizeType === 'original') {
     return { blob: attachment.file, dimensions: { w: image.naturalWidth, h: image.naturalHeight } }
   }
@@ -261,7 +261,7 @@ async function resizeForUpload (attachment, sizeType, mime) {
  */
 export function deleteAttachments (userId, attachmentsToDelete) {
   return Promise.all(attachmentsToDelete.map(attachment => {
-    if (attachment.hasOwnProperty('srcSet')) {
+    if (Object.prototype.hasOwnProperty.call(attachment, 'srcSet')) {
       return Promise.all(Object.entries(attachment.srcSet).map(([sizeType, sizeData]) => {
         let path
         if (attachment.name) {
@@ -281,6 +281,7 @@ export function deleteAttachments (userId, attachmentsToDelete) {
           })
       }))
     }
+    return Promise.resolve()
   }))
 }
 /**

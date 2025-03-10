@@ -87,7 +87,7 @@ export default {
 
     publicMenuList: {
       get () { return this.publicMenuItems },
-      set (newValue) {
+      set(newValue) {
         this.publicMenuItems = newValue.map((item, i) => ({ ...item, order: i }))
         this.updateMenuInSettings('public', newValue)
       }
@@ -95,7 +95,7 @@ export default {
 
     internalMenuList: {
       get () { return this.internalMenuItems },
-      set (newValue) {
+      set(newValue) {
         this.internalMenuItems = newValue.map((item, i) => ({ ...item, order: i }))
         this.updateMenuInSettings('internal', newValue)
       }
@@ -103,13 +103,13 @@ export default {
   },
 
   created () {
-    this.updateMenuSubscription()
+    this.updateMenuSubscription ()
     this.publicMenuItems = this.objectToOrderedList((this.menu || {}).public || {})
     this.internalMenuItems = this.objectToOrderedList((this.menu || {}).internal || {})
   },
 
   watch: {
-    user () { this.updateMenuSubscription() },
+    user () { this.updateMenuSubscription () },
     menu () {
       this.publicMenuItems = this.objectToOrderedList((this.menu || {}).public || {})
       this.internalMenuItems = this.objectToOrderedList((this.menu || {}).internal || {})
@@ -125,7 +125,7 @@ export default {
      * @param {string} type
      * @param {object=} item
      */
-    async openEditor (type, item) {
+    async openEditor(type, item) {
       item = item ? await this.prepareItemForEditor(item) : null
       this.showEditor({
         type,
@@ -136,20 +136,20 @@ export default {
       })
     },
 
-    objectToOrderedList (obj) {
+    objectToOrderedList(obj) {
       return Object.values(obj).sort((a, b) => (a.order + 1 || 1000) - (b.order + 1 || 1000))
     },
 
-    async prepareItemForEditor (item) {
+    async prepareItemForEditor(item) {
       const { id, type } = (item || {})
       if (!id || !type) return null
       const collectionId = type + 's'
-      return db.collection(collectionId).doc(id).get().then(doc => {
-        return ({ ...doc.data(), id: doc.id })
+      return db.collection(collectionId).doc(id).get ().then(doc => {
+        return ({ ...doc.data (), id: doc.id })
       })
     },
 
-    updateMenuInSettings (status, newValue) {
+    updateMenuInSettings(status, newValue) {
       db.collection('settings').doc(status + 'Menu').set({
         items: newValue.reduce((res, item, i) => {
           res[item.id] = { ...item, order: i }

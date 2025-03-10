@@ -63,20 +63,20 @@ export default {
     institutions: null,
     contentTemplates: {
       '--': 'Default',
-      'Residency': 'AIR',
-      'Partners': 'Partners',
-      'About': 'About'
+      Residency: 'AIR',
+      Partners: 'Partners',
+      About: 'About'
     }
   }),
 
   computed: {
     people: {
       get () { return this.postData.relatedPeople || [] },
-      set (newValue) { this.$set(this.postData, 'relatedPeople', newValue) }
+      set(newValue) { this.$set(this.postData, 'relatedPeople', newValue) }
     },
     template: {
       get () { return this.postData.template || '--' },
-      set (newValue) { this.$set(this.postData, 'template', newValue) }
+      set(newValue) { this.$set(this.postData, 'template', newValue) }
     },
     allowDelete () {
       return this.adminOrEditor && (this.value || {}).id
@@ -99,7 +99,7 @@ export default {
         this.$emit('setProcessing', true)
         const attachmentsEditor = this.$refs['attachments-editor']
         if (attachmentsEditor) {
-          const attachmentsData = await attachmentsEditor.processAttachments()
+          const attachmentsData = await attachmentsEditor.processAttachments ()
           this.$set(this.postData, 'attachments', attachmentsData)
           if (this.posterTempId) {
             this.$set(this.postData, 'thumbnail', this.posterTempId)
@@ -114,7 +114,7 @@ export default {
         }
 
         if (!this.postData.date) {
-          this.postData.date = new Date().getTime()
+          this.postData.date = new Date ().getTime ()
         }
 
         const original = (this.value || {})
@@ -128,7 +128,7 @@ export default {
         this.$emit('close')
       } catch (e) {
         this.$emit('setProcessing', false)
-        console.error(`%c savePost() %c e: `, 'background:#ff00AA;color:#000', 'color:#00aaff', e)
+        console.error('%c savePost () %c e: ', 'background:#ff00AA;color:#000', 'color:#00aaff', e)
       }
     },
     async afterDeleteFunc () {

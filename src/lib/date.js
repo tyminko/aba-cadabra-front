@@ -18,7 +18,7 @@ export function dateInFuture (timestamp) {
 
 export function getShortFormatForLocale (locale) {
   if (!locale) locale = DateTime.local().locale
-  if (!FORMAT_STRINGS.hasOwnProperty(locale)) {
+  if (!Object.prototype.hasOwnProperty.call(FORMAT_STRINGS, locale)) {
     FORMAT_STRINGS[locale] = makeShortFormat(locale)
   }
   return FORMAT_STRINGS[locale]
@@ -76,7 +76,7 @@ export function parseTime (string) {
 }
 
 export function parse (string, locale) {
-  let checkDate = DateTime.fromFormat(string, getShortFormatForLocale(locale))
+  const checkDate = DateTime.fromFormat(string, getShortFormatForLocale(locale))
   if (checkDate.isValid) return checkDate
 
   let match = string.match(/^(\d{1,4})\s*([-/.', ])\s*(\d{1,2})\s*([-/.', ])\s*(\d{1,4})\s*([-/.', ]?)\s*$/)
@@ -101,7 +101,7 @@ export function parse (string, locale) {
     if (month > 12 && month <= 31 && day <= 12) {
       [month, day] = [day, month]
     }
-    let checkDate = DateTime.fromObject({ year, month, day })
+    const checkDate = DateTime.fromObject({ year, month, day })
     return checkDate.isValid ? checkDate : null
   }
   match = string.match(/^(\d{1,4})\s*([-/.', ])\s*(\d{1,4})\s*([-/.', ]?)\s*$/)
@@ -125,7 +125,7 @@ export function parse (string, locale) {
         [month, day] = [day, month]
       }
     }
-    let checkDate = DateTime.fromObject({ year, month, day })
+    const checkDate = DateTime.fromObject({ year, month, day })
     return checkDate.isValid ? checkDate : null
   }
   match = string.match(/^(\d{1,4})\s*([-/.', ]?)\s*$/)
@@ -141,7 +141,7 @@ export function parse (string, locale) {
       month = new Date().getMonth() + 1
       year = new Date().getFullYear()
     }
-    let checkDate = DateTime.fromObject({ year, month, day })
+    const checkDate = DateTime.fromObject({ year, month, day })
     return checkDate.isValid ? checkDate : null
   }
   return null
@@ -149,7 +149,7 @@ export function parse (string, locale) {
 
 export function getCalendarStringsForLocale (locale) {
   if (!locale) locale = DateTime.local().locale
-  if (!CALENDAR_STRINGS.hasOwnProperty(locale)) {
+  if (!Object.prototype.hasOwnProperty.call(CALENDAR_STRINGS, locale)) {
     CALENDAR_STRINGS[locale] = generateLocaleStrings(locale)
   }
   return CALENDAR_STRINGS[locale]

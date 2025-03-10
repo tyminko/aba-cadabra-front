@@ -1,75 +1,38 @@
 <template>
   <div id="app">
     <layout-with-push-sidebar>
-      <template v-slot:header>
+      <template #header>
         <main-header />
       </template>
-      <template v-slot:sidebar="{refresh}">
-        <aside-menu @refresh="refresh" />
+      <template #sidebar>
+        <aside-menu />
       </template>
-      <template v-slot:content>
-        <router-view-wrap/>
+      <template #content>
+        <router-view-wrap />
       </template>
     </layout-with-push-sidebar>
-    <router-view name="popup"/>
-    <editor
-      v-if="user && editorToOpen"
-      id="main-editor"
-      :value="editorToOpen.value"
-      :type="editorToOpen.type"
-      :on-saved="editorToOpen.onSaved"
-      :open="!!editorToOpen"
-      @close="hideEditor"/>
+    <editor v-if="editorToOpen" />
   </div>
 </template>
-<script>
-import { mapState, mapActions } from 'vuex'
-import LayoutWithPushSidebar from './views/components/UI/layouts/LayoutWithPushSidebar'
-import MainHeader from './views/components/MainHeader'
-import Editor from './views/editor/Editor'
-import AsideMenu from './views/menu/AsideMenu'
-import RouterViewWrap from './views/components/RouterViewWrap'
 
-export default {
-  name: 'App',
-  components: { RouterViewWrap, AsideMenu, Editor, LayoutWithPushSidebar, MainHeader },
-  computed: {
-    ...mapState(['requestToLogin', 'user', 'editorToOpen', 'postToOpen']),
-    adminOrEditor () {
-      return !!this.user && (this.user.role === 'admin' || this.user.role === 'editor')
-    },
-    showSecondView () {
-      return this.$route.name !== 'home'
-    }
-  },
-  created () {
-    this.detectTouching()
-  },
-  methods: {
-    ...mapActions(['setUseTouch', 'hideEditor', 'closePost']),
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useStore } from 'vuex'
+import LayoutWithPushSidebar from './views/components/UI/layouts/LayoutWithPushSidebar.vue'
+import MainHeader from './views/components/MainHeader.vue'
+import Editor from './views/editor/Editor.vue'
+import AsideMenu from './views/menu/AsideMenu.vue'
+import RouterViewWrap from './views/components/RouterViewWrap.vue'
 
-    detectTouching () {
-      window.addEventListener('touchstart', function onFirstTouch () {
-        this.setUseTouch()
-        window.removeEventListener('touchstart', onFirstTouch, false)
-      }.bind(this), false)
-    }
-  }
-}
+const store = useStore()
+const editorToOpen = computed(() => store.state.editorToOpen)
 </script>
-<style lang="scss">
-  @import "https://fonts.googleapis.com/icon?family=Material+Icons";
-  @import "./styles/main.scss";
-  @import "./styles/vars";
 
-  #app {
-    //  margin-top: $base-size;
-  }
-
-  .post-feed {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: calc(100vh - #{$base-size * 2});
-  }
+<style>
+#app {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #2c3e50;
+}
 </style>

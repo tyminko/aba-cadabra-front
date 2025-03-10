@@ -1,155 +1,177 @@
 <template>
   <div class="event-sidebar">
     <section v-if="showMap">
-      <aba-map
+      <AbaMap
         v-if="latLng"
-        ref="map"
+        ref="mapRef"
         :markers="mapMarkers"
+        :options="mapOptions"
         class="mb-base"/>
     </section>
-    <section>
-      <profile-cell
+    <section v-if="profiles.length" class="space-y-base">
+      <ProfileCell
         v-for="profile in profiles"
         :key="profile.id"
-        :profile="profile"
-        class="mb-base"/>
+        :profile="profile"/>
     </section>
-    <section v-if="authorEvents.length">
-      <div v-for="event in authorEvents" :key="event.id">
-        <post-cell :post="event" />
-      </div>
+    <section v-if="authorEvents.length" class="space-y-base">
+      <PostCell
+        v-for="event in authorEvents"
+        :key="event.id"
+        :post="event" />
     </section>
-    <smooth-reflow>
-      <section v-if="tags">
-        <div v-for="tag in tags" :key="tag.id" class="bg-aba-blue text-white">{{tag.title}}</div>
-        <post-cell v-for="tagPost in tagPosts" :key="tagPost.id" :post="tagPost" />
+    <SmoothReflow>
+      <section v-if="tags.length" class="space-y-base">
+        <div class="flex flex-wrap gap-2">
+          <div
+            v-for="tag in tags"
+            :key="tag.id"
+            class="bg-aba-blue text-white px-3 py-1 rounded-full text-sm">
+            {{ tag.title }}
+          </div>
+        </div>
+        <PostCell
+          v-for="tagPost in tagPosts"
+          :key="tagPost.id"
+          :post="tagPost" />
       </section>
-    </smooth-reflow>
+    </SmoothReflow>
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { db, FieldPath } from '../lib/firebase'
-import PostCell from './components/PostCell'
-import SmoothReflow from './components/UI/SmoothReflow'
-import ProfileCell from './components/ProfileCell'
+import PostCell from './components/PostCell.vue'
+import SmoothReflow from './components/UI/SmoothReflow.vue'
+import ProfileCell from './components/ProfileCell.vue'
 import { abaMapStyle } from '../lib/map'
-import AbaMap from './components/UI/AbaMap'
+import AbaMap from './components/UI/AbaMap.vue'
 
-export default {
-  name: 'EventSidebar',
-  components: { AbaMap, ProfileCell, SmoothReflow, PostCell },
-  props: {
-    post: { type: Object, default: () => ({}) },
-    showMap: Boolean
+// Props
+const props = defineProps({
+  post: {
+    type: Object,
+    default: () => ({})
   },
+  showMap: {
+    type: Boolean,
+    default: false
+  }
+})
 
-  data: () => ({
-    profiles: [],
-    authorEvents: [],
-    tagPosts: [],
-    profileUnsubscribe: null,
-    mapOptions: {
-      disableDefaultUI: true,
-      backgroundColor: '#fff',
-      styles: [...abaMapStyle.basic]
-    }
-  }),
+// Refs
+const mapRef = ref(null)
+const profiles = ref([])
+const authorEvents = ref([])
+const tagPosts = ref([])
+const profileUnsubscribe = null
 
-  computed: {
-    persons () {
-      if (!(this.post || {}).participants) return []
-      return this.post.participants
-    },
+// Constants
+const mapOptions = {
+  disableDefaultUI: true,
+  backgroundColor: '#fff',
+  styles: [...abaMapStyle.basic]
+}
 
-    tags () {
-      return (this.post || {}).tags || []
-    },
+// Computed
+const tags = computed(() => props.post?.tags || [])
 
-    participantsIds () {
-      return ((this.post || {}).participants || []).map(p => p.id)
-    },
+const participantsIds = computed(() =>
+  (props.post?.participants || []).map(p => p.id)
+)
 
-    latLng () {
-      if (!(this.post || {}).location) return null
-      const { lat, lng } = this.post.location
-      // !!! DEBUG !!!
-      console.log(`%c latLng() %c lat, lng: `, 'background:#ffbb00;color:#000', 'color:#00aaff', lat, lng)
-      return { lat: parseFloat(lat), lng: parseFloat(lng) }
-    },
+const latLng = computed(() => {
+  if (!props.post?.location) return null
+  const { lat, lng } = props.post.location
+  return {
+    lat: parseFloat(lat),
+    lng: parseFloat(lng)
+  }
+})
 
-    mapMarkers () {
-      return this.latLng ? [{ ...this.latLng, label: `#${this.post.countNumber}`, url: 'this.post' }] : []
-    }
-  },
+const mapMarkers = computed(() =>
+  latLng.value
+    ? [{
+        ...latLng.value,
+        label: `#${props.post.countNumber}`,
+        url: props.post.url
+      }]
+    : []
+)
 
-  created () {
-    this.subscribeParticipantsProfiles()
-    // this.getAuthorEvents()
-    this.getTagPosts()
-  },
+// Methods
+const subscribeParticipantsProfiles = async () => {
+  profiles.value = []
+  if (!participantsIds.value.length) return
 
-  watch: {
-    author () {
-      // this.getAuthorEvents()
-    },
-    post () {
-      this.subscribeParticipantsProfiles()
-      this.getTagPosts()
-    }
-  },
+  try {
+    const snapshot = await db.collection('profiles')
+      .where(FieldPath.documentId(), 'in', participantsIds.value)
+      .get()
 
-  beforeDestroy () {
-    if (typeof this.profileUnsubscribe === 'function') {
-      this.profileUnsubscribe()
-    }
-  },
-
-  methods: {
-    subscribeParticipantsProfiles () {
-      this.profiles = []
-      if (!this.participantsIds.length) return
-      db.collection('profiles')
-        .where(FieldPath.documentId(), 'in', this.participantsIds)
-        .get()
-        .then(snapshot => {
-          snapshot.forEach(doc => {
-            this.profiles.push({ ...doc.data(), id: doc.id })
-          })
-        })
-    },
-
-    getTagPosts () {
-      const tagIds = (this.post || {}).tagIds || []
-      if (!tagIds.length) {
-        this.tagPosts = []
-        return
-      }
-      db.collection('posts')
-        .where('status', '==', 'public')
-        .where('tagIds', 'array-contains-any', tagIds)
-        .get()
-        .then(snapshot => {
-          const posts = []
-          snapshot.forEach(doc => {
-            posts.push({ ...doc.data(), id: doc.id })
-          })
-          return posts
-        })
-        .then(posts => {
-          this.tagPosts = posts.filter(post => {
-            return post.type === 'event' ||
-              post.author.uid !== (((this.post || {}).author || {}).uid || this.author.uid)
-          })
-        })
-    }
+    profiles.value = snapshot.docs.map(doc => ({
+      ...doc.data(),
+      id: doc.id
+    }))
+  } catch (error) {
+    console.error('Error fetching participant profiles:', error)
   }
 }
+
+const getTagPosts = async () => {
+  const tagIds = props.post?.tagIds || []
+  if (!tagIds.length) {
+    tagPosts.value = []
+    return
+  }
+
+  try {
+    const snapshot = await db.collection('posts')
+      .where('status', '==', 'public')
+      .where('tagIds', 'array-contains-any', tagIds)
+      .get()
+
+    const posts = snapshot.docs.map(doc => ({
+      ...doc.data(),
+      id: doc.id
+    }))
+
+    tagPosts.value = posts.filter(post =>
+      post.type === 'event' ||
+      post.author.uid !== (props.post?.author?.uid || props.author?.uid)
+    )
+  } catch (error) {
+    console.error('Error fetching tag posts:', error)
+    tagPosts.value = []
+  }
+}
+
+// Watchers
+watch(() => props.post, () => {
+  subscribeParticipantsProfiles()
+  getTagPosts()
+}, { deep: true })
+
+// Lifecycle
+onMounted(() => {
+  subscribeParticipantsProfiles()
+  getTagPosts()
+})
+
+onBeforeUnmount(() => {
+  if (typeof profileUnsubscribe === 'function') {
+    profileUnsubscribe()
+  }
+})
 </script>
 
-<style lang="scss">
-  @import "../styles/mixins";
+<style lang="scss" scoped>
+@import "../styles/mixins";
+
+.event-sidebar {
   .excerpt {
     @include multi-line-truncate(3);
   }
+}
 </style>

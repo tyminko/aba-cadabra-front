@@ -1,75 +1,106 @@
 <template>
-  <draggable
-    v-model="model"
-    v-bind="dragOptions"
+  <div
     class="draggable-content"
-    :filter="filter"
-    :draggable="draggable"
-    :disabled="disabled"
-    @start="dragging = true"
-    @end="onEnd">
-    <transition-group
-      type="transition"
-      :class="containerClass"
-      :name="!dragging ? 'flip-list' : null">
-      <slot />
-    </transition-group>
-  </draggable>
+    role="region"
+    :aria-label="label">
+    <draggable
+      v-model="modelValue"
+      v-bind="dragOptions"
+      :disabled="disabled"
+      item-key="id"
+      tag="transition-group"
+      :component-data="{
+        tag: 'div',
+        name: !disabled ? 'flip-list' : undefined,
+        type: 'transition-group',
+        class: 'draggable-content__list'
+      }"
+      @start="onDragStart"
+      @end="onDragEnd">
+      <template #item="{ element, index }">
+        <div
+          class="draggable-content__item"
+          :class="{ 'draggable-content__item--dragging': isDragging }"
+          role="listitem"
+          :aria-grabbed="isDragging"
+          :aria-dropeffect="isDragging ? 'move' : undefined">
+          <slot
+            name="item"
+            :item="element"
+            :index="index"
+            :is-dragging="isDragging" />
+        </div>
+      </template>
+    </draggable>
+  </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, computed } from 'vue'
 import Draggable from 'vuedraggable'
-export default {
-  name: 'DraggableContent',
-  components: { Draggable },
-  props: {
-    value: { type: Array, required: true },
-    filter: String,
-    draggable: { type: String, default: '>*' },
-    containerClass: String,
-    disabled: Boolean,
-    options: { type: Object, default: () => ({}) }
-  },
 
-  data: () => ({
-    dragging: false
-  }),
+interface Props {
+  modelValue: any[]
+  disabled?: boolean
+  label?: string
+  handle?: string
+  animation?: number
+  ghostClass?: string
+}
 
-  computed: {
-    model: {
-      get () { return this.value },
-      set (newValue) {
-        this.$emit('input', newValue)
-      }
-    },
-    dragOptions () {
-      return {
-        animation: 200,
-        group: 'tabs',
-        disabled: false,
-        ghostClass: 'ghost',
-        ...this.options
-      }
-    }
-  },
+const props = defineProps<Props>()
+const emit = defineEmit(['update:modelValue', 'dragstart', 'dragend'])
 
-  methods: {
-    onEnd (e) {
-      this.dragging = false
-      this.$emit('end', e)
-    }
-  }
+const isDragging = ref(false)
+
+const dragOptions = computed(() => ({
+  animation: props.animation || 200,
+  disabled: props.disabled,
+  ghostClass: props.ghostClass || 'ghost',
+  handle: props.handle
+}))
+
+const modelValue = computed({
+  get: () => props.modelValue,
+  set: (value) => emit('update:modelValue', value)
+})
+
+const onDragStart = (event: DragEvent) => {
+  isDragging.value = true
+  emit('dragstart', event)
+}
+
+const onDragEnd = (event: DragEvent) => {
+  isDragging.value = false
+  emit('dragend', event)
 }
 </script>
 
-<style lang="scss">
-  .flip-list-move {
-    transition: transform 0.5s;
+<style lang="scss" scoped>
+.draggable-content {
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
   }
-  .no-move {
-    transition: transform 0s !important;
+
+  &__item {
+    position: relative;
+    transition: all 0.3s ease;
+
+    &--dragging {
+      opacity: 0.5;
+      cursor: grabbing;
+    }
   }
-  .ghost {
-    opacity: 0.5;
-  }
+}
+
+.flip-list-move {
+  transition: transform 0.3s ease;
+}
+
+.ghost {
+  opacity: 0.5;
+  background: var(--color-bg-ghost, #f3f4f6);
+}
 </style>

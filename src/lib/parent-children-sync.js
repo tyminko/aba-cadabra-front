@@ -34,7 +34,7 @@ export async function syncChildrenVisibility (parentId, parentType, visibilitySt
     .get()
     .then(snapshot => {
       snapshot.docs.forEach(doc => {
-        batch.update(doc.ref, { 'status': visibilityStatus })
+        batch.update(doc.ref, { status: visibilityStatus })
       })
     })
     .then(() => {

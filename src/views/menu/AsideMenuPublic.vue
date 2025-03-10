@@ -49,7 +49,7 @@ export default {
 
   watch: {
     user () {
-      this.updateMenuSubscription()
+      this.updateMenuSubscription ()
     },
     menu () {
       this.$emit('updated')
@@ -57,7 +57,7 @@ export default {
   },
 
   created () {
-    this.updateMenuSubscription()
+    this.updateMenuSubscription ()
   },
 
   methods: {

@@ -5,21 +5,21 @@
       <div class="mb-sm px-sm">Log In</div>
       <div class="card-content">
         <form
-          ref="form"
+          ref="formRef"
           class="login-box"
-          @submit.prevent="login">
+          @submit.prevent="handleLogin">
             <px-input
-              ref="email"
+              ref="emailRef"
               v-model="userEmail"
               label="Email"
               type="email"
-              :rules="[rules.required, rules.email]"
+              :rules="validationRules.required"
               @input="clearMessage" />
             <px-input
               v-model="userPassword"
               label="Password"
               type="password"
-              :rules="[rules.required]"
+              :rules="validationRules.required"
               spellcheck="false"
               autocomplete="current-password"
               @input="clearMessage" />
@@ -32,7 +32,7 @@
         </a>
       </div>
       <div class="flex justify-end">
-        <button :disabled="!enableLogin" class="w-auto my-base px-sm" @click="login">
+        <button :disabled="!enableLogin" class="w-auto my-base px-sm" @click="handleLogin">
           <span>Log In</span>
         </button>
       </div>
@@ -40,72 +40,59 @@
     <transition name="push">
       <forgot-form
         v-if="forgotPassword"
-        :class="{open:forgotPassword}"
+        :class="{open: forgotPassword}"
         class="forgot-form"
         @close="forgotPassword = false" />
     </transition>
   </div>
 </template>
 
-<script>
-import { mapState } from 'vuex'
+<script setup>
+import { ref, computed, onMounted } from 'vue'
 import { auth } from '../../../lib/firebase'
 import ForgotForm from './ForgotPasswordForm'
 import PxInput from '../UI/inputs/PxInput'
 
-export default {
-  name: 'Login',
-  components: { PxInput, ForgotForm },
-  data () {
-    return {
-      userEmail: '',
-      userPassword: '',
-      message: '',
-      messageBarOpen: false,
-      showPassword: false,
-      rules: {
-        required: value => !!value || 'Required',
-        email: value => /.+@.+\..+/.test(value) || 'E-mail must be valid'
-      },
-      formValid: true,
-      forgotPassword: false
-    }
-  },
-  computed: {
-    ...mapState(['user']),
+// Ref
+const formRef = ref(null)
+const emailRef = ref(null)
+const userEmail = ref('')
+const userPassword = ref('')
+const message = ref('')
+const formValid = ref(true)
+const forgotPassword = ref(false)
 
-    enableLogin () {
-      return this.formValid
-    }
-  },
+// Validation Rule
+const validationRules = {
+  required: value => !!value || 'Required',
+  email: value => /.+@.+\..+/.test(value) || 'E-mail must be valid'
+}
 
-  mounted () {
-    this.$refs.email.focus()
-  },
+// Computed
+const enableLogin = computed(() => formValid.value)
 
-  methods: {
-    login () {
-      auth.signInWithEmailAndPassword(this.userEmail, this.userPassword).catch(err => {
-        // eslint-disable-next-line no-console
-        console.log(err)
-        if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
-          this.message = 'Wrong email or password.'
-        } else {
-          this.message = err.message
-        }
-        this.messageBarOpen = true
-      })
-    },
-
-    redirectTo (routeName) {
-      this.$router.replace({ name: routeName })
-    },
-
-    clearMessage () {
-      if (this.message) this.message = ''
+// Method
+const handleLogin = async () => {
+  try {
+    await auth.signInWithEmailAndPassword(userEmail.value, userPassword.value)
+  } catch (err) {
+    console.log(err)
+    if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+      message.value = 'Wrong email or password.'
+    } else {
+      message.value = err.message
     }
   }
 }
+
+const clearMessage = () => {
+  if (message.value) message.value = ''
+}
+
+// Lifecycle
+onMounted(() => {
+  emailRef.value?.focu ()
+})
 </script>
 
 <style lang='scss'>
@@ -148,7 +135,7 @@ export default {
   .push-enter-active, .push-leave-active {
     transition: left $transition-time;
   }
-  .push-enter, .push-leave-to {
+  .push-leave-to, .push-enter-from {
     left: 100%;
   }
 </style>

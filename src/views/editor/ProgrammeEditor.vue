@@ -1,42 +1,42 @@
 <template>
-  <div class="">
-    <dropdown-select
-      v-model="status"
-      label="Programme Status"
-      :options="statusList"
-      class="mr-base"/>
-    <px-input
-      ref="title"
-      v-model="title"
-      label="Programme Title"
+  <div class=''>
+    <select-input
+      v-model='status'
+      label='Programme Status'
+      :options='statusList'
+      class='mr-base'/>
+    <text-input
+      ref='title'
+      v-model='title'
+      label='Programme Title'
       required
-      @validated="validateForm"
-      class="lg"/>
-    <px-input
-      ref="single-label"
-      v-model="singlePostLabel"
+      @validated='validateForm'
+      class='lg'/>
+    <text-input
+      ref='single-label'
+      v-model='singlePostLabel'
       required
-      @validated="validateForm"
-      label="Single Post Label">
-      <template v-slot:desc>
-        Used as part of a single post title: <span class="capitalize italic">{{singlePostLabel}} #123</span>
+      @validated='validateForm'
+      label='Single Post Label'>
+      <template #help>
+        Used as part of a single post title: <span class='capitalize italic'>{{singlePostLabel}} #123</span>
       </template>
-    </px-input>
-    <text-editor v-model="text" label="Description"/>
+    </text-input>
+    <text-editor v-model='text' label='Description'/>
   </div>
 </template>
 
 <script>
 import { mapState } from 'vuex'
 import { db } from '../../lib/firebase'
-import PxInput from '../components/UI/inputs/PxInput'
+import TextInput from '../components/UI/inputs/TextInput'
 import TextEditor from '../components/UI/TextEditor'
-import DropdownSelect from '../components/UI/DropdownSelect'
+import SelectInput from '../components/UI/inputs/SelectInput'
 import { disconnectEventsFromProgramme } from '../../lib/parent-children-sync'
 
 export default {
   name: 'ProgrammeEditor',
-  components: { DropdownSelect, TextEditor, PxInput },
+  components: { SelectInput, TextEditor, TextInput },
 
   props: {
     value: { type: Object, default: null }
@@ -64,7 +64,7 @@ export default {
 
     title: {
       get () { return this.programmeData.title || (this.value || {}).title || '' },
-      set (newValue) {
+      set(newValue) {
         this.$set(this.programmeData, 'title', newValue)
         this.$emit('set-header', this.editorTitle)
       }
@@ -72,17 +72,17 @@ export default {
 
     singlePostLabel: {
       get () { return this.programmeData.singlePostLabel || (this.value || {}).singlePostLabel || '' },
-      set (newValue) { this.$set(this.programmeData, 'singlePostLabel', newValue) }
+      set(newValue) { this.$set(this.programmeData, 'singlePostLabel', newValue) }
     },
 
     status: {
       get () { return this.programmeData.status || (this.value || {}).status || 'public' },
-      set (newValue) { this.$set(this.programmeData, 'status', newValue) }
+      set(newValue) { this.$set(this.programmeData, 'status', newValue) }
     },
 
     text: {
       get () { return this.programmeData.text || (this.value || {}).text || '' },
-      set (newValue) { this.$set(this.programmeData, 'text', newValue) }
+      set(newValue) { this.$set(this.programmeData, 'text', newValue) }
     },
 
     editorTitle () {
@@ -99,7 +99,7 @@ export default {
   },
 
   mounted () {
-    this.validateForm()
+    this.validateForm ()
     this.$emit('allowDelete', this.allowDelete)
   },
 
@@ -107,7 +107,7 @@ export default {
     user () {
       this.$emit('allowDelete', this.allowDelete)
     },
-    value (value) {
+    value(value) {
       this.programmeData = { ...this.defaultData, ...value }
       this.$emit('allowDelete', this.allowDelete)
     }
@@ -127,7 +127,7 @@ export default {
         if (!progId && !this.programmeData.status) {
           this.programmeData.status = this.status // be sure that new programme will be saved with a status
         }
-        const progFields = this.fieldsToSave()
+        const progFields = this.fieldsToSave ()
         if (Object.keys(progFields).length) {
           const collectionRef = db.collection('programmes')
           if (progId) {
@@ -143,7 +143,7 @@ export default {
           this.$emit('close')
         }
       } catch (e) {
-        console.error(`%c save() %c e: `, 'background:#ff0000;color:#000', 'color:#00aaff', e)
+        console.error('%c save () %c e: ', 'background:#ff0000;color:#000', 'color:#00aaff', e)
         this.$emit('setProcessing', false)
       }
     },

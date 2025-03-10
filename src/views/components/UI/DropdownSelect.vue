@@ -1,210 +1,230 @@
 <template>
-  <div v-click-outside="close">
-    <label class="px-label block mb-0">
-      <span v-if="label" class="label">
-        {{label}}
+  <div
+    class="dropdown-select"
+    :class="{ 'dropdown-select--open': isOpen }">
+    <button
+      ref="triggerRef"
+      class="dropdown-select__trigger"
+      :class="{ 'dropdown-select__trigger--error': error }"
+      type="button"
+      role="combobox"
+      :aria-expanded="isOpen"
+      :aria-controls="listId"
+      :aria-label="label"
+      :aria-describedby="error ? errorId : undefined"
+      @click="toggle">
+      <span class="dropdown-select__value">
+        {{ selectedLabel || placeholder }}
       </span>
-    </label>
-    <div
-      class="dropdown-select input mb-6"
-      :class="{open:isOpen, 'float-label-wrap':label, disabled}">
-      <div ref="valueEl" class="value" :class="{'no-value': value === '--'}" @click.prevent="toggle">
-        <span class="selected">{{selectedTitle}}</span>
+      <i class="material-icons dropdown-select__icon">
+        {{ isOpen ? 'expand_less' : 'expand_more' }}
+      </i>
+    </button>
+
+    <Transition name="expand">
+      <div
+        v-if="isOpen"
+        :id="listId"
+        class="dropdown-select__list"
+        role="listbox"
+        :aria-label="label">
+        <div
+          v-for="option in options"
+          :key="option.value"
+          class="dropdown-select__option"
+          :class="{ 'dropdown-select__option--selected': isSelected(option) }"
+          role="option"
+          :aria-selected="isSelected(option)"
+          @click="select(option)">
+          {{ option.label }}
+        </div>
       </div>
-      <transition-expand>
-        <ul v-show="isOpen"
-            @click="isOpen=!isOpen"
-            ref="optionsUl"
-            :class="{open:isOpen}" class="options">
-          <li
-            v-for="(title, val) in remainingOptions" :key="val"
-            @click="select(val)"
-            :class="{'no-value': val === '--'}"
-            class="option">
-            <span>{{title}}</span>
-          </li>
-        </ul>
-      </transition-expand>
-      <button v-if="!disabled" class="compact square" type="button" @click.prevent="toggle">
-        <i class="material-icons">{{isOpen ? 'expand_less' : 'expand_more'}}</i>
-      </button>
+    </Transition>
+
+    <div
+      v-if="error"
+      :id="errorId"
+      class="dropdown-select__error"
+      role="alert">
+      {{ error }}
     </div>
   </div>
 </template>
 
-<script>
-import { TransitionExpand } from 'vue-transition-expand'
-import ClickOutside from 'vue-click-outside'
+<script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
-export default {
-  components: { TransitionExpand },
-  props: {
-    value: [String, Number],
-    options: { type: [Object, Array], required: true },
-    label: String,
-    placeholder: String,
-    disabled: Boolean
-  },
+// Generate unique ID
+const generateId = () => `id-${Math.random ().toString(36).substr(2, 9)}`
+const listId = generateId ()
+const errorId = generateId ()
 
-  data () {
-    return {
-      isOpen: false
-    }
-  },
+interface Option {
+  label: string
+  value: any
+}
 
-  computed: {
-    selectedTitle () {
-      if (typeof this.value !== 'undefined') {
-        return Array.isArray(this.options) ? this.value : this.options[this.value]
-      }
-      return this.placeholder
-    },
-    remainingOptions () {
-      const filtered = {}
-      if (Array.isArray(this.options)) {
-        this.options.forEach((v, i) => {
-          if (v !== this.value) {
-            filtered[i] = this.options[i]
-          }
-        })
-      } else {
-        Object.keys(this.options).forEach(slug => {
-          if (slug !== this.value) {
-            filtered[slug] = this.options[slug]
-          }
-        })
-      }
-      return filtered
-    }
-  },
+interface Props {
+  modelValue?: any
+  options: Option[]
+  placeholder?: string
+  label?: string
+  error?: string
+  disabled?: boolean
+}
 
-  methods: {
-    toggle () {
-      if (this.disabled) return
-      this.isOpen = !this.isOpen
-    },
-    close () {
-      this.isOpen = false
-    },
-    select (value) {
-      if (Array.isArray(this.options)) {
-        value = this.options[value]
-      }
-      this.$emit('input', value)
-    },
-    setWidth () {
-      const optionsUl = this.$refs.optionsUl
-      const valueEl = this.$refs.valueEl
-      let width = 0
-      if (valueEl) {
-        valueEl.style.width = null
-        width = valueEl.querySelector('span').getBoundingClientRect().width
-      }
-      if (optionsUl) {
-        const display = optionsUl.style.display
-        optionsUl.style.visibility = 'hidden'
-        optionsUl.style.display = null
-        optionsUl.style.position = `absolute`
-        optionsUl.style.width = '100%'
-        optionsUl.querySelectorAll('span').forEach(el => {
-          const w = el.getBoundingClientRect().width
-          if (w > width) {
-            width = w
-          }
-        })
-        optionsUl.style.width = null
-        optionsUl.style.visibility = null
-        optionsUl.style.position = null
-        optionsUl.style.display = display
-      }
-      if (valueEl) {
-        valueEl.style.width = width + 'px'
-      }
-    }
-  },
+const props = withDefault(defineProps<Props>(), {
+  modelValue: undefined,
+  options: () => [],
+  placeholder: 'Select an option',
+  label: 'Select an option',
+  error: '',
+  disabled: false
+})
 
-  watch: {
-    options () {
-      this.$nextTick(() => { this.setWidth() })
-    }
-  },
-  mounted () {
-    this.setWidth()
-  },
-  directives: {
-    ClickOutside
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: any): void
+  (e: 'change', value: any): void
+}>()
+
+const isOpen = ref(false)
+const triggerRef = ref<HTMLElement | null>(null)
+
+const selectedLabel = computed(() => {
+  const selected = props.options.find(opt => opt.value === props.modelValue)
+  return selected?.label
+})
+
+const isSelected = (option: Option) => option.value === props.modelValue
+
+const toggle = () => {
+  if (!props.disabled) {
+    isOpen.value = !isOpen.value
   }
 }
+
+const close = () => {
+  isOpen.value = false
+}
+
+const select = (option: Option) => {
+  emit('update:modelValue', option.value)
+  emit('change', option.value)
+  close ()
+}
+
+// Handle click outside
+const handleClickOutside = (event: MouseEvent) => {
+  const target = event.target as Node
+  if (triggerRef.value && !triggerRef.value.contain(target)) {
+    close ()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
-<!--suppress CssInvalidAtRule -->
-<style lang="scss">
-  .dropdown-select.input {
-    position: relative;
-    display: inline-flex;
-    width: auto;
+<style lang="scss" scoped>
+.dropdown-select {
+  position: relative;
+  width: 100%;
+
+  &__trigger {
+    display: flex;
     align-items: center;
-    background: transparent;
-    padding: 0;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    background-color: var(--color-bg-primary, white);
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-md, 0.375rem);
+    transition: all 0.2s ease;
 
-    user-select: none;
-    transition: background 0.2s;
-    white-space: nowrap;
-
-    @apply border-aba-blue border-b mb-base;
-
-    &.open {
-      z-index: 10;
+    &:hover:not(:disabled) {
+      border-color: var(--color-aba-blue, #4f46e5);
     }
 
-    &.disabled {
-      pointer-events: none;
-      border-bottom: none;
+    &:disabled {
+      background-color: var(--color-bg-disabled, #f3f4f6);
+      cursor: not-allowed;
     }
 
-    .options {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      list-style: none;
-
-      display: flex;
-      flex-flow: column nowrap;
-      width: 100%;
-      padding: 0;
-      background: #fff;
-      box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.05);
-      z-index: 20;
-      @apply border-aba-blue border-b;
-      overflow: hidden;
-      transition: height 0.2s;
+    &--error {
+      border-color: var(--color-error, #ef4444);
     }
-    .option {
-      @apply py-xs;
-    }
-    .value, .option {
-      @apply px-sm h-2/3base;
-      box-sizing: content-box;
-      display: flex;
-      align-items: center;
-
-      &:active {
-        background: rgba(0, 0, 0, 0.1);
-      }
-    }
-
-    .value.no-value {
-      @apply text-gray-500 italic font-thin;
-    }
-
-    .option:hover {
-      background: rgba(0, 0, 0, 0.05);
-    }
-
-    button {
-      flex-shrink: 0;
-      font-size: 80%;
-    }
-
   }
+
+  &__value {
+    flex: 1;
+    text-align: left;
+    color: var(--color-text-primary, #111827);
+
+    &:empty::before {
+      content: attr(data-placeholder);
+      color: var(--color-text-placeholder, #9ca3af);
+    }
+  }
+
+  &__icon {
+    margin-left: 0.5rem;
+    font-size: 1.25rem;
+    color: var(--color-text-secondary, #6b7280);
+    transition: transform 0.2s ease;
+  }
+
+  &__list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 0.25rem;
+    padding: 0.25rem;
+    background-color: var(--color-bg-primary, white);
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-md, 0.375rem);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    z-index: 50;
+  }
+
+  &__option {
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm, 0.25rem);
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: var(--color-bg-hover, #f3f4f6);
+    }
+
+    &--selected {
+      background-color: var(--color-bg-selected, #eff6ff);
+      color: var(--color-aba-blue, #4f46e5);
+    }
+  }
+
+  &__error {
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--color-error, #ef4444);
+  }
+}
+
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 0.3s ease-out;
+  max-height: 300px;
+  overflow: hidden;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
 </style>

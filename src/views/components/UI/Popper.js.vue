@@ -1,5 +1,5 @@
 <template>
-  <span ref="popper-root" v-click-outside="hide">
+  <span ref="popperRoot" v-click-outside="hide">
     <transition :name="transitionName" @after-leave="destroyAfterTransition">
       <span v-if="!disabled && showPopper" ref="popper" :id="id" class="popper">
         <span class="popper-content">
@@ -13,667 +13,358 @@
   </span>
 </template>
 
-<script>
-import simpleID from '../../../lib/simpleId'
-import { createPopper } from '@popperjs/core'
-import ClickOutside from 'vue-click-outside'
+<script setup lang="ts">
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { createPopper, Instance as PopperInstance, Placement } from '@popperjs/core'
+import { useId } from '../../../composables/useId'
 
-export default {
-  name: 'Popper',
-  directives: { ClickOutside },
-  props: {
-    trigger: {
-      type: [String, Boolean],
-      default: 'click',
-      validator: value => (typeof value === 'boolean' || ['click', 'hover', 'none'].indexOf(value) > -1)
-    },
-    modifiers: { type: Array, default: () => ([]) },
-    strategy: { type: String, default: '' },
-    placement: {
-      type: String,
-      default: 'auto',
-      validator: val => [
-        'auto',
-        'auto-start',
-        'auto-end',
-        'top',
-        'top-start',
-        'top-end',
-        'bottom',
-        'bottom-start',
-        'bottom-end',
-        'right',
-        'right-start',
-        'right-end',
-        'left',
-        'left-start',
-        'left-end',
-        'cursor-auto',
-        'cursor-auto-start',
-        'cursor-auto-end',
-        'cursor-top',
-        'cursor-top-start',
-        'cursor-top-end',
-        'cursor-bottom',
-        'cursor-bottom-start',
-        'cursor-bottom-end',
-        'cursor-right',
-        'cursor-right-start',
-        'cursor-right-end',
-        'cursor-left',
-        'cursor-left-start',
-        'cursor-left-end',
-        'cursor'
-      ].includes(val)
-    },
-    position: { type: Object, default: null },
-    disabled: Boolean,
-    noArrow: Boolean,
-    arrowSize: { type: Number, default: 12 },
-    referenceSelector: { type: String, default: '' },
-    boundariesSelector: { type: String, default: '' },
-    boundariesPadding: { type: [String, Number], default: 0 },
-    delayOnMouseEnter: { type: Number, default: 100 },
-    delayOnMouseLeave: { type: Number, default: 200 },
-    forceShow: Boolean,
-    appendToBody: Boolean,
-    touchable: Boolean,
-    enableQuickReset: Boolean,
-    transition: { type: String, default: '' }
-  },
+defineOptions({
+  name: 'PopperComponent'
+})
 
-  data () {
-    return {
-      referenceEl: null,
-      virtualReferenceEl: null,
-      popperInstance: null,
-      showPopper: false,
-      timer: null,
-      id: simpleID()
-    }
-  },
+interface Props {
+  trigger?: string | boolean
+  modifiers?: Array<any>
+  strategy?: 'absolute' | 'fixed'
+  placement?: Placement
+  position?: { x: number; y: number }
+  disabled?: boolean
+  noArrow?: boolean
+  arrowSize?: number
+  referenceSelector?: string
+  boundariesSelector?: string
+  boundariesPadding?: number
+  delayOnMouseEnter?: number
+  delayOnMouseLeave?: number
+  forceShow?: boolean
+  appendToBody?: boolean
+  touchable?: boolean
+  enableQuickReset?: boolean
+  transition?: string
+}
 
-  computed: {
-    triggerAction () {
-      return typeof this.trigger === 'boolean' || this.trigger === 'none'
-        ? null
-        : this.touchable ? 'click' : this.trigger
-    },
+const props = withDefault(defineProps<Props>(), {
+  trigger: 'click',
+  modifiers: () => [],
+  strategy: 'absolute' as const,
+  placement: 'auto',
+  position: null,
+  disabled: false,
+  noArrow: false,
+  arrowSize: 12,
+  referenceSelector: '',
+  boundariesSelector: '',
+  boundariesPadding: 0,
+  delayOnMouseEnter: 100,
+  delayOnMouseLeave: 200,
+  forceShow: false,
+  appendToBody: false,
+  touchable: false,
+  enableQuickReset: false,
+  transition: ''
+})
 
-    transitionName () {
-      return this.transition || this.triggerAction === 'hover' ? 'popper-hover' : 'popper-click'
-    },
+const emit = defineEmits<{
+  (e: 'created', state: any): void
+  (e: 'toggle', value: boolean): void
+  (e: 'show', instance: any): void
+  (e: 'hide', instance: any): void
+}>()
 
-    popperPlacementAxis () {
-      if (this.popperPlacement.startsWith('top') || this.popperPlacement.startsWith('bottom')) {
-        return 'y'
-      }
-      if (this.popperPlacement.startsWith('left') || this.popperPlacement.startsWith('right')) {
-        return 'x'
-      }
-      return ''
-    },
+const popperRoot = ref<HTMLElement | null>(null)
+const popper = ref<HTMLElement | null>(null)
+const reference = ref<HTMLElement | null>(null)
+const referenceEl = ref<HTMLElement | null>(null)
+const virtualReferenceEl = ref<any>(null)
+const popperInstance = ref<PopperInstance | null>(null)
+const showPopper = ref(false)
+const timer = ref<number | null>(null)
+const id = useId('popper')
 
-    popperPlacement () {
-      if (this.placement.startsWith('cursor-')) {
-        return this.placement.replace('cursor-', '')
-      } else if (this.placement === 'cursor') {
-        return 'auto'
-      }
-      return this.placement
-    },
+const triggerAction = computed(() => {
+  return typeof props.trigger === 'boolean' || props.trigger === 'none'
+    ? null
+    : props.touchable ? 'click' : props.trigger
+})
 
-    popperOptions () {
-      const options = { placement: this.popperPlacement }
-      if (this.strategy) {
-        options.strategy = this.strategy
-      }
+const transitionName = computed(() => {
+  return props.transition || triggerAction.value === 'hover' ? 'popper-hover' : 'popper-click'
+})
 
-      let modifiers = [
-        { name: 'offset', enabled: true, options: { offset: [0, this.noArrow ? 0 : this.arrowSize] } },
-        { name: 'arrow', options: { padding: this.arrowSize } },
-        { name: 'onFirstUpdate', phase: 'beforeRead', fn: state => { this.$emit('created', state) } }
+const popperPlacement = computed(() => {
+  if (props.placement.startsWith('cursor-')) {
+    return props.placement.replace('cursor-', '') as Placement
+  } else if (props.placement === ('cursor' as Placement)) {
+    return 'auto' as Placement
+  }
+  return props.placement
+})
+
+const popperOptions = computed(() => {
+  const options: { placement: Placement; strategy?: 'absolute' | 'fixed'; modifiers?: any[] } = {
+    placement: popperPlacement.value
+  }
+  if (props.strategy) {
+    options.strategy = props.strategy
+  }
+
+  let modifiers = [
+    { name: 'offset', enabled: true, options: { offset: [0, props.noArrow ? 0 : props.arrowSize] } },
+    { name: 'arrow', enabled: true, options: { padding: props.arrowSize } },
+    { name: 'onFirstUpdate', enabled: true, phase: 'beforeRead' as const, fn: (state: any) => { emit('created', state) } }
+  ]
+
+  if (props.boundariesSelector) {
+    const boundariesElement = document.querySelector(props.boundariesSelector)
+    if (boundariesElement) {
+      modifiers = [
+        ...modifiers,
+        {
+          name: 'flip',
+          enabled: true,
+          options: { padding: props.boundariesPadding || 0 }
+        },
+        {
+          name: 'preventOverflow',
+          enabled: true,
+          options: { padding: props.boundariesPadding || 0 }
+        }
       ]
-      if (this.boundariesSelector) {
-        const boundariesElement = document.querySelector(this.boundariesSelector)
-        if (boundariesElement) {
-          modifiers = [
-            ...modifiers,
-            { name: 'flip', options: { boundary: boundariesElement, padding: this.boundariesPadding } },
-            { name: 'preventOverflow', options: { boundary: boundariesElement, padding: this.boundariesPadding } },
-            { name: 'size',
-              phase: 'write',
-              fn: args => {
-                // !!! DEBUG !!!
-                console.log(`%c fn() %c args: `, 'background:#00ffaa;color:#000', 'color:#00aaff', args)
-              }
-            }
-          ]
-        }
-      }
-      modifiers = [...modifiers, ...this.modifiers]
-      return { ...options, modifiers }
     }
-  },
+  }
 
-  watch: {
-    position (value) {
-      if (this.placement.startsWith('cursor-')) {
-        const { x, y } = value
-        this.updateVirtualReferenceEl(x, y)
-      }
-    },
+  modifiers = [...modifiers, ...props.modifiers]
+  return { ...options, modifiers }
+})
 
-    async trigger (value) {
-      if (typeof this.trigger === 'boolean') {
-        if (value) {
-          this.show()
-          await this.$nextTick()
-          const { x, y } = this.position
-          this.updateVirtualReferenceEl(x, y)
-        } else {
-          this.hide()
-        }
-      }
-    },
+watch(() => props.position, (value) => {
+  if (props.placement.startsWith('cursor-') && value) {
+    const { x, y } = value
+    updateVirtualReferenceEl(x, y)
+  }
+})
 
-    arrowSize () {
-      this.setArrowSize()
-    },
-
-    async showPopper (value) {
-      if (value) {
-        await this.$nextTick()
-        this.popper = this.$refs.popper
-        this.updatePopper()
-        this.$emit('toggle', true)
-        this.$emit('show', this)
-      } else {
-        if (this.enableQuickReset) {
-          this.destroyPopper()
-        }
-        this.$emit('toggle', false)
-        this.$emit('hide', this)
-      }
-    },
-
-    forceShow: {
-      handler (value) {
-        this[value ? 'doShow' : 'doClose']()
-      },
-      immediate: true
-    },
-
-    disabled (value) {
-      if (value) {
-        this.showPopper = false
-      }
+watch(() => props.trigger, async (value) => {
+  if (typeof props.trigger === 'boolean') {
+    if (value) {
+      show ()
+      await nextTick ()
+      const { x, y } = props.position || { x: 0, y: 0 }
+      updateVirtualReferenceEl(x, y)
+    } else {
+      hide ()
     }
-  },
+  }
+})
 
-  created () {
-    this.appendedArrow = false
-    this.appendedToBody = false
-  },
+watch(() => props.arrowSize, () => {
+  setArrowSize ()
+})
 
-  mounted () {
-    this.setReferenceEl()
-    this.popper = this.$refs.popper
-    this.setArrowSize()
-    this.setupListenersForTrigger(this.triggerAction)
-  },
-
-  methods: {
-    async toggle (e) {
-      if (!this.forceShow) {
-        this.showPopper ? this.hide() : this.show(e)
-      }
-    },
-
-    showOnMouseEnter (e) {
-      clearTimeout(this.timer)
-      this.timer = setTimeout(() => {
-        this.show(e)
-      }, this.delayOnMouseEnter)
-    },
-
-    hideOnMouseLeave () {
-      clearTimeout(this.timer)
-      this.timer = setTimeout(() => {
-        this.hide()
-      }, this.delayOnMouseLeave)
-    },
-
-    async show (e) {
-      this.showPopper = true
-      if (this.placement.startsWith('cursor') && typeof this.trigger !== 'boolean') {
-        await this.$nextTick()
-        this.updateVirtualReferenceElOnEvent(e)
-      }
-    },
-
-    hide () {
-      this.showPopper = false
-      this.appendedArrow = false
-    },
-
-    setReferenceEl () {
-      if (this.referenceSelector) {
-        this.referenceEl = document.querySelector(this.referenceSelector)
-      } else {
-        this.referenceEl = this.reference || this.$refs.reference
-      }
-    },
-
-    setupListenersForTrigger (trigger) {
-      const el = this.referenceEl || this.$refs.reference || null
-      if (!el) return
-      switch (trigger) {
-        case 'click':
-        case 'none':
-          if (trigger === 'click') el.addEventListener('click', this.toggle)
-          // document.addEventListener('click', this.hideOnClickOutside)
-          break
-        case 'hover':
-          const showEvents = ['mouseenter', 'focus']
-          const hideEvents = ['mouseleave', 'blur']
-
-          showEvents.forEach(event => {
-            el.addEventListener(event, this.showOnMouseEnter)
-          })
-          hideEvents.forEach(event => {
-            el.addEventListener(event, this.hideOnMouseLeave)
-          })
-      }
-    },
-
-    removeListenersForTrigger (trigger) {
-      const el = this.$refs['popper-root'] || null
-      if (!el) return
-      switch (trigger) {
-        case 'click':
-          el.removeEventListener('click', this.toggle)
-          // document.removeEventListener('click', this.hideOnClickOutside)
-          break
-        case 'hover':
-          const showEvents = ['mouseenter', 'focus']
-          const hideEvents = ['mouseleave', 'blur']
-
-          showEvents.forEach(event => {
-            el.removeEventListener(event, this.showOnMouseEnter)
-          })
-          hideEvents.forEach(event => {
-            el.removeEventListener(event, this.hideOnMouseLeave)
-          })
-      }
-    },
-
-    setArrowSize () {
-      if (!this.$refs['popper-root']) return
-      this.$refs['popper-root'].style.setProperty('--popper-arrow-size', this.arrowSize + 'px')
-    },
-
-    doShow () {
-      this.showPopper = true
-    },
-
-    doClose () {
-      this.showPopper = false
-      this.appendedArrow = false
-    },
-
-    doDestroy () {
-      if (this.showPopper) {
-        return
-      }
-
-      if (this.popperInstance) {
-        this.popperInstance.destroy()
-        this.popperInstance = null
-      }
-
-      if (this.appendedToBody) {
-        this.appendedToBody = false
-        document.body.removeChild(this.popper.parentElement)
-      }
-    },
-
-    async createPopper () {
-      if (!this.noArrow && this.$refs.popper) {
-        this.appendArrow(this.$refs.popper)
-      }
-
-      if (this.appendToBody && !this.appendedToBody) {
-        this.appendedToBody = true
-        document.body.appendChild(this.popper.parentElement)
-      }
-
-      if (this.popperInstance && this.popperInstance.destroy) {
-        this.popperInstance.destroy()
-      }
-
-      if (this.placement.startsWith('cursor')) {
-        if (!this.virtualReferenceEl) {
-          this.virtualReferenceEl = {
-            getBoundingClientRect: this.generateGetBoundingClientRect()
-          }
-        }
-        this.popperInstance = createPopper(this.virtualReferenceEl, this.$refs.popper, this.popperOptions)
-        window.addEventListener('resize', this.updateVirtualReferenceElOnEvent)
-        this.getScrollableParents(this.$refs['popper-root'], []).forEach(el => {
-          el.addEventListener('scroll', this.updateVirtualReferenceElOnEvent)
-        })
-      } else {
-        if (!this.referenceEl) this.setReferenceEl()
-        this.popperInstance = createPopper(this.referenceEl, this.$refs.popper, this.popperOptions)
-      }
-    },
-
-    destroyAfterTransition () {
-      if (this.enableQuickReset) return
-      this.destroyPopper()
-    },
-
-    destroyPopper () {
-      this.removeListenersForTrigger(this.triggerAction)
-      if (this.triggerAction === 'click') {
-        // document.removeEventListener('click', this.hideOnClickOutside)
-      }
-      if (this.placement.startsWith('cursor-')) {
-        if (this.$refs['popper-root']) {
-          this.getScrollableParents(this.$refs['popper-root'], []).forEach(el => {
-            el.removeEventListener('scroll', this.updateVirtualReferenceElOnEvent)
-          })
-        }
-      }
-      this.showPopper = false
-      this.appendedArrow = false
-      this.doDestroy()
-    },
-
-    generateGetBoundingClientRect (x = 0, y = 0) {
-      const rect = this.referenceEl
-        ? this.referenceEl.getBoundingClientRect()
-        : { height: 0, width: 0, top: 0, right: 0, bottom: 0, left: 0 }
-
-      let { height, width, top, right, bottom, left } = rect
-      switch (this.popperPlacementAxis) {
-        // case 'x':
-        //   height = 0
-        //   top = y
-        //   bottom = y
-        //   break
-        // case 'y':
-        //   width = 0
-        //   left = x
-        //   right = x
-        //   break
-        default:
-          // height = width = Math.min(height, width)
-          // const half = height / 2
-          width = 0
-          height = 0
-          top = y // - half
-          bottom = y // + half
-          left = x // - half
-          right = x // + half
-      }
-      return () => ({ width, height, top, right, bottom, left })
-    },
-
-    updateVirtualReferenceElOnEvent ({ clientX: x, clientY: y }) {
-      if ((!x || !y)) {
-        // if it happens on scroll
-        const { top, right, bottom, left } = this.virtualReferenceEl.getBoundingClientRect()
-        x = left + (right - left) / 2
-        y = top + (bottom - top) / 2
-      }
-      this.updateVirtualReferenceEl(x, y)
-    },
-
-    updateVirtualReferenceEl (x, y) {
-      if (!this.virtualReferenceEl) this.virtualReferenceEl = {}
-      this.virtualReferenceEl.getBoundingClientRect = this.generateGetBoundingClientRect(x, y)
-      if (this.popperInstance) {
-        this.popperInstance.update()
-      }
-    },
-
-    appendArrow (element) {
-      if (this.appendedArrow) {
-        return
-      }
-      this.appendedArrow = true
-      const arrow = document.createElement('div')
-      arrow.setAttribute('data-popper-arrow', '')
-      arrow.className = 'popper__arrow'
-      element.appendChild(arrow)
-    },
-
-    updatePopper () {
-      this.popperInstance ? this.popperInstance.update() : this.createPopper()
-    },
-
-    onMouseOver (e) {
-      clearTimeout(this._timer)
-      this._timer = setTimeout(async () => {
-        this.showPopper = true
-        await this.$nextTick()
-        this.updateVirtualReferenceElOnEvent(e)
-      }, this.delayOnMouseEnter)
-    },
-
-    onMouseOut () {
-      clearTimeout(this._timer)
-      this._timer = setTimeout(() => {
-        this.showPopper = false
-      }, this.delayOnMouseLeave)
-    },
-
-    hideOnClickOutside (e) {
-      if (!this.$refs.popper ||
-          !this.$el || !this.referenceEl ||
-          this.elementContains(this.$el, e.target) ||
-          this.elementContains(this.referenceEl, e.target) ||
-          this.elementContains(this.$refs.popper, e.target)
-      ) {
-        return
-      }
-
-      this.$emit('documentClick', this)
-
-      if (this.forceShow) {
-        return
-      }
-      this.hide()
-    },
-
-    elementContains (elm, otherElm) {
-      if (typeof elm.contains === 'function') {
-        return elm.contains(otherElm)
-      }
-      return false
-    },
-
-    /**
-     * @param {HTMLElement} el
-     * @param {HTMLElement[]=} parents
-     * @return {HTMLElement[]}
-     */
-    getScrollableParents (el, parents = []) {
-      const { position, overflow, overflowY, overflowX } = window.getComputedStyle(el)
-      if (/(auto|scroll)/.test(overflow + overflowY + overflowX)) {
-        parents = [...parents, el]
-      }
-      if (position !== 'fixed' && el.parentElement) {
-        parents = this.getScrollableParents(el.parentElement, parents)
-      }
-      return parents
+watch(showPopper, async (value) => {
+  if (value) {
+    await nextTick ()
+    popper.value = popperRoot.value?.querySelector('.popper') || null
+    updatePopper ()
+    emit('toggle', true)
+    emit('show', { hide })
+  } else {
+    if (props.enableQuickReset) {
+      destroyPopper ()
     }
-  },
+    emit('toggle', false)
+    emit('hide', { hide })
+  }
+})
 
-  destroyed () {
-    this.destroyPopper()
+watch(() => props.forceShow, (value) => {
+  value ? doShow () : doClose ()
+}, { immediate: true })
+
+watch(() => props.disabled, (value) => {
+  if (value) {
+    showPopper.value = false
+  }
+})
+
+onMounted(() => {
+  setReferenceEl ()
+  popper.value = popperRoot.value?.querySelector('.popper') || null
+  setArrowSize ()
+  setupListenersForTrigger(triggerAction.value)
+})
+
+const toggle = async (e?: Event) => {
+  if (!props.forceShow) {
+    showPopper.value ? hide () : show(e)
   }
 }
+
+const showOnMouseEnter = (e: Event) => {
+  if (timer.value) clearTimeout(timer.value)
+  timer.value = window.setTimeout(() => {
+    show(e)
+  }, props.delayOnMouseEnter)
+}
+
+const hideOnMouseLeave = () => {
+  if (timer.value) clearTimeout(timer.value)
+  timer.value = window.setTimeout(() => {
+    hide ()
+  }, props.delayOnMouseLeave)
+}
+
+const show = async (e?: Event) => {
+  showPopper.value = true
+  if (props.placement.startsWith('cursor') && typeof props.trigger !== 'boolean' && e) {
+    const mouseEvent = e as MouseEvent
+    updateVirtualReferenceEl(mouseEvent.clientX, mouseEvent.clientY)
+  }
+}
+
+const hide = () => {
+  if (!props.forceShow) {
+    showPopper.value = false
+  }
+}
+
+const doShow = () => {
+  showPopper.value = true
+}
+
+const doClose = () => {
+  showPopper.value = false
+}
+
+const destroyPopper = () => {
+  if (popperInstance.value) {
+    popperInstance.value.destroy ()
+    popperInstance.value = null
+  }
+}
+
+const destroyAfterTransition = () => {
+  if (!showPopper.value) {
+    destroyPopper ()
+  }
+}
+
+const updatePopper = () => {
+  nextTick(() => {
+    if (!popperInstance.value) {
+      createPopperInstance ()
+    } else {
+      popperInstance.value.update ()
+    }
+  })
+}
+
+const createPopperInstance = () => {
+  destroyPopper ()
+  if (referenceEl.value && popper.value) {
+    popperInstance.value = createPopper(referenceEl.value, popper.value, popperOptions.value)
+  }
+}
+
+const setReferenceEl = () => {
+  if (props.referenceSelector) {
+    referenceEl.value = document.querySelector(props.referenceSelector)
+  } else {
+    referenceEl.value = reference.value
+  }
+}
+
+const updateVirtualReferenceEl = (x: number, y: number) => {
+  virtualReferenceEl.value = {
+    getBoundingClientRect: () => ({
+      width: 0,
+      height: 0,
+      top: y,
+      right: x,
+      bottom: y,
+      left: x
+    })
+  }
+  referenceEl.value = virtualReferenceEl.value
+  updatePopper ()
+}
+
+const setArrowSize = () => {
+  if (popper.value) {
+    const arrow = popper.value.querySelector('.popper-arrow') as HTMLElement
+    if (arrow) {
+      const size = props.arrowSize
+      arrow.style.width = `${size}px`
+      arrow.style.height = `${size}px`
+    }
+  }
+}
+
+const setupListenersForTrigger = (trigger: string | null) => {
+  if (!trigger) return
+
+  const el = referenceEl.value
+  if (!el) return
+
+  if (trigger === 'click') {
+    el.addEventListener('click', toggle)
+  } else if (trigger === 'hover') {
+    el.addEventListener('mouseenter', showOnMouseEnter)
+    el.addEventListener('mouseleave', hideOnMouseLeave)
+  }
+}
+
+defineExpose({
+  show,
+  hide,
+  toggle
+})
 </script>
 
 <style lang="scss">
-  @import "../../../styles/vars";
+.popper {
+  position: absolute;
+  z-index: 1000;
 
-  :root {
-    --popper-bg-color: #{$color-bg};
-    --popper-border-color: #{$color-aba-blue};
-    --popper-text-color: #{$text-color};
-    --popper-border-width: 2px;
-    --popper-arrow-size: 12px;
-    --popper-drop-shadow: drop-shadow(0 2px 10px rgba(0,0,0,0.05));
-  }
-
-  $pop-border-w: var(--popper-border-width);
-  $pop-bg-color: var(--popper-bg-color);
-  $pop-border-color: var(--popper-border-color);
-  $arrow-size: calc(var(--popper-arrow-size) - var(--popper-border-width) * 2);
-  $arrow-after-size: var(--popper-arrow-size);
-
-  @mixin arrow ($side) {
-    $opposite-side: '';
-    $scale: 0.6;
-
-    $transform: scaleX($scale);
-    $b-color: $pop-bg-color transparent;
-    $b-after-color: $pop-border-color transparent;
-
-    @if ($side == 'left' or $side == 'right') {
-      $transform: scaleY($scale);
-      $b-color: transparent $pop-bg-color;
-      $b-after-color: transparent $pop-border-color;
-    }
-
-    @if ($side == 'top') {
-      $opposite-side: 'bottom';
-    }
-    @else if ($side == 'bottom') {
-      $opposite-side: 'top';
-    }
-    @else if ($side == 'left') {
-      $opposite-side: 'right';
-    }
-    @else if ($side == 'right') {
-      $opposite-side: 'left';
-    }
-    .popper__arrow {
-      #{$opposite-side}: calc(var(--popper-arrow-size) * -1);
-      &:before, &:after {
-        transform: $transform;
-        border-color: $b-color;
-        border-#{$opposite-side}-width: 0;
-      }
-      &:after {
-        border-color: $b-after-color;
-        #{$side}: 0;
-      }
-    }
-  }
-
-  .dark {
-    .popper {
-      --popper-bg-color: #{$color-dimmed};
-      --popper-border-color: #fff;
-      --popper-text-color: #fff;
-      --popper-drop-shadow: drop-shadow(0 2px 60px #{darken($color-dimmed, 8%)});
-    }
-  }
-
-  .popper {
-    max-width: calc(100vw - #{$base-padding * 2});
-    /*max-height: 100%;*/
-    @apply p-base;
-
-    width: auto;
-    background-color: var(--popper-bg-color);
-    position: absolute;
-    border: var(--popper-border-width) solid var(--popper-border-color);
-    border-radius: 3px;
-    font-size: $font-size-caption;
-    color: var(--popper-text-color);
-    filter: var(--popper-drop-shadow);
-    z-index: 200000;
-
-    .popper-content{
-      overflow-y: auto;
-      height: 100%;
-      width: 100%;
-      word-break: break-all;
-      text-align: start;
-    }
-    .popper__arrow {
-      position: absolute;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: var(--popper-arrow-size);
-      height: var(--popper-arrow-size);
-      z-index: 0;
-
-      &:before, &:after {
-        content: '';
-        box-sizing: border-box;
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        border-width: $arrow-size;
-        border-style: solid;
-      }
-      &:after {
-        z-index: -1;
-        border-width: $arrow-after-size;
-      }
-    }
-
-    &[data-popper-placement^="top"] {
-      @include arrow(top);
-    }
-
-    &[data-popper-placement^="bottom"] {
-      @include arrow(bottom);
-    }
-
-    &[data-popper-placement^="right"] {
-      @include arrow(right);
-    }
-
-    &[data-popper-placement^="left"] {
-      @include arrow(left);
-    }
-  }
-
-  .popper-trigger {
+  &-content {
     position: relative;
+    display: inline-block;
   }
 
-  .popper-hover-enter-active {
-    transition: opacity 0.2s
-  }
-  .popper-hover-leave-active {
-    transition: opacity 0.5s
-  }
-  .popper-hover-enter, .popper-hover-leave-to {
-    opacity: 0;
-  }
+  &-arrow {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-color: transparent;
 
-  .popper-click-enter-active, .popper-click-leave-active {
-    transition: opacity 0.2s
+    &::before {
+      position: absolute;
+      content: '';
+      border-style: solid;
+      border-color: transparent;
+    }
   }
-  .popper-click-enter, .popper-click-leave-to {
-    opacity: 0;
-  }
+}
 
-  .popper-instant-enter-active, .popper-instant-leave-active {
-    opacity: 1;
-    transition: none;
-  }
-  .popper-instant-enter, .popper-instant-leave-to {
-    opacity: 0;
-  }
+.popper-click-enter-active,
+.popper-click-leave-active {
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.popper-click-enter-from,
+.popper-click-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.popper-hover-enter-active,
+.popper-hover-leave-active {
+  transition: opacity 0.15s;
+}
+
+.popper-hover-enter-from,
+.popper-hover-leave-to {
+  opacity: 0;
+}
 </style>

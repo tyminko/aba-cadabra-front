@@ -6,7 +6,7 @@
       :options="postStatusList"
       class="mr-base"/>
     <attachments-editor
-      ref="attachments-editor"
+      ref="attachmentsEditor"
       :value="logo"
       :max-number="1"
       no-caption
@@ -35,49 +35,77 @@
   </div>
 </template>
 
-<script>
-import PxInput from '../components/UI/inputs/PxInput'
-import postEditor from '../../mixins/post-editor'
-import AttachmentsEditor from './attachments/AttachmentsEditor'
-import DropdownSelect from '../components/UI/DropdownSelect'
-// import { db } from '../../lib/firebase'
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+import PxInput from '../components/UI/inputs/PxInput.vue'
+import AttachmentsEditor from './attachments/AttachmentsEditor.vue'
+import DropdownSelect from '../components/UI/DropdownSelect.vue'
+import { usePostEditor } from '../../composables/usePostEditor'
 
-export default {
-  name: 'InstitutionEditor',
-  components: { DropdownSelect, AttachmentsEditor, PxInput },
-  mixins: [postEditor],
-  props: {
-    open: Boolean
-  },
+defineOptions({
+  name: 'InstitutionEditor'
+})
 
-  data: () => ({
-    processing: false,
-    emptyPostData: {
-      title: '',
-      logo: null,
-      country: '',
-      url: ''
-    }
-  }),
+interface Props {
+  open?: boolean
+}
 
-  computed: {
-    attachments () { return Object.values(this.postData.attachments || {}) },
-    logo () {
-      return this.postData.logo
-        ? [this.postData.logo]
-        : this.attachments.length
-          ? [this.attachments[0]]
-          : []
-    }
-  },
+const props = withDefaults(defineProps<Props>(), {
+  open: false
+})
 
-  methods: {
-    validateForm () {
-      const fields = ['title', 'country', 'url']
-      const errorField = fields.find(ref => (this.$refs[ref] || {}).isValid !== true)
-      this.$emit('validated', !errorField)
-    }
+const emit = defineEmits<{
+  (e: 'validated', value: boolean): void
+}>()
+
+interface PostData {
+  title: string
+  logo: any | null
+  country: string
+  url: string
+  attachments?: Record<string, any>
+}
+
+const emptyPostData: PostData = {
+  title: '',
+  logo: null,
+  country: '',
+  url: ''
+}
+
+const processing = ref(false)
+const titleRef = ref<InstanceType<typeof PxInput> | null>(null)
+const countryRef = ref<InstanceType<typeof PxInput> | null>(null)
+const urlRef = ref<InstanceType<typeof PxInput> | null>(null)
+const attachmentsEditorRef = ref<InstanceType<typeof AttachmentsEditor> | null>(null)
+
+const {
+  postData,
+  postStatus,
+  postStatusList
+} = usePostEditor(emptyPostData)
+
+const attachments = computed(() => Object.values(postData.value.attachments || {}))
+
+const logo = computed(() => {
+  return postData.value.logo
+    ? [postData.value.logo]
+    : attachments.value.length
+      ? [attachments.value[0]]
+      : []
+})
+
+const validateForm = () => {
+  const refs = {
+    title: titleRef.value,
+    country: countryRef.value,
+    url: urlRef.value
   }
+  const errorField = Object.entries(refs).find(([_, ref]) => {
+    if (!ref) return true
+    return (ref as any).isValid !== true
+  })
+  emit('validated', !errorField)
 }
 </script>
 

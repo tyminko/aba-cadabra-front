@@ -1,8 +1,10 @@
 <template>
   <div class="location">
-    <search-input :query="queryLocation">
-
-    </search-input>
+    <SearchInput
+      v-model="searchQuery"
+      :results="searchResults"
+      placeholder="Search location..."
+      @update:modelValue="queryLocation" />
     <px-input
       v-model.lazy="address"
       label="Location"
@@ -20,158 +22,192 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, computed, nextTick } from 'vue'
 import { gmapApi } from 'vue2-google-maps'
-import PxInput from './PxInput'
+import type { Ref } from 'vue'
+import PxInput from './PxInput.vue'
 import { abaMapStyle, defineABAMarkerClass, getMarkerHtml } from '../../../../lib/map'
-import SearchInput from './SearchInput'
+import SearchInput from './SearchInput.vue'
 
-export default {
-  name: 'Location',
-  components: { SearchInput, PxInput },
-  props: {
-    value: { type: Object, default: () => ({}) }
-  },
+declare global {
+  interface Window {
+    google: {
+      maps: {
+        Geocoder: new () => any;
+        [key: string]: any;
+      };
+    };
+  }
+}
 
-  data: () => ({
-    locationObj: null,
-    geocoder: null,
-    tmpAddress: '',
-    tmpLatLng: null,
-    defaultLatLng: { lat: 52.5220676, lng: 13.4121466 },
-    mapOptions: {
-      disableDefaultUI: true,
-      backgroundColor: '#fff',
-      styles: [...abaMapStyle.basic]
-    },
-    MarkerClass: null,
-    markerEl: null,
-    markerInstance: null,
-    markersStock: {},
-    map: null,
-    error: null
-  }),
+interface LocationValue {
+  id?: string
+  address?: string
+  country?: string
+  countryCode?: string
+  latLng?: { lat: number; lng: number }
+  lat?: number
+  lng?: number
+}
 
-  computed: {
-    address: {
-      get () { return this.tmpAddress || this.value.address },
-      async set (newValue) {
-        // !!! DEBUG !!!
-        console.log(`%c address.set() %c newValue: `, 'background:#ffbbff;color:#000', 'color:#00aaff', newValue)
-        this.tmpAddress = newValue
-        if (!newValue) {
-          this.latLng = null
-        } else {
-          const location = await this.addressToLocation(newValue)
-          // !!! DEBUG !!!
-          console.log(`%c set() %c location: `, 'background:#ffbb00;color:#000', 'color:#00aaff', location)
-          if (location === this.value) return
-          // !!! DEBUG !!!
-          console.log(`%c address.set() %c location: `, 'background:#ffbb00;color:#000', 'color:#00aaff', location)
-          this.latLng = (location || {}).latLng || null
-          this.tmpAddress = (location || {}).address || ''
-          this.setMarker((location || {}).latLng)
-          this.$emit('input', location)
-        }
-      }
-    },
-    latLng: {
-      get () {
-        if (this.tmpLatLng) return this.tmpLatLng
-        // !!! DEBUG !!!
-        console.log(`%c get() %c this.value: `, 'background:#ffbb00;color:#000', 'color:#00aaff', this.value)
-        const { lat, lng } = this.value || {}
-        return lat && lng ? { lat: parseFloat(lat), lng: parseFloat(lng) } : null
-      },
-      set (newValue) {
-        this.tmpLatLng = newValue
-      }
-    },
-    google: gmapApi
-  },
+interface LatLng {
+  lat: number
+  lng: number
+}
 
-  mounted () {
-    if (this.$refs.map) {
-      this.init()
-      if (this.latLng) {
-        this.setMarker(this.latLng)
-      }
-    }
-  },
+interface SearchResult {
+  id: string
+  text: string
+  label: string
+}
 
-  methods: {
-    init () {
-      return this.$refs.map.$mapPromise.then(map => {
-        this.map = map
-        this.MarkerClass = defineABAMarkerClass(this.google)
-      })
-    },
+defineOptions({
+  name: 'LocationInput'
+})
 
-    addressToLocation (addressStr) {
+const props = withDefault(defineProps<{
+  value: LocationValue
+}>(), {
+  value: () => ({})
+})
+
+const emit = defineEmits<{
+  (e: 'input', value: LocationValue): void
+}>()
+
+const locationObj = ref<LocationValue | null>(null)
+const geocoder = ref<any>(null)
+const tmpAddress = ref('')
+const tmpLatLng = ref<LatLng | null>(null)
+const defaultLatLng: LatLng = { lat: 52.5220676, lng: 13.4121466 }
+const mapOptions = {
+  disableDefaultUI: true,
+  backgroundColor: '#fff',
+  styles: [...abaMapStyle.basic]
+}
+const MarkerClass = ref<any>(null)
+const markerEl = ref<HTMLElement | null>(null)
+const markerInstance = ref<any>(null)
+const markersStock = ref<Record<string, any>>({})
+const map = ref<any>(null)
+const error = ref<string | null>(null)
+const searchResults = ref<SearchResult[]>([])
+const searchQuery = ref('')
+
+const googleMaps = computed(() => {
+  const api = gmapApi ()
+  return api?.map
+})
+
+const address = computed({
+  get () { return tmpAddress.value || props.value.address },
+  async set(newValue) {
+    // !!! DEBUG !!!
+    console.log('%c address.set () %c newValue: ', 'background:#ffbbff;color:#000', 'color:#00aaff', newValue)
+    tmpAddress.value = newValue
+    if (!newValue) {
+      latLng.value = null
+    } else {
+      const location = await addressToLocation(newValue)
       // !!! DEBUG !!!
-      console.log(`%c addressToLocation() %c this.value.address: `, 'background:#ffbbff;color:#000', 'color:#00aaff', this.value.address)
-      if (!addressStr) return null
-      if (addressStr === this.value.address) return this.value
-      if (!this.geocoder) this.geocoder = new this.google.maps.Geocoder()
-      return new Promise((resolve) => {
-        this.geocoder.geocode({ 'address': addressStr }, async (results, status) => {
-          if (status === 'OK') {
-            const res = results[0]
-            const location = res.geometry.location
-            const latLng = { lat: location.lat(), lng: location.lng() }
+      console.log('%c set () %c location: ', 'background:#ffbb00;color:#000', 'color:#00aaff', location)
+      if (location === props.value) return
+      // !!! DEBUG !!!
+      console.log('%c address.set () %c location: ', 'background:#ffbb00;color:#000', 'color:#00aaff', location)
+      latLng.value = (location as LocationValue)?.latLng || null
+      tmpAddress.value = (location as LocationValue)?.address || ''
+      setMarker((location as LocationValue)?.latLng)
+      emit('input', location as LocationValue)
+    }
+  }
+})
 
-            // !!! DEBUG !!!
-            console.log(`%c () %c res: `, 'background:#00ddff;color:#000', 'color:#00aaff', res)
+const latLng = computed({
+  get () {
+    if (tmpLatLng.value) return tmpLatLng.value
+    // !!! DEBUG !!!
+    console.log('%c get () %c this.value: ', 'background:#ffbb00;color:#000', 'color:#00aaff', props.value)
+    const { lat, lng } = props.value || {}
+    return lat && lng ? { lat: Number(lat), lng: Number(lng) } : null
+  },
+  set(newValue) {
+    tmpLatLng.value = newValue
+  }
+})
 
-            resolve({
-              id: res.place_id,
-              address: res.formatted_address,
-              country: (res.address_components.find(c => c.types.includes('locality')) || {}).long_name,
-              countryCode: (res.address_components.find(c => c.types.includes('locality')) || {}).short_name,
-              latLng: { ...latLng },
-              lat: latLng.lat,
-              lng: latLng.lng
-            })
-          } else {
-            console.log('Geocode was not successful for the following reason: ' + status)
-            resolve(null)
-          }
+const queryLocation = () => {}
+
+const round = (n) => {
+  return Math.round(n * 1000) / 1000
+}
+
+const init = async () => {
+  if (map.value) {
+    await map.value.$mapPromise.then(map => {
+      map.value = map
+      MarkerClass.value = defineABAMarkerClas(googleMaps.value)
+    })
+  }
+}
+
+const addressToLocation = async (addressStr) => {
+  // !!! DEBUG !!!
+  console.log('%c addressToLocation () %c this.value.address: ', 'background:#ffbbff;color:#000', 'color:#00aaff', props.value.address)
+  if (!addressStr) return null
+  if (addressStr === props.value.address) return props.value
+  if (!geocoder.value) geocoder.value = new googleMaps.value.maps.Geocoder ()
+  return new Promise((resolve) => {
+    geocoder.value.geocode({ address: addressStr }, async (results, status) => {
+      if (status === 'OK') {
+        const res = results[0]
+        const location = res.geometry.location
+        const latLng = { lat: location.lat (), lng: location.lng () }
+
+        // !!! DEBUG !!!
+        console.log('%c () %c res: ', 'background:#00ddff;color:#000', 'color:#00aaff', res)
+
+        resolve({
+          id: res.place_id,
+          address: res.formatted_address,
+          country: (res.address_components.find(c => c.types.include('locality')) || {}).long_name,
+          countryCode: (res.address_components.find(c => c.types.include('locality')) || {}).short_name,
+          latLng: { ...latLng },
+          lat: latLng.lat,
+          lng: latLng.lng
         })
-      })
-    },
-
-    async setMarker (location) {
-      if (!location) return
-      if (!this.map) {
-        await this.$nextTick()
-        await this.init()
+      } else {
+        console.log('Geocode was not successful for the following reason: ' + status)
+        resolve(null)
       }
-      if (!this.markerEl && this.$refs.map) {
-        this.markerEl = getMarkerHtml({ ...location, active: true }, this.$refs.map.$el, this.markersStock)
-      }
-      // !!! DEBUG !!!
-      console.log(`%c setMarker() %c this.map: `, 'background:#00bbff;color:#000', 'color:#00aaff', this.map)
-      console.log(`%c setMarker() %c this.markerEl: `, 'background:#00bbff;color:#000', 'color:#00aaff', this.markerEl)
-      console.log(`%c setMarker() %c this.MarkerClass: `, 'background:#00bbff;color:#000', 'color:#00aaff', this.MarkerClass)
+    })
+  })
+}
 
-      if (this.markerInstance &&
-        this.markerInstance.latLng.lat !== location.lat &&
-        this.markerInstance.latLng.lng !== location.lng
-      ) {
-        this.markerInstance.setMap(null)
-      }
-      if (this.markerEl && this.MarkerClass && this.map) {
-        // noinspection JSClosureCompilerSyntax
-        this.markerInstance = new this.MarkerClass(location, this.markerEl)
-        this.markerInstance.setMap(this.map)
-      }
-    },
+const setMarker = async (location) => {
+  if (!location) return
+  if (!map.value) {
+    await nextTick ()
+    await init ()
+  }
+  if (!markerEl.value && map.value) {
+    markerEl.value = getMarkerHtml({ ...location, active: true }, map.value.$el, markersStock.value)
+  }
+  // !!! DEBUG !!!
+  console.log('%c setMarker () %c this.map: ', 'background:#00bbff;color:#000', 'color:#00aaff', map.value)
+  console.log('%c setMarker () %c this.markerEl: ', 'background:#00bbff;color:#000', 'color:#00aaff', markerEl.value)
+  console.log('%c setMarker () %c this.MarkerClass: ', 'background:#00bbff;color:#000', 'color:#00aaff', MarkerClass.value)
 
-    queryLocation () {},
-
-    round (n) {
-      return Math.round(n * 1000) / 1000
-    }
+  if (markerInstance.value &&
+    markerInstance.value.latLng.lat !== location.lat &&
+    markerInstance.value.latLng.lng !== location.lng
+  ) {
+    markerInstance.value.setMap(null)
+  }
+  if (markerEl.value && MarkerClass.value && map.value) {
+    // noinspection JSClosureCompilerSyntax
+    markerInstance.value = new MarkerClass.value(location, markerEl.value)
+    markerInstance.value.setMap(map.value)
   }
 }
 </script>

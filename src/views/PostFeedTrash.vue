@@ -29,9 +29,16 @@ export default {
 
   computed: {
     ...mapState(['user']),
-    adminOrEditor () {
-      return !!this.user && (this.user.role === 'admin' || this.user.role === 'editor')
-    },
+    // eslint-disable-next-line func-call-spacing
+    isAdmin () { return this.user && this.user.role === 'admin' },
+    // eslint-disable-next-line func-call-spacing
+    isEditor () { return this.user && this.user.role === 'editor' },
+    // eslint-disable-next-line func-call-spacing
+    isAuthor () { return this.user && this.user.role === 'author' },
+    // eslint-disable-next-line func-call-spacing
+    isAdminOrEditor () { return this.isAdmin || this.isEditor },
+    // eslint-disable-next-line func-call-spacing
+    isAdminOrEditorOrAuthor () { return this.isAdminOrEditor || this.isAuthor },
     posts () {
       return Object.values(this.feed)
         .reduce((res, feed) => [...res, ...Object.values(feed)], [])
@@ -40,6 +47,7 @@ export default {
   },
 
   watch: {
+    // eslint-disable-next-line func-call-spacing
     user () {
       if (!this.user) {
         this.$router.push({ name: 'home' })
@@ -47,29 +55,38 @@ export default {
       }
       this.subscribeFeed()
     },
+    // eslint-disable-next-line func-call-spacing
     $route () { if (this.user && !this.unsubscribe) this.subscribeFeed() }
   },
 
+  // eslint-disable-next-line func-call-spacing
   async created () {
     if (this.user) this.subscribeFeed()
   },
-  destroyed () {
+
+  // eslint-disable-next-line func-call-spacing
+  unmounted () {
     this.unsubscribeFeed()
   },
 
   methods: {
+    // eslint-disable-next-line func-call-spacing
     subscribeFeed () {
       this.unsubscribeFeed()
       const options = { status: 'trash' }
-      if (!this.adminOrEditor) options.authorId = (this.user || {}).uid
+      if (!this.isAdminOrEditor) options.authorId = (this.user || {}).uid
       this.types.forEach(collectionName => {
         this.unsubscribe[collectionName] = subscribeToPosts(
           { ...options, collectionName },
           (id, post) => {
-            this.$set(this.feed[collectionName], id, collectionName === 'posts' ? post : {
-              ...post,
-              type: this.collectionNameToType(collectionName)
-            })
+            this.$set(this.feed[collectionName], id,
+              collectionName === 'posts'
+                ? post
+                : {
+                    ...post,
+                    type: this.collectionNameToType(collectionName)
+                  }
+            )
           },
           id => this.$delete(this.feed[collectionName], id),
           () => { this.processing = false }
@@ -77,6 +94,7 @@ export default {
       })
     },
 
+    // eslint-disable-next-line func-call-spacing
     unsubscribeFeed () {
       Object.entries(this.unsubscribe).forEach(([unsub, type]) => {
         if (typeof unsub === 'function') {
@@ -87,6 +105,7 @@ export default {
       })
     },
 
+    // eslint-disable-next-line func-call-spacing
     emptyTrash () {
       this.types.forEach(collName => {
         db.collection(collName)
@@ -98,6 +117,7 @@ export default {
       })
     },
 
+    // eslint-disable-next-line func-call-spacing
     collectionNameToType (collectionName) {
       switch (collectionName) {
         case 'institutions': return 'partner'
@@ -105,7 +125,9 @@ export default {
       }
     }
   },
-  beforeDestroy () {
+
+  // eslint-disable-next-line func-call-spacing
+  beforeUnmount () {
     this.unsubscribeFeed()
   }
 }

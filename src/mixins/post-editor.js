@@ -156,13 +156,13 @@ export default {
         this.$emit('saved')
       } catch (e) {
         this.$emit('setProcessing', false)
-        console.error(`%c savePost() %c e: `, 'background:#ff00AA;color:#000', 'color:#00aaff', e)
+        console.error('%c savePost() %c e: ', 'background:#ff00AA;color:#000', 'color:#00aaff', e)
       }
     },
 
     async remove () {
       if (!this.allowDelete) {
-        console.error(`%c Remove Post %c e: `, 'background:#ff00AA;color:#000', 'color:#00aaff', 'Deleting is not allowed.')
+        console.error('%c Remove Post %c e: ', 'background:#ff00AA;color:#000', 'color:#00aaff', 'Deleting is not allowed.')
         return
       }
       try {
@@ -174,7 +174,7 @@ export default {
         this.$emit('close')
       } catch (e) {
         this.$emit('setProcessing', false)
-        console.error(`%c Remove Post %c e: `, 'background:#ff00AA;color:#000', 'color:#00aaff', e)
+        console.error('%c Remove Post %c e: ', 'background:#ff00AA;color:#000', 'color:#00aaff', e)
       }
     },
 

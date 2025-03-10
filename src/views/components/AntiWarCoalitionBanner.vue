@@ -8,7 +8,7 @@
             version="1.1" xmlns="http://www.w3.org/2000/svg"
             xmlns:xlink="http://www.w3.org/1999/xlink"
             xml:space="preserve"
-            xmlns:serif="http://www.serif.com/"
+            xmlns:serif ="http://www.serif .com/"
             style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
             <g transform="matrix(0.857143,0,0,0.857143,1.32751e-14,-266.571)">
                 <g>
@@ -56,7 +56,7 @@
                     </g>
                 </g>
             </g>
-            <g id="_-anti-war--coalition-art-" serif:id="(anti•war ¶coalition•art)" transform="matrix(11.7433,0,0,11.7433,-2975.67,-6911.76)">
+            <g id="_-anti-war--coalition-art-" serif :id="(anti•war ¶coalition•art)" transform="matrix(11.7433,0,0,11.7433,-2975.67,-6911.76)">
                 <path d="M256.522,590.867L255.715,590.867L255.527,591.461L255.351,591.461L256.041,589.332L256.199,589.332L256.884,591.461L256.709,591.461L256.522,590.867ZM255.764,590.698L256.472,590.698L256.12,589.591L255.764,590.698Z" style="fill-rule:nonzero;"/>
                 <path d="M258.672,591.464L258.502,591.464L257.48,589.676L257.48,591.464L257.309,591.464L257.309,589.335L257.48,589.335L258.502,591.126L258.502,589.335L258.672,589.335L258.672,591.464Z" style="fill:rgb(16,0,255);fill-rule:nonzero;"/>
                 <path d="M260.545,589.505L259.865,589.505L259.865,591.464L259.694,591.464L259.694,589.505L259.012,589.505L259.012,589.335L260.545,589.335L260.545,589.505Z" style="fill:rgb(16,0,255);fill-rule:nonzero;"/>
@@ -95,7 +95,7 @@
             version="1.1" xmlns="http://www.w3.org/2000/svg"
             xmlns:xlink="http://www.w3.org/1999/xlink"
             xml:space="preserve"
-            xmlns:serif="http://www.serif.com/"
+            xmlns:serif ="http://www.serif .com/"
             style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
             <g transform="matrix(0.857143,0,0,0.857143,-43,-266.571)">
                 <g>
@@ -125,7 +125,7 @@
                     </g>
                 </g>
             </g>
-            <g id="_-anti-war--coalition-art-" serif:id="(anti•war ¶coalition•art)" transform="matrix(11.7433,0,0,11.7433,-2996.67,-6911.76)">
+            <g id="_-anti-war--coalition-art-" serif :id="(anti•war ¶coalition•art)" transform="matrix(11.7433,0,0,11.7433,-2996.67,-6911.76)">
                 <path d="M256.522,590.867L255.715,590.867L255.527,591.461L255.351,591.461L256.041,589.332L256.199,589.332L256.884,591.461L256.709,591.461L256.522,590.867ZM255.764,590.698L256.472,590.698L256.12,589.591L255.764,590.698Z" style="fill:rgb(15,0,255);fill-rule:nonzero;"/>
                 <path d="M258.672,591.464L258.502,591.464L257.48,589.676L257.48,591.464L257.309,591.464L257.309,589.335L257.48,589.335L258.502,591.126L258.502,589.335L258.672,589.335L258.672,591.464Z" style="fill:rgb(16,0,255);fill-rule:nonzero;"/>
                 <path d="M260.545,589.505L259.865,589.505L259.865,591.464L259.694,591.464L259.694,589.505L259.012,589.505L259.012,589.335L260.545,589.335L260.545,589.505Z" style="fill:rgb(177,0,0);fill-rule:nonzero;"/>
@@ -173,7 +173,7 @@ export default {
     .awc-banner-medium {
         display: block;
     }
-    @media (min-width: 536px) {
+    @media(min-width: 536px) {
         .awc-banner-full {
             display: block;
         }

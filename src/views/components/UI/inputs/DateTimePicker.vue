@@ -1,185 +1,175 @@
 <template>
-  <div class="date-time-picker">
-    <div :id="id" class="flex items-center">
-      <px-input
-        v-model="dateString"
-        :label="label"
-        :error="!!error"
-        @blur="onBlur"
-        min-width="95">
-        <template v-slot:add-on>
-          <popper
-            ref="calendar-popper"
-            boundaries-selector="body"
-            :boundaries-padding="10"
-            @toggle="calendarIsOpen=$event">
-            <template v-slot:reference>
-              <button class="w-2/3base h-2/3base" @click.prevent="preventDefault">
-                <i class="material-icons">event</i>
-              </button>
-            </template>
-            <calendar v-model="model" locale="de"/>
-          </popper>
-        </template>
-      </px-input>
-      <px-input
-        v-if="!dateOnly"
-        v-model="timeString"
-        placeholder="00:00"
-        label="Time"
-        min-width="50"
-        @blur="onBlur"/>
+  <div
+    class="datetime-picker"
+    :class="{ 'datetime-picker--error': error }">
+    <div class="datetime-picker__inputs">
+      <input
+        ref="dateRef"
+        type="date"
+        class="datetime-picker__field"
+        :value="dateValue"
+        :min="minDate"
+        :max="maxDate"
+        :aria-label="`${label} date`"
+        :aria-invalid="!!error"
+        :aria-describedby="error ? errorId : undefined"
+        :disabled="disabled"
+        @input="handleDateInput"
+        @focus="handleFocus"
+        @blur="handleBlur" />
+
+      <input
+        ref="timeRef"
+        type="time"
+        class="datetime-picker__field"
+        :value="timeValue"
+        :aria-label="`${label} time`"
+        :aria-invalid="!!error"
+        :disabled="disabled"
+        @input="handleTimeInput"
+        @focus="handleFocus"
+        @blur="handleBlur" />
     </div>
-    <div :class="{error}" class="dec px-sm -mt-5 mb-base text-xs text-gray-500 whitespace-no-wrap truncate">
-      {{error || dateFull}}
+
+    <div
+      v-if="error"
+      :id="errorId"
+      class="datetime-picker__error"
+      role="alert">
+      {{ error }}
     </div>
   </div>
 </template>
 
-<script>
-import simpleID from '../../../../lib/simpleId'
-import * as date from '../../../../lib/date'
-import { DateTime } from 'luxon'
-import Popper from '../Popper.js'
-import PxInput from './PxInput'
-import Calendar from '../calendar/Calendar'
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import type { Ref } from 'vue'
 
-export default {
-  name: 'DateTimePicker',
-  components: { Popper, PxInput, Calendar },
-  props: {
-    value: { type: [String, Number] },
-    required: Boolean,
-    label: String,
-    dateOnly: Boolean
-  },
+// Generate unique ID for error message
+const errorId = `datetime-picker-error-${Math.random ().toString(36).substr(2, 9)}`
 
-  data: () => ({
-    id: simpleID(),
-    tempDateString: '',
-    tempTimeString: '',
-    check: '',
-    error: '',
-    lazyParsedValue: '',
-    lazyDelay: 5000,
-    lazyTimeout: null,
-    calendarIsOpen: false,
-    defaultDateFormat: date.getShortFormatForLocale().replace(/L/g, 'M').toUpperCase()
-  }),
+interface Props {
+  modelValue?: Date | null
+  label?: string
+  error?: string
+  disabled?: boolean
+  minDate?: string
+  maxDate?: string
+}
 
-  computed: {
-    dateFull () {
-      return this.lazyParsedValue
-        ? date.format(this.lazyParsedValue, 'full')
-        : this.tempDateString
-          ? date.format(this.model, 'full')
-          : ''
-    },
+const props = withDefault(defineProps<Props>(), {
+  modelValue: null,
+  label: 'Date and time',
+  error: '',
+  disabled: false,
+  minDate: undefined,
+  maxDate: undefined
+})
 
-    dateString: {
-      get () {
-        return this.tempDateString
-      },
-      set (newValue) {
-        clearTimeout(this.lazyTimeout)
-        this.tempDateString = newValue
-        if (!newValue) {
-          this.error = ''
-          if (this.required) {
-            this.lazyParsedValue = DateTime.local()
-          }
-        } else {
-          const parsed = date.parse(newValue.trim())
-          if (parsed) {
-            const { hour, minute } = DateTime.fromMillis(this.model).toObject()
-            this.lazyParsedValue = parsed.set({ hour, minute })
-            this.error = ''
-          } else {
-            this.lazyParsedValue = ''
-            this.error = `Try this format: ${this.defaultDateFormat} (${date.format(DateTime.local())})`
-          }
-        }
-        this.lazyTimeout = setTimeout(() => {
-          if (this.lazyParsedValue) {
-            this.model = this.lazyParsedValue.toMillis()
-            this.lazyParsedValue = ''
-          }
-        }, this.lazyDelay)
-      }
-    },
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: Date | null): void
+  (e: 'change', value: Date | null): void
+  (e: 'focus'): void
+  (e: 'blur'): void
+}>()
 
-    timeString: {
-      get () { return this.tempTimeString },
-      set (newValue) {
-        this.tempTimeString = newValue
-        clearTimeout(this.lazyTimeout)
-        const parsed = date.parseTime(newValue.trim())
-        if (parsed) {
-          this.lazyParsedValue = (this.lazyParsedValue || DateTime.fromMillis(this.model)).set(parsed)
-          this.error = ''
-        }
-        this.lazyTimeout = setTimeout(() => {
-          if (this.lazyParsedValue) {
-            this.model = this.lazyParsedValue.toMillis()
-            this.lazyParsedValue = ''
-          }
-        }, this.lazyDelay)
-      }
-    },
+const dateRef = ref<HTMLInputElement | null>(null)
+const timeRef = ref<HTMLInputElement | null>(null)
 
-    model: {
-      get () {
-        return this.value
-      },
-      set (newValue) {
-        this.$emit('input', newValue)
-      }
-    }
-  },
+const dateValue = computed(() => {
+  if (!props.modelValue) return ''
+  return props.modelValue.toISOString ().split('T')[0]
+})
 
-  watch: {
-    value (value) {
-      this.updateValues()
-    }
-  },
+const timeValue = computed(() => {
+  if (!props.modelValue) return ''
+  return props.modelValue.toTimeString ().slice(0, 5)
+})
 
-  created () {
-    this.updateValues()
-  },
+const handleDateInput = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  const date = target.value
+  updateDateTime(date, timeValue.value)
+}
 
-  methods: {
-    updateValues () {
-      const val = (!this.value && this.required) ? DateTime.local().toMillis() : this.value
-      this.error = ''
-      this.tempDateString = val ? date.format(val) : ''
-      this.tempTimeString = val ? date.formatTime(val) : ''
-    },
+const handleTimeInput = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  const time = target.value
+  updateDateTime(dateValue.value, time)
+}
 
-    onEsc () {
-      if (this.calendarIsOpen && this.$refs['calendar-popper']) {
-        this.$refs['calendar-popper'].hide()
-        return true
-      }
-    },
-
-    onBlur () {
-      clearTimeout(this.lazyTimeout)
-      if (this.lazyParsedValue) {
-        this.$emit('input', this.lazyParsedValue.toMillis())
-        this.lazyParsedValue = ''
-      }
-    },
-
-    preventDefault (e) {
-      e.preventDefault()
-    }
+const updateDateTime = (date: string, time: string) => {
+  if (!date || !time) {
+    emit('update:modelValue', null)
+    emit('change', null)
+    return
   }
+
+  const newDate = new Date(`${date}T${time}:00`)
+  if (isNaN(newDate.getTime ())) {
+    emit('update:modelValue', null)
+    emit('change', null)
+    return
+  }
+
+  emit('update:modelValue', newDate)
+  emit('change', newDate)
+}
+
+const handleFocus = () => {
+  emit('focus')
+}
+
+const handleBlur = () => {
+  emit('blur')
 }
 </script>
 
-<!--suppress CssInvalidAtRule -->
-<style lang="scss">
-  .date-time-picker {
-    .error { @apply text-red-500; }
+<style lang="scss" scoped>
+.datetime-picker {
+  &__inputs {
+    display: flex;
+    gap: 0.5rem;
   }
+
+  &__field {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--color-text-primary, #111827);
+    background-color: var(--color-bg-primary, white);
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-md, 0.375rem);
+    transition: all 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-aba-blue, #4f46e5);
+      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+    }
+
+    &:disabled {
+      background-color: var(--color-bg-disabled, #f3f4f6);
+      cursor: not-allowed;
+    }
+
+    &::-webkit-calendar-picker-indicator {
+      color: var(--color-text-secondary, #6b7280);
+      cursor: pointer;
+    }
+  }
+
+  &__error {
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--color-error, #ef4444);
+  }
+
+  &--error &__field {
+    border-color: var(--color-error, #ef4444);
+
+    &:focus {
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
+    }
+  }
+}
 </style>
