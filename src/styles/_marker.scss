@@ -93,3 +93,44 @@ $label-border-color: lighten($marker-border-color, 30%);
     }
   }
 }
+
+.marker-popup {
+  padding: 12px;
+  max-width: 250px;
+  font-family: sans-serif;
+  
+  h3 {
+    margin: 0 0 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: $label-text-color;
+  }
+  
+  p {
+    margin: 0 0 8px;
+    font-size: 14px;
+    line-height: 1.4;
+    color: #333;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+// Style the Google Maps InfoWindow to match your design
+.gm-style .gm-style-iw-c {
+  padding: 0 !important;
+  border-radius: $marker-border-radius !important;
+  box-shadow: 0 0 0 $marker-border-w $marker-border-color !important;
+}
+
+.gm-style .gm-style-iw-d {
+  overflow: hidden !important;
+  padding: 0 !important;
+}
+
+// Hide the default InfoWindow close button
+.gm-style .gm-style-iw-t button {
+  display: none !important;
+}

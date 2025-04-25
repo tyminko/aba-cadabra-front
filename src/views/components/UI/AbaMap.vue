@@ -96,11 +96,42 @@ export default {
           const { lat, lng } = mData
           const m = new this.MarkerClass({ lat, lng }, markerEl)
           
+          // Create InfoWindow for this marker
+          const infoWindow = new this.google.maps.InfoWindow({
+            content: `
+              <div class="marker-popup">
+                <h3>${mData.title || ''}</h3>
+                ${mData.description ? `<p>${mData.description}</p>` : ''}
+              </div>
+            `,
+            pixelOffset: new this.google.maps.Size(0, -40) // Offset to position popup above the custom marker
+          })
+          
+          // Add click listener to show InfoWindow
           markerEl.addEventListener('click', (e) => {
             e.preventDefault()
             e.stopPropagation()
+            
+            // Close any open InfoWindows first
+            this.markerInstances.forEach(marker => {
+              if (marker.infoWindow) {
+                marker.infoWindow.close()
+              }
+            })
+            
+            // Open this marker's InfoWindow
+            infoWindow.open({
+              map: this.map,
+              anchor: m,
+              shouldFocus: false
+            })
+            
+            // Emit the marker click event as before
             this.$emit('marker-click', mData)
           })
+          
+          // Store InfoWindow reference with marker
+          m.infoWindow = infoWindow
           
           m.setMap(this.map)
           this.markerInstances.push(m)
@@ -110,7 +141,12 @@ export default {
     },
 
     clearMarkers () {
-      this.markerInstances.forEach(m => m.setMap(null))
+      this.markerInstances.forEach(m => {
+        if (m.infoWindow) {
+          m.infoWindow.close()
+        }
+        m.setMap(null)
+      })
       this.markerInstances = []
       this.markersStock = {}
     }

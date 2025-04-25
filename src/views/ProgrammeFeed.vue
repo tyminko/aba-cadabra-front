@@ -35,7 +35,15 @@ export default {
       return this.posts.map(post => {
         const { lat, lng } = post.location || {}
         if (lat && lng) {
-          return { lat: parseFloat(lat), lng: parseFloat(lng), url: '', label: `#${post.countNumber}` }
+          return {
+            lat: parseFloat(lat),
+            lng: parseFloat(lng),
+            label: `#${post.countNumber}`,
+            title: post.title,
+            description: post.excerpt || '',
+            url: post.url || '',
+            active: false // for marker styling
+          }
         }
       }).filter(m => !!m).sort((a, b) => a.lat - b.lat)
     },
