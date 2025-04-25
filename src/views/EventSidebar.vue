@@ -142,6 +142,18 @@ export default {
               post.author.uid !== (((this.post || {}).author || {}).uid || this.author.uid)
           })
         })
+    },
+
+    stopEventPropagation: function () {
+      var anchor = this.anchor
+      anchor.style.cursor = 'auto';
+      ['click', 'dblclick', 'contextmenu', 'wheel', 'mousedown', 'touchstart',
+        'pointerdown']
+        .forEach(function (event) {
+          anchor.addEventListener(event, function (e) {
+            e.stopPropagation()
+          })
+        })
     }
   }
 }

@@ -90,11 +90,18 @@ export default {
       }
       const markers = this.markers.sort((m1, m2) => parseFloat(m1.lat) - parseFloat(m2.lat))
       markers.forEach(mData => {
-        const markerData = { ...mData } /* , active: true */
+        const markerData = { ...mData }
         const markerEl = getMarkerHtml(markerData, this.$refs.map.$el, this.markersStock)
         if (markerEl && this.MarkerClass && this.map) {
           const { lat, lng } = mData
           const m = new this.MarkerClass({ lat, lng }, markerEl)
+          
+          markerEl.addEventListener('click', (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            this.$emit('marker-click', mData)
+          })
+          
           m.setMap(this.map)
           this.markerInstances.push(m)
         }
