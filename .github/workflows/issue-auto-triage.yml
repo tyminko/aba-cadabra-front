@@ -30,12 +30,11 @@ jobs:
       - name: Auto-triage issue
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-          MODEL: gpt-4o
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cursor-agent --force --model "$MODEL" --output-format=text -p "You are operating in a GitHub Actions runner for automatic issue triage and labeling.
+          cursor-agent --force --output-format=text -p "You are operating in a GitHub Actions runner for automatic issue triage and labeling.
 
-          The GitHub CLI is available as `gh` and authenticated via `GH_TOKEN`. You have write access to issues and can add labels, assignees, and comments.
+          The GitHub CLI is available as \`gh\` and authenticated via \`GH_TOKEN\`. You have write access to issues and can add labels, assignees, and comments.
 
           # Context:
           - Repo: ${{ github.repository }}
