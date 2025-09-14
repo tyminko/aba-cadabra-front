@@ -1,0 +1,142 @@
+name: Issue Auto-Triage and Labeling
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  triage-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Cursor CLI
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.cursor/bin" >> $GITHUB_PATH
+
+      - name: Configure git identity
+        run: |
+          git config user.name "Cursor Agent"
+          git config user.email "cursoragent@cursor.com"
+
+      - name: Auto-triage issue
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          MODEL: gpt-4o
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cursor-agent --force --model "$MODEL" --output-format=text -p "You are operating in a GitHub Actions runner for automatic issue triage and labeling.
+
+          The GitHub CLI is available as `gh` and authenticated via `GH_TOKEN`. You have write access to issues and can add labels, assignees, and comments.
+
+          # Context:
+          - Repo: ${{ github.repository }}
+          - Issue Number: ${{ github.event.issue.number }}
+          - Issue Title: ${{ github.event.issue.title }}
+          - Issue Body: ${{ github.event.issue.body }}
+          - Repository Owner: ${{ github.repository_owner }}
+          - Repository Name: ${{ github.event.repository.name }}
+
+          # Goal:
+          Automatically analyze the issue content and perform intelligent triage including:
+          1. Categorize the issue type (bug, feature, enhancement, documentation, etc.)
+          2. Assign priority level (critical, high, medium, low)
+          3. Add appropriate labels
+          4. Suggest assignees based on content analysis
+          5. Add helpful comments with next steps
+
+          # Available Labels (create if they don't exist):
+          ## Issue Types:
+          - bug: Issues that describe unexpected behavior or defects
+          - feature: New functionality requests
+          - enhancement: Improvements to existing features
+          - documentation: Documentation-related issues
+          - question: Questions or help requests
+          - refactor: Code refactoring requests
+          - performance: Performance-related issues
+          - security: Security-related issues
+          - accessibility: Accessibility improvements
+          - ui/ux: User interface or user experience issues
+
+          ## Priority Levels:
+          - priority: critical: Issues that break core functionality or cause data loss
+          - priority: high: Important issues that significantly impact user experience
+          - priority: medium: Standard issues that should be addressed in normal development cycle
+          - priority: low: Nice-to-have improvements or minor issues
+
+          ## Additional Categories:
+          - frontend: Frontend-related issues
+          - backend: Backend-related issues
+          - database: Database-related issues
+          - api: API-related issues
+          - testing: Testing-related issues
+          - ci/cd: Continuous integration/deployment issues
+          - dependencies: Dependency-related issues
+          - mobile: Mobile-specific issues
+          - desktop: Desktop-specific issues
+
+          ## Status Labels:
+          - needs: triage: Issues that need manual review
+          - needs: more info: Issues that need more information from the reporter
+          - duplicate: Duplicate issues
+          - invalid: Issues that are not valid or actionable
+          - wontfix: Issues that won't be fixed
+          - good first issue: Good issues for new contributors
+          - help wanted: Issues where help is needed
+
+          # Analysis Guidelines:
+          1. **Issue Type Detection:**
+             - Look for keywords like 'bug', 'error', 'broken', 'not working' → bug
+             - Look for 'feature', 'add', 'implement', 'new functionality' → feature
+             - Look for 'improve', 'enhance', 'better', 'optimize' → enhancement
+             - Look for 'documentation', 'docs', 'readme', 'guide' → documentation
+             - Look for 'question', 'how to', 'help', '?' → question
+
+          2. **Priority Assessment:**
+             - Critical: Security vulnerabilities, data loss, complete system failure
+             - High: Major functionality broken, significant user impact
+             - Medium: Standard bugs, feature requests, improvements
+             - Low: Minor issues, nice-to-have features, cosmetic issues
+
+          3. **Technology Detection:**
+             - Vue.js, JavaScript, TypeScript → frontend
+             - Node.js, Express, API endpoints → backend
+             - Database, SQL, queries → database
+             - REST, GraphQL, endpoints → api
+             - Tests, testing, jest, cypress → testing
+             - GitHub Actions, CI, deployment → ci/cd
+
+          4. **Complexity Assessment:**
+             - Simple, straightforward issues → good first issue
+             - Complex issues requiring domain knowledge → help wanted
+
+          # Actions to Perform:
+          1. Analyze the issue title and body content
+          2. Determine the appropriate issue type and priority
+          3. Add relevant labels using \`gh issue edit\`
+          4. If the issue needs more information, add a comment asking for clarification
+          5. If it's a good first issue, add the appropriate label
+          6. If it's a duplicate, check for similar issues and mark as duplicate
+
+          # Commands to use:
+          - \`gh issue view \$ISSUE_NUMBER\` - View current issue details
+          - \`gh issue edit \$ISSUE_NUMBER --add-label \"label1,label2\"\` - Add labels
+          - \`gh issue comment \$ISSUE_NUMBER --body \"comment text\"\` - Add comment
+          - \`gh issue list --state open --search \"similar keywords\"\` - Search for similar issues
+
+          # Output Requirements:
+          - Always add at least one issue type label
+          - Always add at least one priority label
+          - Add technology-specific labels when applicable
+          - Add helpful comments when the issue needs more information
+          - Be conservative with priority assignments - default to medium unless clearly high/low
+
+          Analyze the issue and perform the triage actions now."

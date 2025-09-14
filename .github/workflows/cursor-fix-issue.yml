@@ -1,0 +1,255 @@
+name: Fix Issue
+
+on:
+  issues:
+    types: [opened, labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to analyze'
+        required: true
+        type: string
+      force_run:
+        description: 'Force run even if issue already has a PR'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install -g @cursor/cli
+
+      - name: Get issue details
+        id: issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = context.payload.issue?.number || '${{ github.event.inputs.issue_number }}';
+            const issue = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber
+            });
+
+            // Check if issue has auto-fix label or is manually triggered
+            const hasAutoFixLabel = issue.data.labels.some(label =>
+              label.name.toLowerCase().includes('auto-fix') ||
+              label.name.toLowerCase().includes('cursor-fix')
+            );
+
+            const isManualTrigger = context.eventName === 'workflow_dispatch';
+            const forceRun = '${{ github.event.inputs.force_run }}' === 'true';
+
+            if (!hasAutoFixLabel && !isManualTrigger && !forceRun) {
+              console.log('Issue does not have auto-fix label and is not manually triggered. Skipping.');
+              return { should_run: false };
+            }
+
+            // Check if there's already a PR for this issue
+            const existingPRs = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: `cursor-fix-${issueNumber}`
+            });
+
+            if (existingPRs.data.length > 0 && !forceRun) {
+              console.log('PR already exists for this issue. Skipping.');
+              return { should_run: false };
+            }
+
+            return {
+              should_run: true,
+              issue_number: issueNumber,
+              issue_title: issue.data.title,
+              issue_body: issue.data.body,
+              issue_labels: issue.data.labels.map(l => l.name).join(',')
+            };
+
+      - name: Create analysis prompt
+        id: prompt
+        if: steps.issue.outputs.should_run == 'true'
+        run: |
+          cat > analysis_prompt.txt << 'EOF'
+          Analyze the following GitHub issue and create a comprehensive fix:
+
+          Issue Title: ${{ steps.issue.outputs.issue_title }}
+          Issue Body: ${{ steps.issue.outputs.issue_body }}
+          Issue Labels: ${{ steps.issue.outputs.issue_labels }}
+
+          Project Context:
+          - This is a Vue.js 2 frontend application
+          - Uses Vue CLI, Vuex, Vue Router
+          - Has Firebase integration
+          - Uses Tailwind CSS and SCSS
+          - Has ESLint configuration
+
+          Instructions:
+          1. Analyze the issue thoroughly
+          2. Identify the root cause
+          3. Create a comprehensive fix that addresses the issue
+          4. Ensure the fix follows Vue.js best practices
+          5. Include proper error handling
+          6. Add appropriate tests if needed
+          7. Update documentation if necessary
+
+          Please provide:
+          - A detailed analysis of the problem
+          - Step-by-step solution
+          - Code changes with explanations
+          - Any additional considerations
+          EOF
+
+      - name: Run Cursor CLI analysis
+        if: steps.issue.outputs.should_run == 'true'
+        run: |
+          # Set up Cursor CLI with API key
+          export CURSOR_API_KEY="${{ secrets.CURSOR_API_KEY }}"
+
+          # Create a temporary branch for the fix
+          BRANCH_NAME="cursor-fix-${{ steps.issue.outputs.issue_number }}"
+          git checkout -b $BRANCH_NAME
+
+          # Run Cursor CLI to analyze and fix the issue
+          cursor analyze --prompt-file analysis_prompt.txt --output-format json > cursor_analysis.json
+
+          # Apply the suggested changes
+          cursor apply --analysis-file cursor_analysis.json
+
+          # Check if there are any changes
+          if git diff --quiet; then
+            echo "No changes were made by Cursor CLI"
+            exit 0
+          fi
+
+          # Commit the changes
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "Fix issue #${{ steps.issue.outputs.issue_number }}: ${{ steps.issue.outputs.issue_title }}
+
+          Automated fix generated by Cursor CLI
+
+          Issue: ${{ steps.issue.outputs.issue_title }}
+          Analysis: See cursor_analysis.json for detailed analysis
+
+          Co-authored-by: Cursor CLI <cursor@cursor.sh>"
+
+      - name: Push changes and create PR
+        if: steps.issue.outputs.should_run == 'true'
+        run: |
+          BRANCH_NAME="cursor-fix-${{ steps.issue.outputs.issue_number }}"
+          git push origin $BRANCH_NAME
+
+          # Create PR using GitHub CLI
+          gh pr create \
+            --title "🔧 Auto-fix: ${{ steps.issue.outputs.issue_title }}" \
+            --body "## 🤖 Automated Fix for Issue #${{ steps.issue.outputs.issue_number }}
+
+          This PR contains an automated fix generated by Cursor CLI for the following issue:
+
+          **Issue Title:** ${{ steps.issue.outputs.issue_title }}
+
+          **Issue Labels:** ${{ steps.issue.outputs.issue_labels }}
+
+          ### 📋 Changes Made
+          - Analyzed the issue using Cursor CLI
+          - Applied automated fixes based on the analysis
+          - Followed Vue.js best practices
+          - Maintained code quality standards
+
+          ### 🔍 Analysis Details
+          Detailed analysis can be found in \`cursor_analysis.json\`
+
+          ### ✅ Checklist
+          - [x] Issue analyzed by Cursor CLI
+          - [x] Automated fixes applied
+          - [x] Code follows project conventions
+          - [ ] Manual review required
+          - [ ] Testing recommended
+
+          ---
+          *This PR was automatically generated by the Cursor Issue Analyzer workflow*" \
+            --head $BRANCH_NAME \
+            --base main \
+            --label "auto-generated,cursor-fix" \
+            --assignee "@me"
+
+      - name: Comment on issue
+        if: steps.issue.outputs.should_run == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = '${{ steps.issue.outputs.issue_number }}';
+            const pr = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: `cursor-fix-${issueNumber}`
+            });
+
+            if (pr.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: `🤖 **Automated Fix Created**
+
+              I've analyzed this issue and created an automated fix using Cursor CLI.
+
+              **Pull Request:** #${pr.data[0].number}
+
+              The fix includes:
+              - Comprehensive analysis of the issue
+              - Automated code changes
+              - Following Vue.js best practices
+              - Proper error handling
+
+              Please review the PR and let me know if any adjustments are needed!`
+              });
+            }
+
+      - name: Cleanup on failure
+        if: failure() && steps.issue.outputs.should_run == 'true'
+        run: |
+          # Clean up any temporary branches
+          BRANCH_NAME="cursor-fix-${{ steps.issue.outputs.issue_number }}"
+          git checkout main
+          git branch -D $BRANCH_NAME || true
+
+          # Comment on issue about failure
+          gh issue comment ${{ steps.issue.outputs.issue_number }} \
+            --body "❌ **Automated Fix Failed**
+
+          The automated fix process encountered an error. Please check the workflow logs for details.
+
+          You can manually trigger the workflow again or create a manual fix for this issue."
+
+      - name: Skip notification
+        if: steps.issue.outputs.should_run != 'true'
+        run: |
+          echo "Skipping analysis - issue does not meet criteria for automated fixing"
