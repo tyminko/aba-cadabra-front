@@ -2,9 +2,9 @@
   <div class="blogs">
     <h1>Blog Posts</h1>
     <div class="grid pt-lg">
-      <div 
-        v-for="blog in orderedBlogs" 
-        :key="blog.id" 
+      <div
+        v-for="blog in orderedBlogs"
+        :key="blog.id"
         class="blog-box relative">
         <post-cell :post="blog" />
         <button
@@ -71,7 +71,7 @@ export default {
             querySnapshot.docChanges().forEach(docChange => {
               const doc = docChange.doc
               const blogData = { ...doc.data(), id: doc.id }
-              
+
               switch (docChange.type) {
                 case 'added':
                   this.blogs.push(blogData)
@@ -91,7 +91,7 @@ export default {
           },
           error => {
             console.error('Error fetching blogs:', error)
-            this.blogs = []  // Clear the blogs array on error
+            this.blogs = [] // Clear the blogs array on error
             this.loading = false
           })
     },
@@ -133,4 +133,4 @@ export default {
     }
   }
 }
-</style> 
+</style>
