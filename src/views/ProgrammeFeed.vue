@@ -42,6 +42,8 @@ export default {
             title: post.title,
             description: post.excerpt || '',
             url: post.url || '',
+            id: post.id,
+            token: post.token || post.id,
             active: false // for marker styling
           }
         }
@@ -57,6 +59,7 @@ export default {
 
   created () {
     this.programmeId = this.$route.params.id
+    console.log('ProgrammeFeed created with ID:', this.programmeId) // Debug log
     this.subscribeProgrammeRecord()
     this.subscribeFeed()
   },
@@ -81,10 +84,14 @@ export default {
   methods: {
     subscribeProgrammeRecord () {
       if (!this.programmeId) return
+      console.log('Subscribing to programme record:', this.programmeId) // Debug log
       this.unsubscribe.programme = db.collection('programmes')
         .doc(this.programmeId)
         .onSnapshot(doc => {
+          console.log('Programme record received:', doc.exists, doc.data()) // Debug log
           this.programmeObj = { ...doc.data(), id: doc.id }
+        }, error => {
+          console.error('Error fetching programme record:', error) // Debug log
         })
     },
 

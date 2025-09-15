@@ -326,7 +326,7 @@ export default {
 
     .edit-button:not(.active) {
       opacity: 0;
-      transform: opacity $transition-time;
+      transition: opacity $transition-time;
     }
     .edit-button.active {
       background: transparentize($color-dimmed, 0.8);

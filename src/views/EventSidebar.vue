@@ -2,8 +2,8 @@
   <div class="event-sidebar">
     <section v-if="showMap">
       <aba-map
-        v-if="latLng"
         ref="map"
+        :center="latLng || { lat: 52.5220676, lng: 13.4121466 }"
         :markers="mapMarkers"
         class="mb-base"/>
     </section>
@@ -79,14 +79,36 @@ export default {
     },
 
     mapMarkers () {
-      return this.latLng ? [{ ...this.latLng, label: `#${this.post.countNumber}`, url: 'this.post' }] : []
+      if (!this.latLng) {
+        console.log('EventSidebar: No latLng available for map') // Debug log
+        return []
+      }
+      const markers = [{
+        ...this.latLng,
+        label: `#${this.post.countNumber}`,
+        title: this.post.title || 'Event Location',
+        description: this.post.excerpt || '',
+        url: this.post.url || '',
+        id: this.post.id,
+        token: this.post.token || this.post.id,
+        active: false
+      }]
+      console.log('EventSidebar: Generated map markers:', markers) // Debug log
+      return markers
     }
   },
 
   created () {
+    console.log('EventSidebar created, post:', this.post) // Debug log
+    console.log('EventSidebar showMap prop:', this.showMap) // Debug log
     this.subscribeParticipantsProfiles()
     // this.getAuthorEvents()
     this.getTagPosts()
+  },
+
+  mounted () {
+    console.log('EventSidebar mounted, latLng:', this.latLng) // Debug log
+    console.log('EventSidebar mapMarkers:', this.mapMarkers) // Debug log
   },
 
   watch: {
@@ -94,6 +116,9 @@ export default {
       // this.getAuthorEvents()
     },
     post () {
+      console.log('EventSidebar post changed:', this.post) // Debug log
+      console.log('EventSidebar new latLng:', this.latLng) // Debug log
+      console.log('EventSidebar new mapMarkers:', this.mapMarkers) // Debug log
       this.subscribeParticipantsProfiles()
       this.getTagPosts()
     }
