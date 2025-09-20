@@ -1,0 +1,5 @@
+
+> aba-cadabra-front@0.1.0 serve
+> NODE_OPTIONS=--openssl-legacy-provider vue-cli-service serve
+
+sh: 1: vue-cli-service: not found
