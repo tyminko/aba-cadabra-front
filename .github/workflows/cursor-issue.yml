@@ -12,7 +12,7 @@ permissions:
 jobs:
   attempt-fix:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 60
 
     steps:
       - name: Checkout repository
@@ -38,13 +38,19 @@ jobs:
         run: |
           cursor-agent --force --model "$MODEL" --output-format=text -p "You are operating in a GitHub Actions runner.
 
+          The GitHub CLI is available as `gh` and authenticated via `GH_TOKEN`. Git is available.
+
           # Context:
-          - Issue Number: ${{ github.event.issue.number }}
           - Repository: ${{ github.repository }}
-          - Title: ${{ github.event.issue.title }}
-          - Author: ${{ github.event.issue.user.login }}
-          - Body: ${{ github.event.issue.body }}
+          - Default Branch: ${{ github.event.repository.default_branch }}
+          - Issue Number: ${{ github.event.issue.number }}
+          - Issue Title: ${{ github.event.issue.title }}
+          - Issue Author: ${{ github.event.issue.user.login }}
+          - Issue Body: ${{ github.event.issue.body }}
+          - Issue Labels: ${{ join(github.event.issue.labels.*.name, ', ') }}
 
           # Goal:
           - Analyze the issue and determine if it can be automatically fixed.
-          - If a fix is possible, create a new branch, make the changes, and push them to the repository."
+          - If a fix is possible, create a new branch from the default branch, make the changes, and push them to the repository.
+          - Create a pull request from the new branch to the default branch.
+          - If a fix is not possible, leave a comment on the issue indicating that a manual fix is required."
