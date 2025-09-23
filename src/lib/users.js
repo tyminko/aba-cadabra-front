@@ -1,7 +1,7 @@
-import firebase from 'firebase'
+import { functions } from './firebase.js'
 
 export async function getAll () {
-  const allUsersFunc = firebase.functions().httpsCallable('users-all')
+  const allUsersFunc = functions.httpsCallable('users-all')
   const res = await allUsersFunc()
   if (res.data.error) {
     console.error(res.data.error)
@@ -25,7 +25,7 @@ export async function getAll () {
  */
 export async function addUser (userData) {
   try {
-    const addUserFunc = firebase.functions().httpsCallable('users-add')
+    const addUserFunc = functions.httpsCallable('users-add')
     const res = await addUserFunc(userData)
     if (res.data.error) {
       console.error('ERROR Creating New User: ', res.data.error)
@@ -40,7 +40,7 @@ export async function addUser (userData) {
 
 export async function updateUser (userData) {
   try {
-    const updateUserFunc = firebase.functions().httpsCallable('users-update')
+    const updateUserFunc = functions.httpsCallable('users-update')
     const res = await updateUserFunc(userData)
     return res.data
   } catch (error) {
@@ -51,7 +51,7 @@ export async function updateUser (userData) {
 
 export async function remove (id) {
   try {
-    const removeUserFunc = firebase.functions().httpsCallable('users-remove')
+    const removeUserFunc = functions.httpsCallable('users-remove')
     const res = await removeUserFunc(id)
     if (res.data.error) {
       console.error(res.data.error)
