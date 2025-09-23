@@ -47,4 +47,4 @@ jobs:
 
           # Goal:
           - Analyze the issue and determine if it can be automatically fixed.
-          - If a fix is possible, create a new branch, make the changes, and push them to the repository.
+          - If a fix is possible, create a new branch, make the changes, and push them to the repository."
