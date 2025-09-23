@@ -1,4 +1,4 @@
-import Firebase from 'firebase/app'
+import Firebase from 'firebase/compat/app'
 import { storage } from './firebase'
 import { toSlug } from './string'
 import simpleId from './simpleId'
