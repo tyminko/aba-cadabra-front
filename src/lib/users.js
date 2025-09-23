@@ -1,4 +1,5 @@
-import firebase from 'firebase'
+import firebase from 'firebase/compat/app'
+import 'firebase/compat/functions'
 
 export async function getAll () {
   const allUsersFunc = firebase.functions().httpsCallable('users-all')
