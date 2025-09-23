@@ -33,12 +33,11 @@ jobs:
       - name: Analyze Issue
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-          MODEL: gpt-5
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cursor-agent --force --model "$MODEL" --output-format=text -p "You are operating in a GitHub Actions runner.
+          cursor-agent -p "You are operating in a GitHub Actions runner to automatically analyze and fix GitHub issues.
 
-          The GitHub CLI is available as `gh` and authenticated via `GH_TOKEN`. Git is available.
+          The GitHub CLI is available as \`gh\` and authenticated via \`GH_TOKEN\`. Git is available.
 
           # Context:
           - Repository: ${{ github.repository }}
@@ -53,4 +52,11 @@ jobs:
           - Analyze the issue and determine if it can be automatically fixed.
           - If a fix is possible, create a new branch from the default branch, make the changes, and push them to the repository.
           - Create a pull request from the new branch to the default branch.
-          - If a fix is not possible, leave a comment on the issue indicating that a manual fix is required."
+          - If a fix is not possible, leave a comment on the issue indicating that a manual fix is required.
+
+          # Guidelines:
+          - Only attempt fixes for clear, well-defined issues.
+          - Avoid making changes that could break existing functionality.
+          - Be conservative - when in doubt, request manual review.
+          - Follow the project's coding standards and conventions." \
+          --force --model gpt-5 --output-format=text
