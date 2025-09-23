@@ -36,7 +36,7 @@ jobs:
         run: |
           PROMPT="You are operating in a GitHub Actions runner to automatically analyze and fix GitHub issues.
 
-          The GitHub CLI is available as 'gh' and authenticated via 'GH_TOKEN'. Git is available.
+          The GitHub CLI is available as \'gh\' and authenticated via \'GH_TOKEN\'. Git is available.
 
           # Context:
           - Repository: ${{ github.repository }}
@@ -57,7 +57,7 @@ jobs:
           - Only attempt fixes for clear, well-defined issues.
           - Avoid making changes that could break existing functionality.
           - Be conservative - when in doubt, request manual review.
-          - Follow the project's coding standards and conventions."
+          - Follow the project\'s coding standards and conventions."
 
           echo "prompt<<EOF" >> $GITHUB_OUTPUT
           echo "$PROMPT" >> $GITHUB_OUTPUT
@@ -68,30 +68,4 @@ jobs:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: 'bash'
-        run: |-
-          set -euo pipefail
-
-          # Create a temporary directory for storing the output, and ensure it's cleaned up later
-          TEMP_STDOUT="$(mktemp -p "${RUNNER_TEMP}" cursor-out.XXXXXXXXXX)"
-          TEMP_STDERR="$(mktemp -p "${RUNNER_TEMP}" cursor-err.XXXXXXXXXX)"
-
-          function cleanup {
-            rm -f "${TEMP_STDOUT}" "${TEMP_STDERR}"
-          }
-          trap cleanup EXIT
-
-          # Keep track of whether we've failed
-          FAILED=false
-
-          if ! { cursor-agent -p "${{ steps.generate-prompt.outputs.prompt }}" --force --model gpt-5 --output-format=text 2> >(tee "${TEMP_STDERR}" >&2) | tee "${TEMP_STDOUT}"; }; then
-            FAILED=true
-          fi
-
-          ERRORS="$(cat "${TEMP_STDERR}")"
-
-          if [[ "${FAILED}" = true ]]; then
-            LAST_LINE="$(echo "${ERRORS}" | tail -n1)"
-            echo "::error title=Cursor CLI execution failed::${LAST_LINE}"
-            echo "See logs for more details"
-            exit 1
-          fi
+        run: cursor-agent --force --output-format=text -p "${{ steps.generate-prompt.outputs.prompt }}"
