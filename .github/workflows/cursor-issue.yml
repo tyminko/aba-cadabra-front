@@ -1,0 +1,50 @@
+name: AI - Issue
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  attempt-fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Cursor CLI
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.cursor/bin" >> $GITHUB_PATH
+
+      - name: Configure git identity
+        run: |
+          git config user.name "Cursor Agent"
+          git config user.email "cursoragent@cursor.com"
+
+      - name: Analyze Issue
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          MODEL: gpt-5
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cursor-agent --force --model "$MODEL" --output-format=text -p "You are operating in a GitHub Actions runner.
+
+          # Context:
+          - Issue Number: ${{ github.event.issue.number }}
+          - Repository: ${{ github.repository }}
+          - Title: ${{ github.event.issue.title }}
+          - Author: ${{ github.event.issue.user.login }}
+          - Body: ${{ github.event.issue.body }}
+
+          # Goal:
+          - Analyze the issue and determine if it can be automatically fixed.
+          - If a fix is possible, create a new branch, make the changes, and push them to the repository.

@@ -1,6 +1,4 @@
-AGENTS.md
-
-This file gives coding agents a concise, action-oriented guide to work on this repository. It complements `README.md` and should be treated as living documentation.
+# AGENTS
 
 ## Setup commands
 
@@ -70,9 +68,5 @@ Run checks locally: `npm run lint`.
   - `npm run lint`
   - `npm run build` to verify production build succeeds
 - Mention any schema or data shape changes in the PR description.
-
-## References
-
-- This file follows the open format described at `https://agents.md/`. See their overview and examples for agent-focused guidance.
 
 
