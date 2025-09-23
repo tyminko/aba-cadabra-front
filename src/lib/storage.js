@@ -1,4 +1,6 @@
-import Firebase from 'firebase/app'
+// Use compat for storage task enums
+import Firebase from 'firebase/compat/app'
+import 'firebase/compat/storage'
 import { storage } from './firebase'
 import { toSlug } from './string'
 import simpleId from './simpleId'

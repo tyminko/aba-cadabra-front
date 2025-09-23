@@ -1,4 +1,6 @@
-import firebase from 'firebase'
+// Use compat to preserve namespaced API with v9
+import firebase from 'firebase/compat/app'
+import 'firebase/compat/functions'
 
 export async function getAll () {
   const allUsersFunc = firebase.functions().httpsCallable('users-all')
