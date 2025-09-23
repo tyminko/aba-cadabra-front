@@ -1,8 +1,8 @@
-import firebase from 'firebase/app'
-import 'firebase/auth'
-import 'firebase/storage'
-import 'firebase/firestore'
-import 'firebase/functions'
+import { initializeApp } from 'firebase/app'
+import { getAuth } from 'firebase/auth'
+import { getStorage } from 'firebase/storage'
+import { getFirestore, FieldValue, FieldPath } from 'firebase/firestore'
+import { getFunctions } from 'firebase/functions'
 
 export const config = {
   apiKey: 'AIzaSyCxfEiKF30A51yBQ7ofv-CK9VxG-RW59Yo',
@@ -15,16 +15,15 @@ export const config = {
   measurementId: 'G-CCFSJH8HQJ'
 }
 
-export const app = firebase.initializeApp(config)
-export const db = firebase.firestore()
-export const auth = firebase.auth()
-export const storage = firebase.storage()
-export const functions = firebase.functions()
-export const FieldValue = firebase.firestore.FieldValue
-export const FieldPath = firebase.firestore.FieldPath
+export const app = initializeApp(config)
+export const db = getFirestore(app)
+export const auth = getAuth(app)
+export const storage = getStorage(app)
+export const functions = getFunctions(app)
+export { FieldValue, FieldPath }
 
 export const syncAuth = store => {
-  app.auth().onAuthStateChanged(user => {
+  auth.onAuthStateChanged(user => {
     if (user) {
       auth.currentUser.getIdTokenResult(true)
         .then(token => {
