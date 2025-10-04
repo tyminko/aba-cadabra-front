@@ -106,7 +106,6 @@ export default {
         console.log('Generated markerId in setupMarkers:', markerId) // Debug log
         if (this.map) {
           const { lat, lng } = mData
-<<<<<<< HEAD
           console.log('Creating standard Google Maps marker for:', mData) // Debug log
           console.log('Available fields in marker data:', Object.keys(mData)) // Debug log
 
@@ -126,9 +125,6 @@ export default {
               anchor: new this.google.maps.Point(20, 20)
             }
           })
-=======
-          const m = new this.MarkerClass({ lat, lng }, markerEl)
->>>>>>> 7e362667fb9abdd1eb76dcc20e26d00c5d95275e
 
           // Create InfoWindow for this marker
           const eventNumber = mData.countNumber || mData.label || mData.eventNumber || mData.number || mData.id || '?'
@@ -162,7 +158,6 @@ export default {
             pixelOffset: new this.google.maps.Size(0, -40)
           })
 
-<<<<<<< HEAD
           // Store InfoWindow reference with marker
           m.infoWindow = infoWindow
 
@@ -172,14 +167,6 @@ export default {
             console.log('Opening popup with URL:', eventUrl) // Debug log
 
             // Close all other InfoWindows
-=======
-          // Add click listener to show InfoWindow
-          markerEl.addEventListener('click', (e) => {
-            e.preventDefault()
-            e.stopPropagation()
-
-            // Close any open InfoWindows first
->>>>>>> 7e362667fb9abdd1eb76dcc20e26d00c5d95275e
             this.markerInstances.forEach(marker => {
               if (marker.infoWindow && marker !== m) {
                 marker.infoWindow.close()
@@ -194,7 +181,6 @@ export default {
               shouldFocus: false
             })
 
-<<<<<<< HEAD
             // Add fallback click listener after InfoWindow opens
             this.$nextTick(() => {
               setTimeout(() => {
@@ -206,16 +192,10 @@ export default {
             this.$emit('marker-click', mData)
           })
 
-=======
-            // Emit the marker click event as before
-            this.$emit('marker-click', mData)
-          })
-
           // Store InfoWindow reference with marker
           m.infoWindow = infoWindow
 
           m.setMap(this.map)
->>>>>>> 7e362667fb9abdd1eb76dcc20e26d00c5d95275e
           this.markerInstances.push(m)
         }
       })
