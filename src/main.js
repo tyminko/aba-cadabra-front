@@ -13,7 +13,8 @@ Vue.use(VueLazyload, {
 })
 Vue.use(VueGoogleMaps, {
   load: {
-    key: process.env.VUE_APP_MAP_KEY
+    key: process.env.VUE_APP_MAP_KEY,
+    loading: 'async'
   }
 })
 

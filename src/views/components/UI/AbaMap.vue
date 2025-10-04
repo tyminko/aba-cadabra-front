@@ -9,7 +9,7 @@
 
 <script>
 import { gmapApi } from 'vue2-google-maps'
-import { abaMapStyle, defineABAMarkerClass, getMarkerHtml } from '../../../lib/map'
+import { abaMapStyle } from '../../../lib/map'
 
 export default {
   name: 'AbaMap',
@@ -26,11 +26,7 @@ export default {
       backgroundColor: '#fff',
       styles: [...abaMapStyle.basic]
     },
-    MarkerClass: null,
-    markersStock: {},
     markerInstances: [],
-    markerEl: null,
-    markerInstance: null,
     map: null
   }),
 
@@ -42,12 +38,24 @@ export default {
     }
   },
 
+  created () {
+    console.log('AbaMap created, Google API available:', !!this.google) // Debug log
+  },
+
   async mounted () {
+    console.log('AbaMap mounted, markers:', this.markers.length) // Debug log
     if (this.$refs.map) {
-      await this.init()
-      if (this.markers.length) {
-        this.setupMarkers()
+      try {
+        await this.init()
+        console.log('Map initialized successfully') // Debug log
+        if (this.markers.length) {
+          this.setupMarkers()
+        }
+      } catch (error) {
+        console.error('Error initializing map:', error) // Debug log
       }
+    } else {
+      console.error('Map ref not found') // Debug log
     }
   },
 
@@ -59,8 +67,11 @@ export default {
   methods: {
     init () {
       return this.$refs.map.$mapPromise.then(map => {
+        console.log('Map promise resolved, map object:', map) // Debug log
         this.map = map
-        this.MarkerClass = defineABAMarkerClass(this.google)
+      }).catch(error => {
+        console.error('Map promise rejected:', error) // Debug log
+        throw error
       })
     },
 
@@ -91,22 +102,72 @@ export default {
       const markers = this.markers.sort((m1, m2) => parseFloat(m1.lat) - parseFloat(m2.lat))
       markers.forEach(mData => {
         const markerData = { ...mData }
-        const markerEl = getMarkerHtml(markerData, this.$refs.map.$el, this.markersStock)
-        if (markerEl && this.MarkerClass && this.map) {
+        const markerId = markerData.id || `marker-${Date.now()}-${Math.random()}`
+        console.log('Generated markerId in setupMarkers:', markerId) // Debug log
+        if (this.map) {
           const { lat, lng } = mData
+          console.log('Creating standard Google Maps marker for:', mData) // Debug log
+          console.log('Available fields in marker data:', Object.keys(mData)) // Debug log
+
+          // Use standard Google Maps Marker with SVG icon (working version)
+          const m = new this.google.maps.Marker({
+            position: { lat, lng },
+            map: this.map,
+            title: mData.title || 'Location',
+            icon: {
+              url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="20" cy="20" r="18" fill="#ff6b6b" stroke="#fff" stroke-width="2"/>
+                  <text x="20" y="26" text-anchor="middle" fill="white" font-family="Arial" font-size="14" font-weight="bold">${mData.countNumber || mData.label || mData.eventNumber || mData.number || mData.id || '?'}</text>
+                </svg>
+              `),
+              scaledSize: new this.google.maps.Size(40, 40),
+              anchor: new this.google.maps.Point(20, 20)
+            }
+          })
           const m = new this.MarkerClass({ lat, lng }, markerEl)
 
           // Create InfoWindow for this marker
+          const eventNumber = mData.countNumber || mData.label || mData.eventNumber || mData.number || mData.id || '?'
+          // Remove # symbol from event number for URL
+          const cleanEventNumber = eventNumber.replace('#', '')
+
+          // Check if we have a token or ID for the event route
+          const eventToken = mData.token || mData.eventToken || mData.eventId || mData.id
+          // Use the provided URL if available, otherwise generate one based on available data
+          // Try to use event route if we have a token, otherwise fall back to programme route
+          const eventUrl = mData.url || (eventToken ? `/event/${eventToken}` : `/programme/${cleanEventNumber}`)
+          console.log('Event data for URL generation:', { mData, eventNumber, cleanEventNumber, eventToken, eventUrl }) // Debug log
+          console.log('InfoWindow title will be:', mData.title || `Event #${eventNumber}`) // Debug log
+          console.log('Generated URL for navigation:', eventUrl) // Debug log
+
           const infoWindow = new this.google.maps.InfoWindow({
             content: `
-              <div class="marker-popup">
-                <h3>${mData.title || ''}</h3>
-                ${mData.description ? `<p>${mData.description}</p>` : ''}
+              <div style="padding: 10px; max-width: 300px;">
+                <div style="margin-bottom: 8px;">
+                  <strong style="color: #ff6b6b; font-size: 14px; cursor: pointer;" 
+                          id="title-${markerId}"
+                          onclick="console.log('Title clicked, navigating to:', '${eventUrl}'); window.location.href='${eventUrl}'; return false;"
+                          onmouseover="this.style.textDecoration='underline'" 
+                          onmouseout="this.style.textDecoration='none'">
+                    ${mData.title || `Event #${eventNumber}`}
+                  </strong>
+                </div>
+                ${mData.description ? `<p style="margin: 0 0 8px 0; font-size: 12px; color: #666;">${mData.description}</p>` : ''}
               </div>
             `,
-            pixelOffset: new this.google.maps.Size(0, -40) // Offset to position popup above the custom marker
+            pixelOffset: new this.google.maps.Size(0, -40)
           })
 
+          // Store InfoWindow reference with marker
+          m.infoWindow = infoWindow
+
+          // Add click listener to the standard Google Maps marker
+          m.addListener('click', () => {
+            console.log('Standard marker clicked:', mData) // Debug log
+            console.log('Opening popup with URL:', eventUrl) // Debug log
+
+            // Close all other InfoWindows
           // Add click listener to show InfoWindow
           markerEl.addEventListener('click', (e) => {
             e.preventDefault()
@@ -114,17 +175,29 @@ export default {
 
             // Close any open InfoWindows first
             this.markerInstances.forEach(marker => {
-              if (marker.infoWindow) {
+              if (marker.infoWindow && marker !== m) {
                 marker.infoWindow.close()
               }
             })
 
             // Open this marker's InfoWindow
+            console.log('Opening InfoWindow for marker:', markerId) // Debug log
             infoWindow.open({
               map: this.map,
               anchor: m,
               shouldFocus: false
             })
+
+            // Add fallback click listener after InfoWindow opens
+            this.$nextTick(() => {
+              setTimeout(() => {
+                this.addFallbackClickListener(markerId, eventUrl)
+              }, 300)
+            })
+
+            // Emit the marker click event
+            this.$emit('marker-click', mData)
+          })
 
             // Emit the marker click event as before
             this.$emit('marker-click', mData)
@@ -148,7 +221,48 @@ export default {
         m.setMap(null)
       })
       this.markerInstances = []
-      this.markersStock = {}
+    },
+
+    addFallbackClickListener (markerId, eventUrl) {
+      // Fallback click listener for the button
+      const titleElement = document.getElementById(`title-${markerId}`)
+      console.log('Fallback: Looking for title element:', `title-${markerId}`, titleElement) // Debug log
+      if (titleElement) {
+        console.log('Fallback: Adding click listener to title button:', markerId, eventUrl) // Debug log
+        titleElement.addEventListener('click', (e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          console.log('Fallback: Title button clicked, navigating to:', eventUrl) // Debug log
+          window.location.href = eventUrl
+        })
+      } else {
+        console.log('Fallback: Title element not found:', `title-${markerId}`) // Debug log
+      }
+    },
+
+    openMarkerPopup (marker, markerData, markerId) {
+      console.log('Opening popup for marker:', markerId) // Debug log
+
+      // Close all other InfoWindows
+      this.markerInstances.forEach(m => {
+        if (m.infoWindow && m !== marker) {
+          m.infoWindow.close()
+        }
+      })
+
+      // Open this marker's InfoWindow
+      if (marker.infoWindow) {
+        marker.infoWindow.open({
+          map: this.map,
+          anchor: marker,
+          shouldFocus: false
+        })
+
+        // InfoWindow is now open
+
+        // Emit the marker click event
+        this.$emit('marker-click', markerData)
+      }
     }
   }
 }
