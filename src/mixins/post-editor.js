@@ -25,7 +25,7 @@ export default {
         status: 'public'
       },
       emptyPostExtraData: {},
-      postStatusList: { public: 'Public', internal: 'Internal', draft: 'Draft' },
+      postStatusList: { public: 'Public', internal: 'Internal', draft: 'Draft', programme: 'Programme' },
       collectionRef: null
     }
   },

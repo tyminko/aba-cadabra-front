@@ -28,6 +28,9 @@
             <section class="text-sm pb-3 border-b border-aba-blue-semi">
               <a class="block min-h-full cursor-pointer" @click.prevent="openEditor('page')">Add Page</a>
             </section>
+            <section class="text-sm py-3 border-b border-aba-blue-semi">
+              <a class="block min-h-full cursor-pointer" @click.prevent="openEditor('post')">Add Blog</a>
+            </section>
             <section class="text-sm pt-3">
               <a class="block min-h-full cursor-pointer" @click.prevent="openEditor('programme')">Add Programme</a>
             </section>

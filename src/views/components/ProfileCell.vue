@@ -90,7 +90,5 @@ export default {
     .excerpt {
       @include multi-line-truncate(3);
     }
-    .avatar {
-    }
   }
 </style>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Air Salon Logo Generator</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        canvas {
+            border: 2px solid #ddd;
+            margin: 20px 0;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        button {
+            padding: 12px 24px;
+            margin: 8px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .instructions {
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            border-left: 4px solid #007bff;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .instructions ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .instructions code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Air Salon Logo Generator</h1>
+        
+        <div class="instructions">
+            <h3>📋 Instructions:</h3>
+            <ol>
+                <li>Click <strong>"Generate Logo"</strong> to create the Air Salon logo with dot-matrix effect</li>
+                <li>Click <strong>"Download PNG"</strong> to save the image to your computer</li>
+                <li>Save the downloaded file as <code>airsalon-logo.png</code> in your project's <code>public</code> folder</li>
+                <li>The logo will automatically appear in your Air Salon banner!</li>
+            </ol>
+        </div>
+        
+        <canvas id="logoCanvas" width="300" height="120"></canvas>
+        
+        <div class="controls">
+            <button onclick="generateLogo()">🎨 Generate Logo</button>
+            <button onclick="downloadLogo()">💾 Download PNG</button>
+        </div>
+    </div>
+
+    <script>
+        function generateLogo() {
+            const canvas = document.getElementById('logoCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas with white background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, 300, 120);
+            
+            // Draw AIR with dot-matrix effect
+            drawDotMatrixText(ctx, 'AIR', 150, 40, 36, 4);
+            
+            // Draw SALON with dot-matrix effect
+            drawDotMatrixText(ctx, 'SALON', 150, 90, 28, 3);
+        }
+        
+        function drawDotMatrixText(ctx, text, x, y, fontSize, dotSize) {
+            // Set font
+            ctx.font = `bold ${fontSize}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Get text metrics
+            const metrics = ctx.measureText(text);
+            const textWidth = metrics.width;
+            const textHeight = fontSize;
+            
+            // Create temporary canvas for text rendering
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = textWidth + 40;
+            tempCanvas.height = textHeight + 40;
+            
+            // Draw text on temporary canvas
+            tempCtx.font = `bold ${fontSize}px Arial`;
+            tempCtx.textAlign = 'center';
+            tempCtx.textBaseline = 'middle';
+            tempCtx.fillStyle = 'black';
+            tempCtx.fillText(text, tempCanvas.width/2, tempCanvas.height/2);
+            
+            // Get image data
+            const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+            const data = imageData.data;
+            
+            // Draw dots where text pixels are
+            for (let i = 0; i < data.length; i += 4) {
+                if (data[i] === 0 && data[i + 1] === 0 && data[i + 2] === 0) {
+                    const pixelX = (i / 4) % tempCanvas.width;
+                    const pixelY = Math.floor((i / 4) / tempCanvas.width);
+                    
+                    // Convert to main canvas coordinates
+                    const canvasX = x - tempCanvas.width/2 + pixelX;
+                    const canvasY = y - tempCanvas.height/2 + pixelY;
+                    
+                    // Add slight randomness to dot size for authentic look
+                    const randomSize = dotSize + (Math.random() - 0.5) * 1.5;
+                    if (randomSize > 0) {
+                        ctx.beginPath();
+                        ctx.arc(canvasX, canvasY, randomSize, 0, 2 * Math.PI);
+                        ctx.fillStyle = 'black';
+                        ctx.fill();
+                    }
+                }
+            }
+        }
+        
+        function downloadLogo() {
+            const canvas = document.getElementById('logoCanvas');
+            const link = document.createElement('a');
+            link.download = 'airsalon-logo.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        // Generate logo automatically when page loads
+        window.onload = function() {
+            generateLogo();
+        };
+    </script>
+</body>
+</html>

@@ -86,10 +86,21 @@ export default {
     },
 
     publicMenuList: {
-      get () { return this.publicMenuItems },
+      get () {
+        // Always include Blogs as the first item
+        const blogsItem = {
+          type: 'resident-blogs',
+          id: 'resident-blogs',
+          title: 'Blogs',
+          order: 0
+        }
+        return [blogsItem, ...this.publicMenuItems]
+      },
       set (newValue) {
-        this.publicMenuItems = newValue.map((item, i) => ({ ...item, order: i }))
-        this.updateMenuInSettings('public', newValue)
+        // Filter out the static Blogs item when setting
+        const filteredItems = newValue.filter(item => item.id !== 'resident-blogs')
+        this.publicMenuItems = filteredItems.map((item, i) => ({ ...item, order: i }))
+        this.updateMenuInSettings('public', filteredItems)
       }
     },
 

@@ -5,6 +5,11 @@
         <a-b-a-logo ref="logo" class="main block" />
       </router-link>
       <anti-war-coalition-banner />
+      <air-salon-banner />
+      <div class="separator"></div>
+      <bookstop-banner />
+      <div class="separator"></div>
+      <uq-bar-banner />
     </div>
     <nav>
       <router-link
@@ -25,10 +30,13 @@ import { mapState, mapActions, mapGetters } from 'vuex'
 import UserMenu from './UserMenu'
 import ABALogo from './ABALogo'
 import AntiWarCoalitionBanner from './AntiWarCoalitionBanner.vue'
+import AirSalonBanner from './AirSalonBanner.vue'
+import BookstopBanner from './BookstopBanner.vue'
+import UqBarBanner from './UqBarBanner.vue'
 
 export default {
   name: 'MainHeader',
-  components: { ABALogo, UserMenu, AntiWarCoalitionBanner },
+  components: { ABALogo, UserMenu, AntiWarCoalitionBanner, AirSalonBanner, BookstopBanner, UqBarBanner },
   data: () => ({
     logoIsSmall: false
   }),
@@ -138,13 +146,35 @@ export default {
           padding-left: calc(0.75rem * var(--logo-current-scale));
           transition: height 0.2s, width 0.2s;
         }
+        .air-salon-banner {
+          height: calc(var(--logo-main-height) * var(--logo-current-scale) * 0.55);
+          padding-left: calc(0.5rem * var(--logo-current-scale));
+          transition: height 0.2s, width 0.2s;
+          border-right: 1px solid $color-aba-blue;
+        }
+        .bookstop-banner {
+          height: calc(var(--logo-main-height) * var(--logo-current-scale) * 0.55);
+          padding-left: calc(0.5rem * var(--logo-current-scale));
+          transition: height 0.2s, width 0.2s;
+        }
+        .uq-bar-banner {
+          height: calc(var(--logo-main-height) * var(--logo-current-scale) * 0.55);
+          padding-left: calc(0.5rem * var(--logo-current-scale));
+          transition: height 0.2s, width 0.2s;
+        }
+        .separator {
+          width: 1px;
+          height: calc(var(--logo-main-height) * var(--logo-current-scale) * 0.55);
+          background-color: $color-aba-blue;
+          margin: 0 0.5rem;
+        }
         .logo-link {
           display: flex;
           height: calc(var(--logo-main-height) * var(--logo-current-scale) * 0.75);
           justify-content: center;
           background: radial-gradient(closest-side, #4b4b4b, $color-bg-semitransparent);
           border: solid $color-aba-blue;
-          border-width: 0 1px;
+          border-width: 0 1px 0 0;
           padding: 0 0.5rem;
           color: $color-aba-blue;
 

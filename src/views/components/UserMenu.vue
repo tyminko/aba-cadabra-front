@@ -52,6 +52,9 @@
 <!--          <router-link v-if="admin" :to="{name: 'wp-posts'}" class="menu-cell nav-item">-->
 <!--            Import WP Posts-->
 <!--          </router-link>-->
+          <router-link :to="{name: 'resident-blogs'}" class="menu-cell nav-item">
+            <span>Blogs</span>
+          </router-link>
           <router-link :to="{name: 'internal'}" class="menu-cell nav-item">
             <span>Internal Posts</span>
           </router-link>

@@ -86,6 +86,16 @@ const router = new Router({
       component: () => import(/* webpackChunkName: "institutions" */ './views/components/page-templates/Partners')
     },
     {
+      path: '/resident-blogs',
+      name: 'resident-blogs',
+      component: () => import(/* webpackChunkName: "blogs" */ './views/components/page-templates/ResidentBlogs')
+    },
+    {
+      path: '/logo-demo',
+      name: 'logo-demo',
+      component: () => import(/* webpackChunkName: "logo-demo" */ './views/LogoDemo.vue')
+    },
+    {
       path: '/admin',
       component: () => import(/* webpackChunkName: "admin" */ './views/admin/AdminArea.vue'),
       meta: { restricted: true },

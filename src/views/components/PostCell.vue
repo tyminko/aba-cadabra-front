@@ -2,11 +2,11 @@
   <div
     class="post-cell cell break-words flex flex-col"
     :class="[cellSize, post.status, post.type, (allowReservation ? 'upcoming' : '')]">
-    <header class="flex-grow-0 relative">
-      <div class="flex items-center relative">
+    <header class="flex-grow-0 relative overflow-visible">
+      <div class="flex items-center relative overflow-visible">
         <div class="badge">
-          <router-link v-if="routerTypeLink" :to="routerTypeLink">{{typeLabel}}</router-link>
-          <span v-else>{{typeLabel}}</span>
+          <router-link v-if="routerTypeLink" :to="routerTypeLink" :class="{ 'recent-author': isRecent && post.type === 'post' }">{{typeLabel}}</router-link>
+          <span v-else :class="{ 'recent-author': isRecent && post.type === 'post' }">{{typeLabel}}</span>
           <div v-if="post.status !== 'public'" class="status">
             {{post.status}}
           </div>
@@ -76,7 +76,8 @@ export default {
   mixins: [ReservationMixin],
   components: { ReservationConfirm, ReservationFormPopover, CreditsString },
   props: {
-    post: { type: Object, required: true }
+    post: { type: Object, required: true },
+    isRecent: { type: Boolean, default: false }
   },
 
   data: () => ({
@@ -278,10 +279,11 @@ export default {
       text-transform: capitalize;
     }
     .badge {
-      @apply px-sm py-sm text-xs capitalize truncate;
+      @apply px-sm py-sm text-xs capitalize;
       position: relative;
       min-width: 0;
       margin-left: -0.5rem;
+      overflow: visible;
       &::after {
         content: "";
         position: absolute;
@@ -388,6 +390,27 @@ export default {
       &[lazy=loaded] {
         opacity: 1;
       }
+    }
+  }
+
+  .recent-author {
+    color: #3b82f6 !important;
+    font-weight: 600 !important;
+    position: relative;
+
+    &::after {
+      content: "NEW";
+      position: absolute;
+      top: -12px;
+      right: -25px;
+      background: #3b82f6;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: bold;
+      z-index: 10;
+      white-space: nowrap;
     }
   }
 </style>

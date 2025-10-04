@@ -29,6 +29,11 @@ export default {
       return { internal: this.internalList, public: this.publicList }
     },
 
+    // Ensure we always have a menu object
+    safeMenu () {
+      return this.menu || { public: {}, internal: {} }
+    },
+
     internalList () {
       return Object.entries(this.menu.internal || {})
         .map(([id, item]) => ({ ...item, id, status: 'internal' }))
@@ -36,14 +41,31 @@ export default {
     },
 
     publicList () {
-      const menu = Object.entries(this.menu.public || {})
-        .map(([id, item]) => ({ ...item, id }))
-        .sort((a, b) => a.order - b.order)
-      return [...menu, {
+      // Always return at least the Blogs item, regardless of Firebase data
+      const blogsItem = {
+        type: 'resident-blogs',
+        id: 'resident-blogs',
+        title: 'Blogs',
+        order: 1
+      }
+
+      // Try to get Firebase menu items
+      let firebaseItems = []
+      if (this.menu && this.menu.public) {
+        firebaseItems = Object.entries(this.menu.public)
+          .map(([id, item]) => ({ ...item, id }))
+          .sort((a, b) => a.order - b.order)
+      }
+
+      // Add Subscribe
+      const subscribeItem = {
         type: 'subscribe',
         id: 'subscribe',
-        title: 'Subscribe'
-      }]
+        title: 'Subscribe',
+        order: 999
+      }
+
+      return [blogsItem, ...firebaseItems, subscribeItem]
     }
   },
 
@@ -52,12 +74,20 @@ export default {
       this.updateMenuSubscription()
     },
     menu () {
+      console.log('Menu data changed:', this.menu)
+      console.log('Public list updated:', this.publicList)
       this.$emit('updated')
     }
   },
 
   created () {
     this.updateMenuSubscription()
+  },
+
+  mounted () {
+    console.log('AsideMenuPublic mounted, menu state:', this.menu)
+    console.log('Public list computed:', this.publicList)
+    console.log('Menu public data:', this.menu && this.menu.public)
   },
 
   methods: {
