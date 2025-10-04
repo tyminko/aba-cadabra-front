@@ -125,6 +125,7 @@ export default {
               anchor: new this.google.maps.Point(20, 20)
             }
           })
+          const m = new this.MarkerClass({ lat, lng }, markerEl)
 
           // Create InfoWindow for this marker
           const eventNumber = mData.countNumber || mData.label || mData.eventNumber || mData.number || mData.id || '?'
@@ -167,6 +168,12 @@ export default {
             console.log('Opening popup with URL:', eventUrl) // Debug log
 
             // Close all other InfoWindows
+          // Add click listener to show InfoWindow
+          markerEl.addEventListener('click', (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+
+            // Close any open InfoWindows first
             this.markerInstances.forEach(marker => {
               if (marker.infoWindow && marker !== m) {
                 marker.infoWindow.close()
@@ -192,6 +199,14 @@ export default {
             this.$emit('marker-click', mData)
           })
 
+            // Emit the marker click event as before
+            this.$emit('marker-click', mData)
+          })
+
+          // Store InfoWindow reference with marker
+          m.infoWindow = infoWindow
+
+          m.setMap(this.map)
           this.markerInstances.push(m)
         }
       })
